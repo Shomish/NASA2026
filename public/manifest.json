@@ -1,0 +1,18 @@
+{
+  "name": "Monitor Autónomo de Salud para Astronautas",
+  "short_name": "AYNI Health",
+  "description": "Monitor autónomo de salud para astronautas con análogo terrestre andino. NASA Space Apps 2026.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icono.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
