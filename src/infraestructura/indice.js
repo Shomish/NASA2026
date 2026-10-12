@@ -151,52 +151,49 @@ export class AdaptadorApi {
 }
 
 /**
- * Conector LLM opcional (usa una API key si está disponible).
- * Si no hay key, devuelve null y el motor local responde.
+ * Conector LLM (nivel 3 · online).
+ * Delega al backend Express (`/api/chat`), que oculta la API key del proveedor.
+ * La key NUNCA viaja al navegador ni aparece en el bundle del cliente.
  */
 export class ConectorLLM {
   /**
-   * @param {string} [claveApi] - Clave de API (opcional, desde .env).
+   * @param {string} [base] - URL base de la API.
    */
-  constructor(claveApi = import.meta.env.VITE_GEMINI_API_KEY) {
-    this.claveApi = claveApi
+  constructor(base = import.meta.env.VITE_API_URL || '/api') {
+    this.base = base
   }
 
   /**
-   * Indica si hay un LLM real disponible.
-   * @returns {boolean} Verdadero si hay clave.
+   * Verifica si el proveedor de IA está configurado en el servidor.
+   * @returns {Promise<boolean>} Verdadero si hay LLM en la nube disponible.
    */
-  disponible() {
-    return Boolean(this.claveApi)
+  async disponible() {
+    try {
+      const respuesta = await fetch(`${this.base}/chat/estado`)
+      if (!respuesta.ok) return false
+      const datos = await respuesta.json()
+      return Boolean(datos?.disponible)
+    } catch {
+      return false
+    }
   }
 
   /**
-   * Consulta el LLM con contexto del astronauta.
+   * Consulta el LLM (mediante el backend) con contexto del astronauta.
    * @param {string} mensaje - Mensaje del usuario.
    * @param {string} contexto - Contexto (perfil + vitales).
-   * @returns {Promise<string|null>} Respuesta del LLM o null.
+   * @returns {Promise<string|null>} Respuesta del LLM o null (para usar el motor local).
    */
   async consultar(mensaje, contexto) {
-    if (!this.claveApi) return null
     try {
-      const respuesta = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.claveApi}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: `Eres el médico de IA de una misión espacial. Contexto del astronauta:\n${contexto}\n\nPregunta del astronauta: ${mensaje}\nResponde en español, breve y accionable.` },
-                ],
-              },
-            ],
-          }),
-        },
-      )
+      const respuesta = await fetch(`${this.base}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mensaje, contexto }),
+      })
+      if (!respuesta.ok) return null
       const datos = await respuesta.json()
-      return datos?.candidates?.[0]?.content?.parts?.[0]?.text ?? null
+      return datos?.respuesta ?? null
     } catch {
       return null
     }

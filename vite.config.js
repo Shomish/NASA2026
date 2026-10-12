@@ -10,6 +10,7 @@ export default defineConfig({
   server: {
     host: process.env.HOST === 'true',
     port: 5173,
+    strictPort: true,
     proxy: {
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3001',

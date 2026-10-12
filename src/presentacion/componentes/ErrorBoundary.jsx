@@ -1,20 +1,20 @@
 /**
  * @fileoverview Componente ErrorBoundary
  * Captura errores de render de toda la aplicación y muestra una pantalla de
- * fallback visible (nunca una pantalla negra muda). Es la última barrera de
- * contención ante cualquier excepción no controlada en el árbol de React.
+ * fallback visible (nunca una pantalla negra muda). Ofrece recarga y un
+ * restablecimiento de datos locales con confirmación y descarga de respaldo.
  * @module presentacion/componentes/ErrorBoundary
  */
 
 import { Component } from 'react'
-import { AlertTriangle, RotateCcw, Trash2 } from 'lucide-react'
+import { AlertTriangle, RotateCcw, Trash2, Download, X } from 'lucide-react'
 
 /** Nombre de la base de datos local que usa la aplicación. */
 const NOMBRE_BASE = 'salud_astronauta_db'
 
 /**
  * Boundary de errores global.
- * Captura errores de renderizado/ciclo de vida y ofrece una recuperación visible.
+ * Captura errores de renderizado/ciclo de vida y ofrece recuperación visible.
  */
 export default class ErrorBoundary extends Component {
   /**
@@ -22,7 +22,7 @@ export default class ErrorBoundary extends Component {
    */
   constructor(props) {
     super(props)
-    this.state = { error: null, hasError: false, restableciendo: false }
+    this.state = { error: null, hasError: false, restableciendo: false, mostrarConfirmacion: false }
   }
 
   /**
@@ -51,33 +51,87 @@ export default class ErrorBoundary extends Component {
   }
 
   /**
-   * Borra los datos locales (IndexedDB y localStorage) y recarga.
-   * Permite salir de un estado corrupto persistente.
+   * Lee los datos locales almacenados en IndexedDB.
+   * @returns {Promise<object>} Datos de la base (tripulacion e historial).
    */
-  _restablecerDatos = async () => {
-    this.setState({ restableciendo: true })
-    try {
-      if (window.indexedDB?.databases) {
-        const bases = await window.indexedDB.databases()
-        for (const base of bases) {
-          if (base.name === NOMBRE_BASE) {
-            await new Promise((resolver) => {
-              const solicitud = window.indexedDB.deleteDatabase(NOMBRE_BASE)
-              solicitud.onsuccess = () => resolver()
-              solicitud.onerror = () => resolver()
-              solicitud.onblocked = () => resolver()
-            })
+  _leerDatosLocales = () => {
+    return new Promise((resolver) => {
+      const solicitud = window.indexedDB.open(NOMBRE_BASE)
+      solicitud.onsuccess = () => {
+        const base = solicitud.result
+        const resultado = { tripulacion: [], historial: [] }
+        try {
+          const tx = base.transaction(['tripulacion', 'historial'], 'readonly')
+          const reqT = tx.objectStore('tripulacion').getAll()
+          const reqH = tx.objectStore('historial').getAll()
+          tx.oncomplete = () => {
+            resultado.tripulacion = reqT.result ?? []
+            resultado.historial = reqH.result ?? []
+            resolver(resultado)
           }
+          tx.onerror = () => resolver(resultado)
+        } catch {
+          resolver(resultado)
+        } finally {
+          base.close()
         }
       }
-      try {
-        window.localStorage?.clear()
-      } catch {
-        /* localStorage puede no estar disponible; se ignora. */
-      }
-    } finally {
-      window.location.reload()
-    }
+      solicitud.onerror = () => resolver({ tripulacion: [], historial: [] })
+    })
+  }
+
+  /**
+   * Descarga una copia de los datos locales en formato JSON.
+   */
+  _descargarCopia = async () => {
+    const datos = await this._leerDatosLocales()
+    const contenido = JSON.stringify(datos, null, 2)
+    const blob = new Blob([contenido], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const enlace = document.createElement('a')
+    enlace.href = url
+    enlace.download = `respaldo-ayni-health-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(enlace)
+    enlace.click()
+    document.body.removeChild(enlace)
+    URL.revokeObjectURL(url)
+  }
+
+  /**
+   * Muestra el diálogo de confirmación antes de borrar.
+   */
+  _abrirConfirmacion = () => {
+    this.setState({ mostrarConfirmacion: true })
+  }
+
+  /**
+   * Cierra el diálogo de confirmación.
+   */
+  _cerrarConfirmacion = () => {
+    this.setState({ mostrarConfirmacion: false })
+  }
+
+  /**
+   * Borra los datos locales (IndexedDB y localStorage) y recarga.
+   */
+  _confirmarRestablecer = () => {
+    this.setState({ restableciendo: true, mostrarConfirmacion: false })
+    const borrarBase = () =>
+      new Promise((resolver) => {
+        const solicitud = window.indexedDB.deleteDatabase(NOMBRE_BASE)
+        solicitud.onsuccess = () => resolver()
+        solicitud.onerror = () => resolver()
+        solicitud.onblocked = () => resolver()
+      })
+    Promise.resolve(borrarBase())
+      .then(() => {
+        try {
+          window.localStorage?.clear()
+        } catch {
+          /* localStorage puede no estar disponible; se ignora. */
+        }
+      })
+      .finally(() => window.location.reload())
   }
 
   /**
@@ -112,15 +166,67 @@ export default class ErrorBoundary extends Component {
             </button>
             <button
               type="button"
-              onClick={this._restablecerDatos}
-              disabled={this.state.restableciendo}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 font-medium text-sm disabled:opacity-60"
+              onClick={this._abrirConfirmacion}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 font-medium text-sm"
             >
               <Trash2 size={16} />
-              {this.state.restableciendo ? 'Restableciendo…' : 'Restablecer datos locales'}
+              Restablecer datos locales
             </button>
           </div>
         </div>
+
+        {/* Diálogo de confirmación */}
+        {this.state.mostrarConfirmacion && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-restablecer"
+          >
+            <div className="max-w-md w-full bg-[#111827] border border-[#374151] rounded-2xl p-6 space-y-4">
+              <div className="flex items-start justify-between">
+                <h2 id="titulo-restablecer" className="text-lg font-semibold text-[#F9FAFB]">
+                  Restablecer datos locales
+                </h2>
+                <button type="button" onClick={this._cerrarConfirmacion} className="text-neutral-400 hover:text-neutral-200" aria-label="Cerrar">
+                  <X size={18} />
+                </button>
+              </div>
+              <p className="text-sm text-[#9CA3AF]">
+                Se eliminarán todos los datos guardados en este navegador (tripulantes, signos
+                vitales, sueño, notas y alertas). Esta acción no se puede deshacer. Te recomendamos
+                descargar una copia de respaldo antes de continuar.
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={this._descargarCopia}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 font-medium text-sm"
+                >
+                  <Download size={16} />
+                  Descargar copia (JSON)
+                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={this._cerrarConfirmacion}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-medium text-sm"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={this._confirmarRestablecer}
+                    disabled={this.state.restableciendo}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-medium text-sm disabled:opacity-60"
+                  >
+                    {this.state.restableciendo ? 'Restableciendo…' : 'Sí, restablecer'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

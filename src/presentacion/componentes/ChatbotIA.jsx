@@ -26,11 +26,23 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
   ])
   const [entrada, setEntrada] = useState('')
   const [escribiendo, setEscribiendo] = useState(false)
+  const [enLinea, setEnLinea] = useState(false)
   const finRef = useRef(null)
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [mensajes, escribiendo])
+
+  // Verifica si el proveedor de IA está disponible en el servidor.
+  useEffect(() => {
+    let activo = true
+    conectorLLM?.disponible().then((disponible) => {
+      if (activo) setEnLinea(disponible)
+    })
+    return () => {
+      activo = false
+    }
+  }, [conectorLLM])
 
   /**
    * Construye el contexto textual para el LLM.
@@ -65,7 +77,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
     setEscribiendo(true)
 
     let respuesta = null
-    if (conectorLLM?.disponible()) {
+    if (enLinea) {
       respuesta = await conectorLLM.consultar(texto, construirContexto())
     }
     if (!respuesta) {
@@ -85,7 +97,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
         <div>
           <h3 className="font-semibold text-neutral-100 leading-tight">Médico de IA</h3>
           <p className="text-xs font-mono text-neutral-500">
-            {conectorLLM?.disponible() ? 'LLM conectado (Gemini)' : 'Motor local · offline'}
+            {enLinea ? 'LLM en la nube · en línea' : 'Motor local · offline'}
           </p>
         </div>
       </div>
