@@ -1,7 +1,6 @@
 /**
  * @fileoverview Punto de entrada de la aplicación.
- * Monta la app con un ErrorBoundary global, un splash de carga (Suspense + lazy)
- * y las tipografías autoalojadas (offline, sin dependencia de Google Fonts).
+ * Monta la app con ErrorBoundary, splash de carga, proveedor de tema y toasts.
  * @module main
  */
 
@@ -9,6 +8,7 @@ import React, { lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import ErrorBoundary from './presentacion/componentes/ErrorBoundary.jsx'
 import SplashCarga from './presentacion/componentes/SplashCarga.jsx'
+import { ProveedorTema, ContenedorTostadas } from './presentacion/sistema/indice.js'
 import './index.css'
 
 // Tipografías autoalojadas (@fontsource) para funcionamiento offline.
@@ -28,9 +28,12 @@ const App = lazy(() => import('./App.jsx'))
 createRoot(document.getElementById('raiz')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <Suspense fallback={<SplashCarga />}>
-        <App />
-      </Suspense>
+      <ProveedorTema>
+        <Suspense fallback={<SplashCarga />}>
+          <App />
+        </Suspense>
+        <ContenedorTostadas />
+      </ProveedorTema>
     </ErrorBoundary>
   </React.StrictMode>,
 )

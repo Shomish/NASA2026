@@ -12,6 +12,7 @@ import VistaTripulacion from './presentacion/componentes/VistaTripulacion.jsx'
 import { tripulacionInicial } from './datos/mockDatos.js'
 import { AdaptadorAlmacenamiento, AdaptadorApi, ConectorLLM, generarId } from './infraestructura/indice.js'
 import { evaluarSignoVital, sanitizarTripulante } from './dominio/indice.js'
+import VistaDesignSystem from './presentacion/componentes/VistaDesignSystem.jsx'
 
 /** Historial inicial de demostración. */
 function historialInicial() {
@@ -35,6 +36,15 @@ export default function App() {
   const [tripulacion, setTripulacion] = useState(tripulacionInicial)
   const [personaId, setPersonaId] = useState('ana-quispe')
   const [historial, setHistorial] = useState(historialInicial)
+  // Ruta temporal para la revisión del sistema de diseño (Fase 2).
+  const [ruta, setRuta] = useState(() => window.location.hash)
+
+  // Escucha cambios de hash para la ruta temporal /design-system.
+  useEffect(() => {
+    const manejarHash = () => setRuta(window.location.hash)
+    window.addEventListener('hashchange', manejarHash)
+    return () => window.removeEventListener('hashchange', manejarHash)
+  }, [])
 
   const almacenamiento = useMemo(() => new AdaptadorAlmacenamiento(), [])
   const api = useMemo(() => new AdaptadorApi(), [])
@@ -148,6 +158,17 @@ export default function App() {
     )
   }
 
+  // Ruta temporal del sistema de diseño (Fase 2): accesible en #/design-system.
+  if (ruta === '#/design-system') {
+    return (
+      <div className="min-h-screen bg-fondo text-tinta">
+        <div className="mx-auto max-w-6xl px-4">
+          <VistaDesignSystem />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-neutral-950 text-neutral-100">
       <NavegacionPrincipal vistaActiva={vista} alCambiarVista={setVista} />
@@ -184,6 +205,7 @@ export default function App() {
         <div className="max-w-[1600px] mx-auto flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4 text-xs text-neutral-500 font-mono">
           <span className="text-neutral-400">AYNI HEALTH · Monitor Autónomo de Salud</span>
           <span className="ml-auto">Análogo terrestre: Cusco, Perú · NASA Space Apps Challenge 2026</span>
+          <a href="#/design-system" className="text-violet-400 hover:text-violet-300 underline">Design System</a>
         </div>
       </footer>
     </div>
