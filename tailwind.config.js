@@ -16,6 +16,7 @@ export default {
         'primario-fuerte': 'rgb(var(--primario-fuerte) / <alpha-value>)',
         secundario: 'rgb(var(--secundario) / <alpha-value>)',
         'secundario-fuerte': 'rgb(var(--secundario-fuerte) / <alpha-value>)',
+        acento: 'rgb(var(--acento) / <alpha-value>)',
         exito: 'rgb(var(--exito) / <alpha-value>)',
         advertencia: 'rgb(var(--advertencia) / <alpha-value>)',
         'advertencia-fuerte': 'rgb(var(--advertencia-fuerte) / <alpha-value>)',

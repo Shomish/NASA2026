@@ -3,37 +3,40 @@
 @tailwind utilities;
 
 /* ============================================================
-   AYNI HEALTH · Tokens de diseño (Cosmos Andino)
-   Paleta oscuro/claro con canales RGB para soportar opacidad.
+   AYNI HEALTH · Tokens de diseño (Cosmos Andino / Cusco)
+   Los tokens de color se inyectan dinámicamente por el ProveedorTema.
+   :root contiene los valores por defecto (Cusco Atardecer · oscuro)
+   para evitar parpadeo antes de que React cargue.
    ============================================================ */
 :root {
   /* Fondo y superficies */
-  --fondo: 11 15 25; /* #0B0F19 */
-  --superficie: 17 24 39; /* #111827 */
-  --superficie-elevada: 22 29 46; /* #161D2E */
-  --superficie-alta: 31 41 55; /* #1F2937 */
-  --borde: 42 52 71; /* #2A3447 */
-  --borde-fuerte: 55 65 81; /* #374151 */
+  --fondo: 18 16 14;
+  --superficie: 26 22 19;
+  --superficie-elevada: 35 30 25;
+  --superficie-alta: 45 38 32;
+  --borde: 58 50 42;
+  --borde-fuerte: 74 64 54;
 
   /* Texto */
-  --tinta: 249 250 251; /* #F9FAFB */
-  --tinta-suave: 156 163 175; /* #9CA3AF */
+  --tinta: 247 241 232;
+  --tinta-suave: 184 173 158;
 
   /* Acentos */
-  --primario: 99 102 241; /* #6366F1 índigo */
-  --primario-fuerte: 124 58 237; /* #7C3AED violeta */
-  --secundario: 6 182 212; /* #06B6D4 cian */
-  --secundario-fuerte: 59 130 246; /* #3B82F6 azul */
+  --primario: 232 137 79;
+  --primario-fuerte: 194 96 58;
+  --secundario: 224 176 79;
+  --secundario-fuerte: 200 146 46;
+  --acento: 43 179 163;
 
   /* Estados */
-  --exito: 16 185 129; /* #10B981 esmeralda */
-  --advertencia: 245 158 11; /* #F59E0B ámbar */
-  --advertencia-fuerte: 249 115 22; /* #F97316 naranja */
-  --critico: 239 68 68; /* #EF4444 coral */
+  --exito: 63 163 122;
+  --advertencia: 245 158 11;
+  --advertencia-fuerte: 249 115 22;
+  --critico: 220 38 38;
 
   /* Acento andino */
-  --andino-dorado: 212 162 76; /* #D4A24C */
-  --andino-terracota: 194 96 58; /* #C2603A */
+  --andino-dorado: 224 176 79;
+  --andino-terracota: 194 96 58;
 
   /* Radios */
   --radio-tarjeta: 16px;
@@ -41,24 +44,10 @@
   --radio-insignia: 8px;
 
   /* Sombras */
-  --sombra-consola: 0 10px 25px -5px rgba(99, 102, 241, 0.15);
-  --sombra-glow: 0 0 24px rgba(124, 58, 237, 0.35);
+  --sombra-consola: 0 10px 25px -5px rgba(194, 96, 58, 0.18);
+  --sombra-glow: 0 0 24px rgba(232, 137, 79, 0.35);
 
   color-scheme: dark;
-}
-
-/* Modo claro */
-[data-theme='light'] {
-  --fondo: 245 247 251; /* #F5F7FB */
-  --superficie: 255 255 255; /* #FFFFFF */
-  --superficie-elevada: 249 250 251; /* #F9FAFB */
-  --superficie-alta: 243 244 246; /* #F3F4F6 */
-  --borde: 229 231 235; /* #E5E7EB */
-  --borde-fuerte: 209 213 219; /* #D1D5DB */
-  --tinta: 17 24 39; /* #111827 */
-  --tinta-suave: 107 114 128; /* #6B7280 */
-
-  color-scheme: light;
 }
 
 /* ============================================================
@@ -78,9 +67,17 @@ body,
 
 body {
   background-image:
-    radial-gradient(1000px 500px at 85% -10%, rgba(124, 58, 237, 0.10), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(6, 182, 212, 0.06), transparent 60%);
+    radial-gradient(1000px 500px at 85% -10%, rgb(var(--primario) / 0.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgb(var(--acento) / 0.07), transparent 60%);
   background-attachment: fixed;
+}
+
+/* Textura sutil tipo textil/chakana para héroes y estados vacíos. */
+.textura-andina {
+  background-image:
+    linear-gradient(45deg, rgb(var(--andino-dorado) / 0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgb(var(--andino-dorado) / 0.03) 25%, transparent 25%);
+  background-size: 24px 24px;
 }
 
 * {

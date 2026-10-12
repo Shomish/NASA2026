@@ -1,22 +1,38 @@
 /**
  * @fileoverview Componente VistaDesignSystem
- * Ruta temporal (/design-system) que muestra tokens, tipografía y componentes base.
+ * Ruta temporal (/design-system) con paletas, editor de tema, componentes base y móviles,
+ * y un conmutador de viewport para probar el diseño responsive.
  * @module presentacion/componentes/VistaDesignSystem
  */
 
 import { useState } from 'react'
-import { AlertTriangle, Inbox, Moon, Sun } from 'lucide-react'
-import { Boton, Tarjeta, Insignia, Entrada, Modal, Esqueleto, EstadoVacio, useTema, toast } from '../sistema/indice.js'
+import { AlertTriangle, Inbox, Moon, Plus, Sun, User, Users, Utensils, HeartPulse, LayoutDashboard } from 'lucide-react'
+import {
+  Boton,
+  Tarjeta,
+  Insignia,
+  Entrada,
+  Modal,
+  Esqueleto,
+  EstadoVacio,
+  useTema,
+  toast,
+  EditorTema,
+  SelectorSegmentado,
+  TarjetaTabla,
+  BarraInferior,
+  BotonFlotante,
+  HojaInferior,
+  Drawer,
+} from '../sistema/indice.js'
 
 /** Muestras de color para la paleta. */
 const MUESTRAS_COLOR = [
   { nombre: 'Fondo', clase: 'bg-fondo' },
   { nombre: 'Superficie', clase: 'bg-superficie' },
-  { nombre: 'Superficie elevada', clase: 'bg-superficie-elevada' },
-  { nombre: 'Superficie alta', clase: 'bg-superficie-alta' },
   { nombre: 'Primario', clase: 'bg-primario' },
-  { nombre: 'Primario fuerte', clase: 'bg-primario-fuerte' },
   { nombre: 'Secundario', clase: 'bg-secundario' },
+  { nombre: 'Acento', clase: 'bg-acento' },
   { nombre: 'Éxito', clase: 'bg-exito' },
   { nombre: 'Advertencia', clase: 'bg-advertencia' },
   { nombre: 'Crítico', clase: 'bg-critico' },
@@ -26,13 +42,21 @@ const MUESTRAS_COLOR = [
 
 /** Escala tipográfica. */
 const ESCALA_TIPOGRAFICA = [
-  { etiqueta: '12px · etiqueta', clase: 'text-xs text-tinta-suave' },
-  { etiqueta: '14px · cuerpo', clase: 'text-sm text-tinta' },
-  { etiqueta: '16px · base', clase: 'text-base text-tinta' },
-  { etiqueta: '20px · subtítulo', clase: 'text-xl font-medium text-tinta' },
-  { etiqueta: '24px · título', clase: 'text-2xl font-semibold text-tinta' },
-  { etiqueta: '32px · h2', clase: 'text-3xl font-serif font-semibold text-tinta' },
-  { etiqueta: '48px · h1', clase: 'text-5xl font-serif font-bold text-tinta' },
+  { etiqueta: '12px', clase: 'text-xs text-tinta-suave' },
+  { etiqueta: '14px', clase: 'text-sm text-tinta' },
+  { etiqueta: '16px', clase: 'text-base text-tinta' },
+  { etiqueta: '24px', clase: 'text-2xl font-semibold text-tinta' },
+  { etiqueta: '32px serif', clase: 'text-3xl font-serif font-semibold text-tinta' },
+  { etiqueta: '48px serif', clase: 'text-5xl font-serif font-bold text-tinta' },
+]
+
+/** Viewports de prueba. */
+const VIEWPORTS = [
+  { id: '360', ancho: 360, etiqueta: '360' },
+  { id: '390', ancho: 390, etiqueta: '390' },
+  { id: '768', ancho: 768, etiqueta: '768' },
+  { id: '1280', ancho: 1280, etiqueta: '1280' },
+  { id: 'completo', ancho: null, etiqueta: 'Completo' },
 ]
 
 /**
@@ -40,8 +64,14 @@ const ESCALA_TIPOGRAFICA = [
  * @returns {import('react').JSX.Element} Vista.
  */
 export default function VistaDesignSystem() {
-  const { tema, alternar } = useTema()
+  const { modoEfectivo, alternarModo } = useTema()
+  const [viewport, setViewport] = useState('completo')
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [hojaAbierta, setHojaAbierta] = useState(false)
+  const [drawerAbierto, setDrawerAbierto] = useState(false)
+  const [segmento, setSegmento] = useState('7')
+
+  const anchoViewport = VIEWPORTS.find((v) => v.id === viewport)?.ancho
 
   return (
     <div className="space-y-10 py-8">
@@ -49,126 +79,177 @@ export default function VistaDesignSystem() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-5xl font-bold text-tinta">Sistema de Diseño</h1>
-          <p className="mt-1 text-tinta-suave">AYNI HEALTH · Tokens, tipografía y componentes base.</p>
+          <p className="mt-1 text-tinta-suave">AYNI HEALTH · Paletas, componentes y mobile-first.</p>
         </div>
-        <Boton variante="secundario" onClick={alternar}>
-          {tema === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          {tema === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+        <Boton variante="secundario" onClick={alternarModo}>
+          {modoEfectivo === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          {modoEfectivo === 'dark' ? 'Modo claro' : 'Modo oscuro'}
         </Boton>
       </div>
 
-      {/* Colores */}
+      {/* Editor de tema */}
       <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold text-tinta">Paleta de color</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {MUESTRAS_COLOR.map((c) => (
-            <div key={c.nombre} className="rounded-tarjeta border border-borde bg-superficie p-3">
-              <div className={`h-14 rounded-boton ${c.clase} border border-borde-fuerte`} />
-              <div className="mt-2 text-sm font-medium text-tinta">{c.nombre}</div>
-            </div>
-          ))}
-        </div>
+        <h2 className="font-serif text-2xl font-semibold text-tinta">Editor de tema</h2>
+        <EditorTema />
       </section>
 
-      {/* Tipografía */}
+      {/* Conmutador de viewport */}
       <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold text-tinta">Tipografía</h2>
-        <div className="rounded-tarjeta border border-borde bg-superficie p-5 space-y-4">
-          {ESCALA_TIPOGRAFICA.map((t) => (
-            <div key={t.etiqueta} className="flex items-baseline gap-4">
-              <span className={`${t.clase}`}>El Cosmos Andino cuida la salud.</span>
-              <span className="font-mono text-xs text-tinta-suave">{t.etiqueta}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Botones */}
-      <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold text-tinta">Botones</h2>
-        <div className="flex flex-wrap gap-3">
-          <Boton variante="primario">Primario</Boton>
-          <Boton variante="secundario">Secundario</Boton>
-          <Boton variante="contorno">Contorno</Boton>
-          <Boton variante="fantasma">Fantasma</Boton>
-          <Boton variante="exito">Éxito</Boton>
-          <Boton variante="peligro">Peligro</Boton>
-          <Boton variante="primario" tamaño="icono" aria-label="Botón icono">+</Boton>
-          <Boton variante="primario" disabled>Deshabilitado</Boton>
-        </div>
-      </section>
-
-      {/* Tarjetas e insignias */}
-      <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold text-tinta">Tarjetas e insignias</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Tarjeta variante="plano">
-            <h3 className="font-medium text-tinta">Tarjeta plana</h3>
-            <p className="mt-1 text-sm text-tinta-suave">Sin sombra, borde sutil.</p>
-          </Tarjeta>
-          <Tarjeta variante="elevado">
-            <h3 className="font-medium text-tinta">Tarjeta elevada</h3>
-            <p className="mt-1 text-sm text-tinta-suave">Con sombra de elevación.</p>
-          </Tarjeta>
-          <Tarjeta variante="andino">
-            <h3 className="font-medium text-tinta">Tarjeta andina</h3>
-            <p className="mt-1 text-sm text-tinta-suave">Borde dorado inca.</p>
-          </Tarjeta>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Insignia variante="neutro">Neutro</Insignia>
-          <Insignia variante="exito" punto>Óptimo</Insignia>
-          <Insignia variante="advertencia" punto>Atención</Insignia>
-          <Insignia variante="critico" punto>Crítico</Insignia>
-          <Insignia variante="primario">Primario</Insignia>
-          <Insignia variante="andino">Andino</Insignia>
-        </div>
-      </section>
-
-      {/* Entradas */}
-      <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold text-tinta">Entradas</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Entrada placeholder="Campo normal" />
-            <Entrada placeholder="Campo con error" error />
-            <Entrada placeholder="Deshabilitado" disabled />
-          </div>
-          <div className="space-y-3">
-            <Esqueleto className="h-10 w-full" />
-            <Esqueleto className="h-10 w-3/4" />
-            <Esqueleto className="h-24 w-full" />
-          </div>
-        </div>
-      </section>
-
-      {/* Estado vacío y acciones */}
-      <section className="space-y-3">
-        <h2 className="font-serif text-2xl font-semibold text-tinta">Estados y feedback</h2>
-        <Tarjeta variante="plano">
-          <EstadoVacio
-            icono={<Inbox size={24} />}
-            titulo="Sin alertas"
-            descripcion="Todo está en orden. Las alertas aparecerán aquí si detectamos un valor anómalo."
-            accion={{ etiqueta: 'Revisar salud', alHacerClic: () => toast.success('Todo en orden') }}
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-2xl font-semibold text-tinta">Vista previa responsive</h2>
+          <SelectorSegmentado
+            opciones={VIEWPORTS.map((v) => ({ valor: v.id, etiqueta: v.etiqueta }))}
+            valor={viewport}
+            alCambiar={setViewport}
           />
-        </Tarjeta>
-        <div className="flex flex-wrap gap-3">
-          <Boton variante="secundario" onClick={() => toast('Notificación simple')}>Toast simple</Boton>
-          <Boton variante="exito" onClick={() => toast.success('Medición guardada')}>Toast éxito</Boton>
-          <Boton variante="peligro" onClick={() => toast.error('Registro eliminado')}>Toast error</Boton>
-          <Boton variante="primario" onClick={() => setModalAbierto(true)}>Abrir modal</Boton>
+        </div>
+
+        {/* Contenedor con ancho de viewport */}
+        <div
+          className="mx-auto overflow-hidden rounded-tarjeta border border-borde bg-fondo p-4 transition-all"
+          style={{ maxWidth: anchoViewport ?? '100%' }}
+        >
+          <div className="space-y-8">
+            {/* Colores */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {MUESTRAS_COLOR.map((c) => (
+                <div key={c.nombre} className="rounded-tarjeta border border-borde bg-superficie p-2">
+                  <div className={`h-10 rounded-boton ${c.clase} border border-borde-fuerte`} />
+                  <div className="mt-1 text-xs font-medium text-tinta">{c.nombre}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tipografía */}
+            <div className="rounded-tarjeta border border-borde bg-superficie p-4 space-y-3">
+              {ESCALA_TIPOGRAFICA.map((t) => (
+                <div key={t.etiqueta} className="flex items-baseline gap-3">
+                  <span className={t.clase}>El Cosmos Andino cuida la salud.</span>
+                  <span className="font-mono text-xs text-tinta-suave">{t.etiqueta}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Botones */}
+            <div className="flex flex-wrap gap-2">
+              <Boton variante="primario">Primario</Boton>
+              <Boton variante="secundario">Secundario</Boton>
+              <Boton variante="contorno">Contorno</Boton>
+              <Boton variante="exito">Éxito</Boton>
+              <Boton variante="peligro">Peligro</Boton>
+            </div>
+
+            {/* Insignias con icono + texto (regla de accesibilidad) */}
+            <div className="flex flex-wrap gap-2">
+              <Insignia variante="exito" punto><HeartPulse size={13} /> Óptimo</Insignia>
+              <Insignia variante="advertencia" punto><AlertTriangle size={13} /> Atención</Insignia>
+              <Insignia variante="critico" punto><AlertTriangle size={13} /> Crítico</Insignia>
+            </div>
+
+            {/* Entradas */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Entrada placeholder="Campo normal" />
+              <Entrada placeholder="Campo con error" error />
+            </div>
+
+            {/* Selector segmentado */}
+            <SelectorSegmentado
+              opciones={[
+                { valor: '7', etiqueta: '7 días' },
+                { valor: '30', etiqueta: '30 días' },
+                { valor: '60', etiqueta: '60 días' },
+              ]}
+              valor={segmento}
+              alCambiar={setSegmento}
+            />
+
+            {/* Tabla móvil */}
+            <TarjetaTabla
+              columnas={[
+                { clave: 'fecha', etiqueta: 'Fecha' },
+                { clave: 'tipo', etiqueta: 'Tipo' },
+                { clave: 'valor', etiqueta: 'Valor' },
+              ]}
+              filas={[
+                { fecha: '12/10/2026', tipo: 'Signos', valor: 'FC 72 lpm' },
+                { fecha: '11/10/2026', tipo: 'Sueño', valor: '8h · calidad 8' },
+              ]}
+            />
+
+            {/* Esqueleto */}
+            <Esqueleto className="h-10 w-full" />
+
+            {/* Estado vacío */}
+            <Tarjeta variante="plano">
+              <EstadoVacio
+                icono={<Inbox size={24} />}
+                titulo="Sin alertas"
+                descripcion="Todo en orden."
+                accion={{ etiqueta: 'Revisar', alHacerClic: () => toast.success('Listo') }}
+              />
+            </Tarjeta>
+
+            {/* Acciones */}
+            <div className="flex flex-wrap gap-2 pb-16">
+              <Boton variante="secundario" onClick={() => setHojaAbierta(true)}>Hoja inferior</Boton>
+              <Boton variante="secundario" onClick={() => setDrawerAbierto(true)}>Drawer lateral</Boton>
+              <Boton variante="primario" onClick={() => setModalAbierto(true)}>Modal</Boton>
+              <Boton variante="exito" onClick={() => toast.success('Medición guardada')}>Toast</Boton>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* Demostración de barra inferior (en viewport móvil) */}
+      {anchoViewport && anchoViewport < 768 && (
+        <div className="relative h-24 rounded-tarjeta border border-borde bg-fondo">
+          <BarraInferior
+            activo="inicio"
+            alCambiar={() => {}}
+            destinos={[
+              { id: 'inicio', etiqueta: 'Inicio', icono: <LayoutDashboard size={20} /> },
+              { id: 'monitor', etiqueta: 'Monitor', icono: <HeartPulse size={20} /> },
+              { id: 'registrar', etiqueta: 'Registrar', icono: <Plus size={24} />, destacado: true },
+              { id: 'nutricion', etiqueta: 'Nutrición', icono: <Utensils size={20} /> },
+              { id: 'mas', etiqueta: 'Más', icono: <Users size={20} /> },
+            ]}
+          />
+        </div>
+      )}
+
+      {/* FAB de demostración */}
+      <BotonFlotante icono={<Plus size={24} />} etiqueta="Registrar medición" alHacerClic={() => toast('FAB')} />
+
+      {/* Hoja inferior */}
+      <HojaInferior abierto={hojaAbierta} alCerrar={() => setHojaAbierta(false)} titulo="Filtros">
+        <div className="space-y-3">
+          <Entrada placeholder="Buscar tripulante" />
+          <SelectorSegmentado
+            opciones={[
+              { valor: 'todos', etiqueta: 'Todos' },
+              { valor: 'signos', etiqueta: 'Signos' },
+            ]}
+            valor="todos"
+            alCambiar={() => {}}
+          />
+          <Boton variante="primario" onClick={() => setHojaAbierta(false)}>Aplicar</Boton>
+        </div>
+      </HojaInferior>
+
+      {/* Drawer lateral */}
+      <Drawer abierto={drawerAbierto} alCerrar={() => setDrawerAbierto(false)} titulo="AYNI HEALTH">
+        <div className="space-y-2">
+          {['Dashboard', 'Monitor', 'Tripulación', 'Nutrición'].map((item) => (
+            <button key={item} type="button" className="flex w-full items-center gap-2 rounded-boton px-3 py-2 text-sm text-tinta hover:bg-superficie-alta">
+              <User size={16} /> {item}
+            </button>
+          ))}
+        </div>
+      </Drawer>
 
       {/* Modal accesible */}
       <Modal abierto={modalAbierto} alCerrar={() => setModalAbierto(false)} titulo="Diálogo de ejemplo">
-        <p className="text-sm text-tinta-suave">
-          Este modal es accesible: atrapa el foco (Tab), se cierra con Escape y restaura el foco al cerrar.
-        </p>
-        <div className="mt-4 flex items-center gap-2 text-sm text-advertencia-fuerte">
-          <AlertTriangle size={16} /> Contenido de demostración.
-        </div>
+        <p className="text-sm text-tinta-suave">Modal accesible con focus-trap, Escape y restauración de foco.</p>
         <div className="mt-4 flex justify-end gap-2">
           <Boton variante="secundario" onClick={() => setModalAbierto(false)}>Cancelar</Boton>
           <Boton variante="primario" onClick={() => setModalAbierto(false)}>Aceptar</Boton>

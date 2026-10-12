@@ -1,6 +1,6 @@
 /**
  * @fileoverview Punto de entrada del sistema de diseño.
- * Reexporta tokens, utilidades y componentes base.
+ * Reexporta tokens, utilidades, componentes base y componentes móviles.
  * @module presentacion/sistema
  */
 
@@ -14,3 +14,7 @@ export { Modal } from './Modal.jsx'
 export { Esqueleto } from './Esqueleto.jsx'
 export { EstadoVacio } from './EstadoVacio.jsx'
 export { ContenedorTostadas, toast } from './Tostada.jsx'
+export { EditorTema } from './EditorTema.jsx'
+export { temas, obtenerTema } from './temas/indice.js'
+export { contrasteWCAG, cumpleAA, rgbAHex, hexARgb } from './temas/contraste.js'
+export * from './movil/indice.js'
