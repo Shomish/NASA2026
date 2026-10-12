@@ -13,6 +13,7 @@ import ModuloNutricion from './ModuloNutricion.jsx'
 import ChatbotIA from './ChatbotIA.jsx'
 import { PanelHistorial, PanelNotas, PanelAlertas, Calendario } from './Registro.jsx'
 import { calcularPuntajeSalud, generarRecomendacionNutricional } from '../../aplicacion/indice.js'
+import { calcularIMC } from '../../dominio/indice.js'
 
 /**
  * Dashboard del monitor.
@@ -85,7 +86,7 @@ export default function VistaMonitor({
 
         <div className="ml-auto flex items-center gap-2 font-mono text-xs text-neutral-400">
           <CalendarDays size={14} className="text-violet-400" />
-          Día de misión {persona.diaMision} · IMC {persona.imc()}
+          Día de misión {persona.diaMision} · IMC {calcularIMC(persona.pesoKg, persona.alturaCm)}
         </div>
       </div>
 

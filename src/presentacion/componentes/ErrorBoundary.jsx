@@ -7,7 +7,10 @@
  */
 
 import { Component } from 'react'
-import { AlertTriangle, RotateCcw } from 'lucide-react'
+import { AlertTriangle, RotateCcw, Trash2 } from 'lucide-react'
+
+/** Nombre de la base de datos local que usa la aplicación. */
+const NOMBRE_BASE = 'salud_astronauta_db'
 
 /**
  * Boundary de errores global.
@@ -19,7 +22,7 @@ export default class ErrorBoundary extends Component {
    */
   constructor(props) {
     super(props)
-    this.state = { error: null, hasError: false }
+    this.state = { error: null, hasError: false, restableciendo: false }
   }
 
   /**
@@ -48,6 +51,36 @@ export default class ErrorBoundary extends Component {
   }
 
   /**
+   * Borra los datos locales (IndexedDB y localStorage) y recarga.
+   * Permite salir de un estado corrupto persistente.
+   */
+  _restablecerDatos = async () => {
+    this.setState({ restableciendo: true })
+    try {
+      if (window.indexedDB?.databases) {
+        const bases = await window.indexedDB.databases()
+        for (const base of bases) {
+          if (base.name === NOMBRE_BASE) {
+            await new Promise((resolver) => {
+              const solicitud = window.indexedDB.deleteDatabase(NOMBRE_BASE)
+              solicitud.onsuccess = () => resolver()
+              solicitud.onerror = () => resolver()
+              solicitud.onblocked = () => resolver()
+            })
+          }
+        }
+      }
+      try {
+        window.localStorage?.clear()
+      } catch {
+        /* localStorage puede no estar disponible; se ignora. */
+      }
+    } finally {
+      window.location.reload()
+    }
+  }
+
+  /**
    * Renderiza el fallback o los hijos.
    * @returns {import('react').ReactNode} Árbol de componentes.
    */
@@ -62,19 +95,31 @@ export default class ErrorBoundary extends Component {
           </div>
           <h1 className="text-xl font-semibold text-[#F9FAFB]">Algo salió mal</h1>
           <p className="text-sm text-[#9CA3AF]">
-            Ocurrió un error inesperado al cargar la aplicación. Recarga la página para continuar.
+            Ocurrió un error inesperado al cargar la aplicación. Intenta recargar; si persiste,
+            restablece los datos locales.
           </p>
           <pre className="text-left text-xs font-mono text-rose-300 bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-40">
             {this.state.error?.message ?? 'Error desconocido'}
           </pre>
-          <button
-            type="button"
-            onClick={this._recargar}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm"
-          >
-            <RotateCcw size={16} />
-            Recargar aplicación
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={this._recargar}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm"
+            >
+              <RotateCcw size={16} />
+              Recargar aplicación
+            </button>
+            <button
+              type="button"
+              onClick={this._restablecerDatos}
+              disabled={this.state.restableciendo}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 font-medium text-sm disabled:opacity-60"
+            >
+              <Trash2 size={16} />
+              {this.state.restableciendo ? 'Restableciendo…' : 'Restablecer datos locales'}
+            </button>
+          </div>
         </div>
       </div>
     )

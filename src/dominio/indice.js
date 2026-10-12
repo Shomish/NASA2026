@@ -54,13 +54,50 @@ export class Astronauta {
   }
 
   /**
-   * Índice de masa corporal.
+   * Índice de masa corporal (delegación a la función pura `calcularIMC`).
    * @returns {number} IMC.
    */
   imc() {
-    const alturaM = this.alturaCm / 100
-    return Number((this.pesoKg / (alturaM * alturaM)).toFixed(1))
+    return calcularIMC(this.pesoKg, this.alturaCm)
   }
+}
+
+/**
+ * Calcula el índice de masa corporal (IMC) a partir de peso y talla.
+ * Función pura: no depende de métodos de instancia, por lo que funciona
+ * tanto con instancias de `Astronauta` como con objetos planos (p. ej.,
+ * los que devuelve IndexedDB tras perder los métodos del prototipo).
+ * @param {number} pesoKg - Masa corporal en kilogramos.
+ * @param {number} alturaCm - Estatura en centímetros.
+ * @returns {number} IMC redondeado a 1 decimal.
+ */
+export function calcularIMC(pesoKg, alturaCm) {
+  if (!pesoKg || !alturaCm) return 0
+  const alturaM = alturaCm / 100
+  return Number((pesoKg / (alturaM * alturaM)).toFixed(1))
+}
+
+/**
+ * Rehidrata un objeto plano (de IndexedDB/JSON) a una instancia de `Astronauta`.
+ * Devuelve los mismos datos pero con los métodos de la entidad disponibles.
+ * @param {object} datos - Objeto plano con los campos de un tripulante.
+ * @returns {Astronauta} Instancia de Astronauta.
+ */
+export function crearPersona(datos) {
+  return new Astronauta(datos ?? {})
+}
+
+/**
+ * Valida y rehidrata un registro de tripulante leído de IndexedDB.
+ * Descarta (devuelve `null`) los registros corruptos o con campos obligatorios
+ * ausentes, de modo que datos viejos o dañados no rompan la aplicación.
+ * @param {unknown} datos - Registro crudo leído del almacén.
+ * @returns {Astronauta | null} Instancia válida, o `null` si el registro es inválido.
+ */
+export function sanitizarTripulante(datos) {
+  if (!datos || typeof datos !== 'object') return null
+  if (typeof datos.id !== 'string' || typeof datos.nombre !== 'string') return null
+  return new Astronauta(datos)
 }
 
 /**

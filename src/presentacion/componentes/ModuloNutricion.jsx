@@ -9,6 +9,7 @@ import { Utensils, Leaf, Sparkles, ImageOff } from 'lucide-react'
 import { Tarjeta, EncabezadoPanel } from './UtilidadesUi.jsx'
 import { despensaGlobal, contramedidasAndinas } from '../../datos/mockDatos.js'
 import { generarRecomendacionNutricional } from '../../aplicacion/indice.js'
+import { calcularIMC } from '../../dominio/indice.js'
 
 /** Colores de placeholder por contramedida. */
 const COLOR_PLACEHOLDER = {
@@ -69,7 +70,7 @@ function PlanPersonalizado({ persona, recomendacion }) {
         </div>
         <p className="text-sm text-neutral-300">{recomendacion?.resumen}</p>
         <div className="mt-2 text-xs font-mono text-neutral-400">
-          IMC {persona.imc()} · Objetivo: {persona.objetivoSalud || '—'} · Alergias: {persona.alergias?.join(', ') || 'ninguna'}
+          IMC {calcularIMC(persona.pesoKg, persona.alturaCm)} · Objetivo: {persona.objetivoSalud || '—'} · Alergias: {persona.alergias?.join(', ') || 'ninguna'}
         </div>
       </div>
 

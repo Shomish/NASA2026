@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bot, Send, User } from 'lucide-react'
 import { Tarjeta } from './UtilidadesUi.jsx'
 import { responderChatbot } from '../../aplicacion/indice.js'
+import { calcularIMC } from '../../dominio/indice.js'
 
 /**
  * Chatbot de IA interactivo.
@@ -42,7 +43,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
         rol: persona?.rol,
         edad: persona?.edad,
         pesoKg: persona?.pesoKg,
-        imc: persona?.imc(),
+        imc: persona ? calcularIMC(persona.pesoKg, persona.alturaCm) : null,
         condiciones: persona?.condiciones,
         alergias: persona?.alergias,
         objetivoSalud: persona?.objetivoSalud,

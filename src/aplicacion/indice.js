@@ -3,7 +3,7 @@
  * @module aplicacion/indice
  */
 
-import { evaluarSignoVital, CATALOGO_CONDICIONES } from '../dominio/indice.js'
+import { evaluarSignoVital, CATALOGO_CONDICIONES, calcularIMC } from '../dominio/indice.js'
 import { contramedidasAndinas, despensaGlobal } from '../datos/mockDatos.js'
 
 /**
@@ -55,7 +55,7 @@ export function generarRecomendacionNutricional(persona, signos = {}) {
     .filter((c) => !alergias.has(c.nombre.toLowerCase()))
 
   // 2. Raciones según IMC y signos.
-  const imc = persona.imc()
+  const imc = calcularIMC(persona.pesoKg, persona.alturaCm)
   const raciones = []
   if (imc < 20 || signos?.masa_corporal < persona.pesoKg * 0.9) {
     raciones.push(despensaGlobal.find((d) => d.id === 'barra_proteina'))
@@ -113,7 +113,7 @@ export function responderChatbot(texto, contexto) {
     return generarResumenRiesgos(persona, signos)
   }
   if (/(quien|perfil|edad|peso|datos|informacion|soy)/.test(t)) {
-    return `${nombre} (${persona.rol}), ${persona.edad} años, ${persona.pesoKg} kg, IMC ${persona.imc()}. Misión: ${persona.mision}, día ${persona.diaMision}. Objetivo: ${persona.objetivoSalud || 'sin objetivo definido'}.`
+    return `${nombre} (${persona.rol}), ${persona.edad} años, ${persona.pesoKg} kg, IMC ${calcularIMC(persona.pesoKg, persona.alturaCm)}. Misión: ${persona.mision}, día ${persona.diaMision}. Objetivo: ${persona.objetivoSalud || 'sin objetivo definido'}.`
   }
 
   // Respuesta por defecto: resumen de salud.

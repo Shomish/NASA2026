@@ -9,6 +9,7 @@ import { Pencil, Plus, Trash2, UserRound, X } from 'lucide-react'
 import { Tarjeta } from './UtilidadesUi.jsx'
 import { opcionesCondiciones } from '../../datos/mockDatos.js'
 import { generarId } from '../../infraestructura/indice.js'
+import { calcularIMC } from '../../dominio/indice.js'
 
 /** Campos base para un tripulante nuevo. */
 function formularioVacio() {
@@ -118,7 +119,7 @@ export default function VistaTripulacion({ tripulacion, personaId, alSeleccionar
 
             <div className="grid grid-cols-2 gap-2 font-mono text-xs text-neutral-400">
               <span>Edad: {persona.edad}</span>
-              <span>IMC: {persona.imc()}</span>
+              <span>IMC: {calcularIMC(persona.pesoKg, persona.alturaCm)}</span>
               <span>Peso: {persona.pesoKg} kg</span>
               <span>Día {persona.diaMision}</span>
             </div>

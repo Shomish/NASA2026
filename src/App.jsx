@@ -11,7 +11,7 @@ import VistaMonitor from './presentacion/componentes/VistaMonitor.jsx'
 import VistaTripulacion from './presentacion/componentes/VistaTripulacion.jsx'
 import { tripulacionInicial } from './datos/mockDatos.js'
 import { AdaptadorAlmacenamiento, AdaptadorApi, ConectorLLM, generarId } from './infraestructura/indice.js'
-import { evaluarSignoVital } from './dominio/indice.js'
+import { evaluarSignoVital, sanitizarTripulante } from './dominio/indice.js'
 
 /** Historial inicial de demostración. */
 function historialInicial() {
@@ -50,7 +50,11 @@ export default function App() {
           almacenamiento.obtenerTodos('historial'),
         ])
         if (!activo) return
-        if (tripulacionGuardada?.length) setTripulacion(tripulacionGuardada)
+        // Rehidrata y valida cada tripulante: IndexedDB devuelve objetos planos
+        // (sin métodos). `sanitizarTripulante` restaura la instancia y descarta corruptos.
+        if (tripulacionGuardada?.length) {
+          setTripulacion(tripulacionGuardada.map(sanitizarTripulante).filter(Boolean))
+        }
         if (historialGuardado?.length) setHistorial(historialGuardado)
       } catch {
         /* Conserva datos de demostración. */

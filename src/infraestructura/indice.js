@@ -14,6 +14,12 @@ export function generarId() {
 }
 
 /**
+ * Versión del esquema de la base de datos IndexedDB.
+ * Incrementar al cambiar la estructura de los stores para disparar `onupgradeneeded`.
+ */
+const VERSION_ESQUEMA = 2
+
+/**
  * Almacenamiento local con IndexedDB (CRUD completo).
  */
 export class AdaptadorAlmacenamiento {
@@ -32,15 +38,9 @@ export class AdaptadorAlmacenamiento {
   async _abrir() {
     if (this.base) return this.base
     return new Promise((resolver, rechazar) => {
-      const solicitud = indexedDB.open(this.nombre, 1)
+      const solicitud = indexedDB.open(this.nombre, VERSION_ESQUEMA)
       solicitud.onupgradeneeded = (evento) => {
-        const base = evento.target.result
-        if (!base.objectStoreNames.contains('tripulacion')) {
-          base.createObjectStore('tripulacion', { keyPath: 'id' })
-        }
-        if (!base.objectStoreNames.contains('historial')) {
-          base.createObjectStore('historial', { keyPath: 'id' })
-        }
+        this._aplicarMigracion(evento.target.result, evento.oldVersion)
       }
       solicitud.onsuccess = (evento) => {
         this.base = evento.target.result
@@ -48,6 +48,25 @@ export class AdaptadorAlmacenamiento {
       }
       solicitud.onerror = () => rechazar(solicitud.error)
     })
+  }
+
+  /**
+   * Aplica las migraciones del esquema según la versión anterior.
+   * @param {IDBDatabase} base - Base de datos en actualización.
+   * @param {number} versionAnterior - Versión previa del esquema (0 si es nueva).
+   */
+  _aplicarMigracion(base, versionAnterior) {
+    if (versionAnterior < 1) {
+      if (!base.objectStoreNames.contains('tripulacion')) {
+        base.createObjectStore('tripulacion', { keyPath: 'id' })
+      }
+      if (!base.objectStoreNames.contains('historial')) {
+        base.createObjectStore('historial', { keyPath: 'id' })
+      }
+    }
+    // v1 → v2: a partir de ahora los tripulantes se rehidratan a entidades al leer
+    // (los objetos planos de IndexedDB ya no se usan directamente). No hay cambio
+    // estructural, por lo que no se requiere migración de datos.
   }
 
   /**
@@ -69,11 +88,13 @@ export class AdaptadorAlmacenamiento {
 
   /**
    * Guarda un objeto (upsert).
+   * Ignora valores que no sean objetos (p. ej., datos corruptos) sin lanzar error.
    * @param {string} almacen - Almacén.
    * @param {object} objeto - Objeto.
-   * @returns {Promise<object>} Objeto guardado.
+   * @returns {Promise<object | null>} Objeto guardado o null si es inválido.
    */
   async guardar(almacen, objeto) {
+    if (!objeto || typeof objeto !== 'object' || Array.isArray(objeto)) return null
     if (!objeto.id) objeto.id = generarId()
     await this._transaccion(almacen, 'readwrite', (store) => store.put(objeto))
     return objeto
