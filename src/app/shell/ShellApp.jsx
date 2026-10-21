@@ -9,24 +9,32 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   Activity,
   Bell,
+  Bot,
+  Brain,
+  Calendar,
   ChevronsLeft,
   ChevronsRight,
   HeartPulse,
   HelpCircle,
+  History,
   LayoutDashboard,
   Leaf,
   Menu,
   Moon,
+  NotebookPen,
   Plus,
+  Presentation,
   Search,
   Settings,
   Sun,
   User,
+  Users,
 } from 'lucide-react'
 import { cn } from '../../presentacion/sistema/cn.js'
 import { useTema } from '../../presentacion/sistema/tema.jsx'
 import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
 import { apiLogout } from '../../features/auth/api.js'
+import { useSaludStore } from '../../features/salud/almacen.js'
 import { tripulacionInicial } from '../../datos/mockDatos.js'
 import { Drawer } from '../../presentacion/sistema/movil/Drawer.jsx'
 import { BarraInferior } from '../../presentacion/sistema/movil/BarraInferior.jsx'
@@ -37,11 +45,28 @@ const NAVEGACION = [
   { seccion: 'Principal', items: [{ id: 'dashboard', etiqueta: 'Dashboard', icono: LayoutDashboard, ruta: '/app' }] },
   {
     seccion: 'Monitoreo',
-    items: [{ id: 'monitor', etiqueta: 'Monitor de salud', icono: HeartPulse, ruta: '/app/monitor' }],
+    items: [
+      { id: 'monitor', etiqueta: 'Monitor de salud', icono: HeartPulse, ruta: '/app/monitor' },
+      { id: 'signos', etiqueta: 'Signos vitales', icono: Activity, ruta: '/app/signos' },
+      { id: 'salud-integral', etiqueta: 'Salud integral', icono: Brain, ruta: '/app/salud-integral' },
+      { id: 'calendario', etiqueta: 'Calendario', icono: Calendar, ruta: '/app/calendario' },
+    ],
+  },
+  { seccion: 'Nutrición', items: [{ id: 'nutricion', etiqueta: 'Nutrición inteligente', icono: Leaf, ruta: '/app/nutricion' }] },
+  {
+    seccion: 'Tripulación',
+    items: [
+      { id: 'tripulacion', etiqueta: 'Tripulantes', icono: Users, ruta: '/app/tripulacion' },
+      { id: 'historial', etiqueta: 'Historial', icono: History, ruta: '/app/historial' },
+      { id: 'diario', etiqueta: 'Diario', icono: NotebookPen, ruta: '/app/diario' },
+    ],
   },
   {
     seccion: 'Sistema',
     items: [
+      { id: 'alertas', etiqueta: 'Alertas', icono: Bell, ruta: '/app/alertas', badge: 'alertas' },
+      { id: 'chat-ia', etiqueta: 'Médico de IA', icono: Bot, ruta: '/app/chat-ia' },
+      { id: 'presentacion', etiqueta: 'Presentación', icono: Presentation, ruta: '/app/presentacion' },
       { id: 'configuracion', etiqueta: 'Configuración', icono: Settings, ruta: '/app/configuracion' },
       { id: 'ayuda', etiqueta: 'Ayuda', icono: HelpCircle, ruta: '/app/ayuda' },
     ],
@@ -77,6 +102,9 @@ export function ShellApp() {
   const [drawerAbierto, setDrawerAbierto] = useState(false)
   const [paletteAbierto, setPaletteAbierto] = useState(false)
   const reloj = usarReloj()
+  const alertasSinLeer = useSaludStore(
+    (s) => s.historial.filter((r) => r.tipo === 'alerta' && !r.leida && r.personaId === s.personaId).length,
+  )
 
   // Atajo Ctrl/Cmd + K para abrir el buscador global.
   useEffect(() => {
@@ -115,7 +143,10 @@ export function ShellApp() {
                 }
               >
                 <item.icono size={18} />
-                {!colapsado && item.etiqueta}
+                {!colapsado && <span className="flex-1">{item.etiqueta}</span>}
+                {item.badge === 'alertas' && alertasSinLeer > 0 && (
+                  <span className="rounded-full bg-critico px-1.5 py-0.5 text-[10px] font-bold text-white">{alertasSinLeer}</span>
+                )}
               </NavLink>
             ))}
           </div>

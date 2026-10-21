@@ -59,13 +59,13 @@ export default function TarjetaEstadoGlobal({ resultado }) {
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="font-mono text-3xl font-bold text-neutral-50">{puntaje}</span>
-            <span className="font-mono text-[10px] text-neutral-500 uppercase">/ 100</span>
+            <span className="font-mono text-[10px] text-tinta-suave uppercase">/ 100</span>
           </div>
         </div>
 
         <div className="flex-1 space-y-3">
           <InsigniaEstado estado={nivel} />
-          <p className="text-sm text-neutral-400 leading-relaxed">
+          <p className="text-sm text-tinta-suave leading-relaxed">
             Evaluación combinada de presión arterial, saturación de O₂, masa corporal y
             temperatura, procesada de forma autónoma sin conexión a control de misión.
           </p>
@@ -73,11 +73,11 @@ export default function TarjetaEstadoGlobal({ resultado }) {
       </div>
 
       {/* Sparklines de tendencias */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-neutral-800 pt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-borde pt-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <HeartPulse size={14} className="text-rose-400" />
-            <span className="text-xs font-mono text-neutral-400">Frecuencia cardíaca · 24h</span>
+            <HeartPulse size={14} className="text-critico" />
+            <span className="text-xs font-mono text-tinta-suave">Frecuencia cardíaca · 24h</span>
           </div>
           <div className="h-20">
             <ResponsiveContainer width="100%" height="100%">
@@ -99,8 +99,8 @@ export default function TarjetaEstadoGlobal({ resultado }) {
 
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Activity size={14} className="text-emerald-400" />
-            <span className="text-xs font-mono text-neutral-400">Saturación O₂ · 24h</span>
+            <Activity size={14} className="text-exito" />
+            <span className="text-xs font-mono text-tinta-suave">Saturación O₂ · 24h</span>
           </div>
           <div className="h-20">
             <ResponsiveContainer width="100%" height="100%">

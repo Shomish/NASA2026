@@ -144,22 +144,22 @@ export default class ErrorBoundary extends Component {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0B0F19] p-6">
         <div className="max-w-md w-full bg-[#111827] border border-[#374151] rounded-2xl p-8 text-center space-y-4">
-          <div className="w-14 h-14 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center mx-auto">
-            <AlertTriangle size={28} className="text-rose-400" />
+          <div className="w-14 h-14 rounded-xl bg-critico/15 border border-rose-500/30 flex items-center justify-center mx-auto">
+            <AlertTriangle size={28} className="text-critico" />
           </div>
           <h1 className="text-xl font-semibold text-[#F9FAFB]">Algo salió mal</h1>
           <p className="text-sm text-[#9CA3AF]">
             Ocurrió un error inesperado al cargar la aplicación. Intenta recargar; si persiste,
             restablece los datos locales.
           </p>
-          <pre className="text-left text-xs font-mono text-rose-300 bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-40">
+          <pre className="text-left text-xs font-mono text-critico bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-40">
             {this.state.error?.message ?? 'Error desconocido'}
           </pre>
           <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={this._recargar}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primario hover:bg-primario-fuerte text-white font-medium text-sm"
             >
               <RotateCcw size={16} />
               Recargar aplicación
@@ -167,7 +167,7 @@ export default class ErrorBoundary extends Component {
             <button
               type="button"
               onClick={this._abrirConfirmacion}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 font-medium text-sm"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-superficie-alta hover:bg-superficie-alta border border-borde text-tinta font-medium text-sm"
             >
               <Trash2 size={16} />
               Restablecer datos locales
@@ -188,7 +188,7 @@ export default class ErrorBoundary extends Component {
                 <h2 id="titulo-restablecer" className="text-lg font-semibold text-[#F9FAFB]">
                   Restablecer datos locales
                 </h2>
-                <button type="button" onClick={this._cerrarConfirmacion} className="text-neutral-400 hover:text-neutral-200" aria-label="Cerrar">
+                <button type="button" onClick={this._cerrarConfirmacion} className="text-tinta-suave hover:text-tinta" aria-label="Cerrar">
                   <X size={18} />
                 </button>
               </div>
@@ -201,7 +201,7 @@ export default class ErrorBoundary extends Component {
                 <button
                   type="button"
                   onClick={this._descargarCopia}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 font-medium text-sm"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-superficie-alta hover:bg-superficie-alta border border-borde text-tinta font-medium text-sm"
                 >
                   <Download size={16} />
                   Descargar copia (JSON)
@@ -210,7 +210,7 @@ export default class ErrorBoundary extends Component {
                   <button
                     type="button"
                     onClick={this._cerrarConfirmacion}
-                    className="flex-1 px-4 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-medium text-sm"
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-superficie-alta hover:bg-superficie-alta text-tinta font-medium text-sm"
                   >
                     Cancelar
                   </button>
@@ -218,7 +218,7 @@ export default class ErrorBoundary extends Component {
                     type="button"
                     onClick={this._confirmarRestablecer}
                     disabled={this.state.restableciendo}
-                    className="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-medium text-sm disabled:opacity-60"
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-critico hover:bg-critico text-white font-medium text-sm disabled:opacity-60"
                   >
                     {this.state.restableciendo ? 'Restableciendo…' : 'Sí, restablecer'}
                   </button>

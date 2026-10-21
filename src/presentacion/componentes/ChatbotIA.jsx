@@ -91,12 +91,12 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
   return (
     <Tarjeta clase="p-5 flex flex-col h-full">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
+        <div className="w-9 h-9 rounded-lg bg-primario/20 border border-primario/30 flex items-center justify-center text-primario">
           <Bot size={18} />
         </div>
         <div>
-          <h3 className="font-semibold text-neutral-100 leading-tight">Médico de IA</h3>
-          <p className="text-xs font-mono text-neutral-500">
+          <h3 className="font-semibold text-tinta leading-tight">Médico de IA</h3>
+          <p className="text-xs font-mono text-tinta-suave">
             {enLinea ? 'LLM en la nube · en línea' : 'Motor local · offline'}
           </p>
         </div>
@@ -108,12 +108,12 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
             <div
               className={`max-w-[85%] p-3 rounded-xl text-sm ${
                 m.rol === 'usuario'
-                  ? 'bg-violet-600 text-white'
-                  : 'bg-neutral-800 text-neutral-200 border border-neutral-700'
+                  ? 'bg-primario text-white'
+                  : 'bg-superficie-alta text-tinta border border-borde'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                {m.rol === 'bot' ? <Bot size={12} className="text-violet-400" /> : <User size={12} />}
+                {m.rol === 'bot' ? <Bot size={12} className="text-primario" /> : <User size={12} />}
                 <span className="font-mono text-[10px] uppercase tracking-wider opacity-70">
                   {m.rol === 'bot' ? 'IA' : 'Tú'}
                 </span>
@@ -123,7 +123,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
           </div>
         ))}
         {escribiendo && (
-          <div className="flex items-center gap-2 text-neutral-500 text-xs font-mono">
+          <div className="flex items-center gap-2 text-tinta-suave text-xs font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
             Analizando...
           </div>
@@ -133,7 +133,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
 
       <div className="flex gap-2 mt-3">
         <input
-          className="flex-1 bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2.5 text-sm text-neutral-100 outline-none focus:border-violet-500"
+          className="flex-1 bg-superficie-alta border border-borde rounded-xl px-3 py-2.5 text-sm text-tinta outline-none focus:border-primario"
           placeholder="Pregunta: ¿cómo está mi salud?"
           value={entrada}
           onChange={(e) => setEntrada(e.target.value)}
@@ -142,7 +142,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
         <button
           type="button"
           onClick={enviar}
-          className="px-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white flex items-center"
+          className="px-3 rounded-xl bg-primario hover:bg-primario-fuerte text-white flex items-center"
         >
           <Send size={16} />
         </button>

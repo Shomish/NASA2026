@@ -52,8 +52,8 @@ export default function VistaMonitor({
 
   if (!persona) {
     return (
-      <div className="text-center py-20 text-neutral-400">
-        No hay tripulantes. Ve a <strong className="text-neutral-200">Tripulación</strong> y agrega uno.
+      <div className="text-center py-20 text-tinta-suave">
+        No hay tripulantes. Ve a <strong className="text-tinta">Tripulación</strong> y agrega uno.
       </div>
     )
   }
@@ -63,19 +63,19 @@ export default function VistaMonitor({
   return (
     <div className="space-y-4">
       {/* Barra de contexto + selector */}
-      <div className="flex flex-wrap items-center gap-4 px-4 py-3 rounded-2xl border border-neutral-800 bg-neutral-900/60">
+      <div className="flex flex-wrap items-center gap-4 px-4 py-3 rounded-2xl border border-borde bg-superficie/60">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center font-semibold text-white">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primario to-primario-fuerte flex items-center justify-center font-semibold text-white">
             {persona.nombre.split(' ').map((p) => p[0]).join('').slice(0, 2)}
           </div>
           <div>
-            <div className="font-medium text-neutral-100">{persona.nombre}</div>
-            <div className="text-xs font-mono text-neutral-500">{persona.rol} · {persona.mision}</div>
+            <div className="font-medium text-tinta">{persona.nombre}</div>
+            <div className="text-xs font-mono text-tinta-suave">{persona.rol} · {persona.mision}</div>
           </div>
         </div>
 
         <select
-          className="bg-neutral-800 border border-neutral-700 rounded-lg px-3 py-2 text-sm text-neutral-100"
+          className="bg-superficie-alta border border-borde rounded-lg px-3 py-2 text-sm text-tinta"
           value={persona.id}
           onChange={(e) => alSeleccionar(e.target.value)}
         >
@@ -84,8 +84,8 @@ export default function VistaMonitor({
           ))}
         </select>
 
-        <div className="ml-auto flex items-center gap-2 font-mono text-xs text-neutral-400">
-          <CalendarDays size={14} className="text-violet-400" />
+        <div className="ml-auto flex items-center gap-2 font-mono text-xs text-tinta-suave">
+          <CalendarDays size={14} className="text-primario" />
           Día de misión {persona.diaMision} · IMC {calcularIMC(persona.pesoKg, persona.alturaCm)}
         </div>
       </div>

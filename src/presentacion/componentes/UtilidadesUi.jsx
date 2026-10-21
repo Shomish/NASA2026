@@ -12,10 +12,10 @@ export const COLOR_ESTADO = {
 
 /** Clases de color por estado. */
 export const CLASES_ESTADO = {
-  optimo: { texto: 'text-emerald-400', fondo: 'bg-emerald-500', borde: 'border-emerald-500/40', suave: 'bg-emerald-500/10' },
-  atencion: { texto: 'text-orange-400', fondo: 'bg-orange-500', borde: 'border-orange-500/40', suave: 'bg-orange-500/10' },
-  critico: { texto: 'text-rose-400', fondo: 'bg-rose-500', borde: 'border-rose-500/40', suave: 'bg-rose-500/10' },
-  neutro: { texto: 'text-neutral-400', fondo: 'bg-neutral-500', borde: 'border-neutral-700', suave: 'bg-neutral-800' },
+  optimo: { texto: 'text-exito', fondo: 'bg-exito', borde: 'border-emerald-500/40', suave: 'bg-exito/10' },
+  atencion: { texto: 'text-advertencia', fondo: 'bg-advertencia', borde: 'border-orange-500/40', suave: 'bg-advertencia/10' },
+  critico: { texto: 'text-critico', fondo: 'bg-critico', borde: 'border-rose-500/40', suave: 'bg-critico/10' },
+  neutro: { texto: 'text-tinta-suave', fondo: 'bg-neutral-500', borde: 'border-borde', suave: 'bg-superficie-alta' },
 }
 
 /**
@@ -45,7 +45,7 @@ export function InsigniaEstado({ estado, etiqueta }) {
  */
 export function Tarjeta({ children, clase = '' }) {
   return (
-    <div className={`bg-neutral-900/80 border border-neutral-800 rounded-2xl backdrop-blur-sm ${clase}`}>
+    <div className={`bg-superficie/80 border border-borde rounded-2xl backdrop-blur-sm ${clase}`}>
       {children}
     </div>
   )
@@ -62,12 +62,12 @@ export function Tarjeta({ children, clase = '' }) {
 export function EncabezadoPanel({ icono, titulo, subtitulo }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-9 h-9 rounded-lg bg-violet-600/15 border border-violet-500/20 flex items-center justify-center text-violet-400">
+      <div className="w-9 h-9 rounded-lg bg-primario/15 border border-primario/20 flex items-center justify-center text-primario">
         {icono}
       </div>
       <div>
-        <h3 className="font-semibold text-neutral-100 leading-tight">{titulo}</h3>
-        {subtitulo && <p className="text-xs text-neutral-500 font-mono">{subtitulo}</p>}
+        <h3 className="font-semibold text-tinta leading-tight">{titulo}</h3>
+        {subtitulo && <p className="text-xs text-tinta-suave font-mono">{subtitulo}</p>}
       </div>
     </div>
   )

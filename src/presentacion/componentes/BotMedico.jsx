@@ -27,15 +27,15 @@ export default function BotMedico({ mensajes = [], analizando = false }) {
     <Tarjeta clase="p-5 flex flex-col h-full">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-400">
+          <div className="w-9 h-9 rounded-lg bg-primario/20 border border-primario/30 flex items-center justify-center text-primario">
             <Bot size={18} />
           </div>
           <div>
-            <h3 className="font-semibold text-neutral-100 leading-tight">Asistente de IA Predictivo</h3>
-            <p className="text-xs font-mono text-neutral-500">Bot Médico · análisis continuo</p>
+            <h3 className="font-semibold text-tinta leading-tight">Asistente de IA Predictivo</h3>
+            <p className="text-xs font-mono text-tinta-suave">Bot Médico · análisis continuo</p>
           </div>
         </div>
-        <Sparkles size={16} className="text-violet-400 animate-pulso-suave" />
+        <Sparkles size={16} className="text-primario animate-pulso-suave" />
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto max-h-[560px] pr-1">
@@ -45,22 +45,22 @@ export default function BotMedico({ mensajes = [], analizando = false }) {
           return (
             <div
               key={mensaje.id}
-              className={`p-3 rounded-xl border text-sm ${clases.borde} bg-neutral-900/70`}
+              className={`p-3 rounded-xl border text-sm ${clases.borde} bg-superficie/70`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <Bot size={12} className={clases.texto} />
                 <span className={`font-mono text-[10px] uppercase tracking-wider ${clases.texto}`}>
                   {mensaje.severidad}
                 </span>
-                <span className="ml-auto font-mono text-[10px] text-neutral-600">{mensaje.instante}</span>
+                <span className="ml-auto font-mono text-[10px] text-tinta-suave">{mensaje.instante}</span>
               </div>
-              <p className="text-neutral-300 leading-relaxed text-[13px]">{mensaje.mensaje}</p>
+              <p className="text-tinta leading-relaxed text-[13px]">{mensaje.mensaje}</p>
             </div>
           )
         })}
 
         {analizando && (
-          <div className="flex items-center gap-2 p-3 rounded-xl border border-neutral-800 text-neutral-500 text-xs font-mono">
+          <div className="flex items-center gap-2 p-3 rounded-xl border border-borde text-tinta-suave text-xs font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
             Analizando signos vitales...
           </div>

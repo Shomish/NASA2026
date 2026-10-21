@@ -81,7 +81,7 @@ export default function VistaDashboard() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="rounded-tarjeta border border-borde bg-[#0E1A2B] p-5 text-white">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="h-2 w-2 rounded-full bg-exito" />
             <span className="font-mono text-xs uppercase tracking-widest">Operativo</span>
           </div>
           <div className="mt-3 font-mono text-4xl font-bold">Día 120</div>
