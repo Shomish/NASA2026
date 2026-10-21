@@ -6,12 +6,13 @@
 import { Router } from 'express'
 import { login, refresh, logout, me } from './controlador.js'
 import { autenticacion } from '../middlewares/autenticacion.js'
+import { verificarOrigen } from '../middlewares/csrf.js'
 
 const rutas = Router()
 
 rutas.post('/login', login)
-rutas.post('/refresh', refresh)
-rutas.post('/logout', logout)
+rutas.post('/refresh', verificarOrigen, refresh)
+rutas.post('/logout', verificarOrigen, logout)
 rutas.get('/me', autenticacion, me)
 
 export default rutas

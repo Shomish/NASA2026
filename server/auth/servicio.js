@@ -13,7 +13,7 @@ import {
   encontrarPorUsername,
   buscarPorId,
   guardarRefreshToken,
-  esRefreshValido,
+  estadoRefresh,
   usuarioDeRefresh,
   revocarRefreshToken,
   revocarTodosDeUsuario,
@@ -82,12 +82,22 @@ export async function iniciarSesion(username, contrasena) {
 
 /**
  * Rota el refresh token: valida el actual, lo revoca y emite uno nuevo.
+ * Si el token ya fue usado (reutilización), revoca toda la familia del usuario.
  * @param {string} refreshToken - Refresh token en claro.
  * @returns {{accessToken: string, refreshToken: string, usuario: object} | null} Nueva sesión o null.
  */
 export function rotarRefreshToken(refreshToken) {
   const tokenHash = hashearToken(refreshToken)
-  if (!esRefreshValido(tokenHash)) return null
+  const estado = estadoRefresh(tokenHash)
+
+  if (estado === 'inexistente') return null
+
+  if (estado === 'reutilizado') {
+    // Detección de reutilización: revocar toda la familia de tokens del usuario.
+    const usuarioId = usuarioDeRefresh(tokenHash)
+    if (usuarioId) revocarTodosDeUsuario(usuarioId)
+    return null
+  }
 
   const usuarioId = usuarioDeRefresh(tokenHash)
   const usuario = buscarPorId(usuarioId)

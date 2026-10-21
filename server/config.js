@@ -22,45 +22,47 @@ const esquemaConfig = z.object({
 })
 
 /**
- * Resuelve el valor de JWT_SECRET: obligatorio en producción, con un valor de
- * desarrollo (inseguro) solo para facilitar la demo local.
- * @returns {string} Secreto JWT.
- */
-function resolverJwtSecret() {
-  const esProduccion = process.env.NODE_ENV === 'production'
-  const secreto = process.env.JWT_SECRET
-  if (!secreto) {
-    if (esProduccion) throw new Error('JWT_SECRET es obligatorio en producción.')
-    return 'dev-secreto-inseguro-solo-para-desarrollo'
-  }
-  return secreto
-}
-
-/**
- * Resuelve el valor de DEMO_MODE: en desarrollo por defecto es true (para la demo),
- * en producción es false a menos que se fije explícitamente.
- * @returns {string} 'true' o 'false'.
- */
-function resolverDemoMode() {
-  const esProduccion = process.env.NODE_ENV === 'production'
-  return process.env.DEMO_MODE ?? (esProduccion ? 'false' : 'true')
-}
-
-/**
- * Carga y valida la configuración del servidor.
+ * Valida la configuración a partir de un entorno dado.
+ * Lanza un Error si la configuración es inválida o insegura.
+ * @param {{PUERTO?: string|number, JWT_SECRET?: string, DEMO_MODE?: string, NODE_ENV?: string}} entorno - Variables de entorno.
  * @returns {{PUERTO: number, JWT_SECRET: string, DEMO_MODE: string, NODE_ENV: string}} Configuración validada.
  */
-function cargarConfig() {
+export function validarConfig(entorno) {
+  const esProduccion = entorno.NODE_ENV === 'production'
+
+  // En producción JWT_SECRET es obligatorio.
+  const jwtSecret = entorno.JWT_SECRET || ''
+  if (esProduccion && !jwtSecret) {
+    throw new Error('JWT_SECRET es obligatorio en producción.')
+  }
+  // En desarrollo, un secreto por defecto solo para la demo local.
+  const secretoEfectivo = jwtSecret || (esProduccion ? '' : 'dev-secreto-inseguro-solo-para-desarrollo')
+
   const resultado = esquemaConfig.safeParse({
-    PUERTO: process.env.PUERTO,
-    JWT_SECRET: resolverJwtSecret(),
-    DEMO_MODE: resolverDemoMode(),
-    NODE_ENV: process.env.NODE_ENV,
+    PUERTO: entorno.PUERTO,
+    JWT_SECRET: secretoEfectivo,
+    DEMO_MODE: entorno.DEMO_MODE ?? (esProduccion ? 'false' : 'true'),
+    NODE_ENV: entorno.NODE_ENV ?? 'development',
   })
   if (!resultado.success) {
     throw new Error(`Configuración inválida: ${resultado.error.message}`)
   }
-  return resultado.data
+
+  const config = resultado.data
+  // En producción el modo demo está prohibido.
+  if (config.NODE_ENV === 'production' && config.DEMO_MODE === 'true') {
+    throw new Error('DEMO_MODE no puede estar activo en producción.')
+  }
+  return config
 }
 
-export const config = cargarConfig()
+/**
+ * Configuración cargada desde el entorno del proceso.
+ * @type {{PUERTO: number, JWT_SECRET: string, DEMO_MODE: string, NODE_ENV: string}}
+ */
+export const config = validarConfig({
+  PUERTO: process.env.PUERTO,
+  JWT_SECRET: process.env.JWT_SECRET,
+  DEMO_MODE: process.env.DEMO_MODE,
+  NODE_ENV: process.env.NODE_ENV,
+})

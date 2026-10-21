@@ -83,6 +83,17 @@ export function esRefreshValido(tokenHash) {
 }
 
 /**
+ * Estado de un refresh token: valido, reutilizado (revocado) o inexistente.
+ * @param {string} tokenHash - Hash del refresh token.
+ * @returns {'valido' | 'reutilizado' | 'inexistente'} Estado.
+ */
+export function estadoRefresh(tokenHash) {
+  const registro = refreshTokens.get(tokenHash)
+  if (!registro) return 'inexistente'
+  return registro.revocado ? 'reutilizado' : 'valido'
+}
+
+/**
  * Obtiene el id de usuario asociado a un refresh token.
  * @param {string} tokenHash - Hash del refresh token.
  * @returns {string | null} Id del usuario o null.

@@ -32,6 +32,19 @@ function opcionesCookie() {
 }
 
 /**
+ * Opciones para limpiar la cookie (sin maxAge, que está deprecado en clearCookie).
+ * @returns {object} Opciones de limpieza.
+ */
+function opcionesLimpiezaCookie() {
+  return {
+    httpOnly: true,
+    secure: config.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/api/v1/auth',
+  }
+}
+
+/**
  * Indica si un usuario está temporalmente bloqueado por intentos fallidos.
  * @param {string} username - Usuario.
  * @returns {boolean} Verdadero si está bloqueado.
@@ -103,7 +116,7 @@ export function refresh(req, res) {
 
   const sesion = rotarRefreshToken(token)
   if (!sesion) {
-    res.clearCookie(COOKIE_REFRESH, opcionesCookie())
+    res.clearCookie(COOKIE_REFRESH, opcionesLimpiezaCookie())
     return res.status(401).json({ codigo: 'SESION_EXPIRADA', mensaje: 'Sesión expirada.' })
   }
 
@@ -118,7 +131,7 @@ export function refresh(req, res) {
  */
 export function logout(req, res) {
   cerrarSesion(req.cookies?.[COOKIE_REFRESH])
-  res.clearCookie(COOKIE_REFRESH, opcionesCookie())
+  res.clearCookie(COOKIE_REFRESH, opcionesLimpiezaCookie())
   return res.status(204).end()
 }
 
