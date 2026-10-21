@@ -6,6 +6,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { seudonimizarContexto, detectarEscalamiento, generarRespuestaChat } from './servicio.js'
+import { actualizarUmbrales, restablecerUmbrales } from '../configuracion/umbrales.js'
 
 describe('seudonimizarContexto', () => {
   it('no incluye el nombre real del tripulante', () => {
@@ -34,6 +35,15 @@ describe('detectarEscalamiento', () => {
 
   it('no activa escalamiento con métricas normales', () => {
     expect(detectarEscalamiento({ signosVitales: { saturacion_oxigeno: 98 } })).toBeNull()
+  })
+
+  it('el escalamiento usa el umbral editable de Configuración', () => {
+    // Bajar el umbral crítico de SpO₂ a 85: un valor de 88 ya no es crítico.
+    actualizarUmbrales({ saturacion_oxigeno: { criticoMin: 85 } })
+    expect(detectarEscalamiento({ signosVitales: { saturacion_oxigeno: 88 } })).toBeNull()
+    restablecerUmbrales()
+    // Con el umbral por defecto (90), 88 sí es crítico.
+    expect(detectarEscalamiento({ signosVitales: { saturacion_oxigeno: 88 } })).toContain('saturación')
   })
 })
 

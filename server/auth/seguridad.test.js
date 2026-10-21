@@ -93,8 +93,8 @@ describe('cobertura 401 sin sesión', () => {
     expect(res.status).toBe(401)
   })
 
-  it('/api/chat devuelve 401', async () => {
-    const res = await request(app).post('/api/chat').send({ mensaje: 'hola' })
+  it('/api/v1/chat devuelve 401', async () => {
+    const res = await request(app).post('/api/v1/chat').send({ mensaje: 'hola' })
     expect(res.status).toBe(401)
   })
 

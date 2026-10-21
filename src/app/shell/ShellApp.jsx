@@ -18,6 +18,7 @@ import {
   Menu,
   Moon,
   Plus,
+  Search,
   Settings,
   Sun,
   User,
@@ -29,6 +30,7 @@ import { apiLogout } from '../../features/auth/api.js'
 import { tripulacionInicial } from '../../datos/mockDatos.js'
 import { Drawer } from '../../presentacion/sistema/movil/Drawer.jsx'
 import { BarraInferior } from '../../presentacion/sistema/movil/BarraInferior.jsx'
+import { CommandPalette } from './CommandPalette.jsx'
 
 /** Elementos de navegación del sidebar (secciones). */
 const NAVEGACION = [
@@ -73,7 +75,20 @@ export function ShellApp() {
   const cerrar = useAlmacenSesion((s) => s.cerrar)
   const [colapsado, setColapsado] = useState(false)
   const [drawerAbierto, setDrawerAbierto] = useState(false)
+  const [paletteAbierto, setPaletteAbierto] = useState(false)
   const reloj = usarReloj()
+
+  // Atajo Ctrl/Cmd + K para abrir el buscador global.
+  useEffect(() => {
+    const manejarTecla = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteAbierto(true)
+      }
+    }
+    window.addEventListener('keydown', manejarTecla)
+    return () => window.removeEventListener('keydown', manejarTecla)
+  }, [])
 
   const cerrarSesion = async () => {
     await apiLogout()
@@ -155,6 +170,9 @@ export function ShellApp() {
           <div className="font-serif text-lg font-semibold">Monitor de salud</div>
 
           <div className="ml-auto flex items-center gap-2">
+            <button type="button" onClick={() => setPaletteAbierto(true)} className="rounded-boton p-2 text-tinta-suave hover:text-tinta" aria-label="Buscar (Ctrl+K)">
+              <Search size={18} />
+            </button>
             <select className="hidden rounded-boton border border-borde bg-superficie-alta px-2 py-1.5 text-sm text-tinta sm:block" aria-label="Tripulante activo">
               {tripulacionInicial.map((p) => (
                 <option key={p.id} value={p.id}>{p.nombre}</option>
@@ -208,6 +226,9 @@ export function ShellApp() {
           ]}
         />
       </div>
+
+      {/* Buscador global (Ctrl/Cmd + K) */}
+      <CommandPalette abierto={paletteAbierto} alCerrar={() => setPaletteAbierto(false)} />
     </div>
   )
 }

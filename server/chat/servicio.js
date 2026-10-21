@@ -6,6 +6,7 @@
  */
 
 import { GeminiChatProvider } from './proveedores.js'
+import { umbralCriticoSpo2, umbralCriticoPhq9 } from '../configuracion/umbrales.js'
 
 /**
  * Prompt de sistema (español, Perú).
@@ -39,6 +40,7 @@ export function seudonimizarContexto(contexto = {}) {
 
 /**
  * Detecta síntomas graves para añadir un aviso de escalamiento.
+ * Usa los umbrales editables de Configuración (no valores fijos).
  * @param {object} contexto - Contexto.
  * @returns {string | null} Aviso de escalamiento o null.
  */
@@ -46,8 +48,8 @@ export function detectarEscalamiento(contexto = {}) {
   const spo2 = contexto.signosVitales?.saturacion_oxigeno
   const phq9 = contexto.saludMental?.phq9
   const avisos = []
-  if (typeof spo2 === 'number' && spo2 < 90) avisos.push('saturación de O₂ críticamente baja')
-  if (typeof phq9 === 'number' && phq9 >= 20) avisos.push('posible depresión severa (PHQ-9 alto)')
+  if (typeof spo2 === 'number' && spo2 < umbralCriticoSpo2()) avisos.push('saturación de O₂ críticamente baja')
+  if (typeof phq9 === 'number' && phq9 >= umbralCriticoPhq9()) avisos.push('posible depresión severa (PHQ-9 alto)')
   return avisos.length ? `[Escalamiento sugerido] Detecto: ${avisos.join(', ')}. Recomienda contactar al médico y a control de misión.` : null
 }
 

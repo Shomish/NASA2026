@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url'
 import { config } from './config.js'
 import authRutas from './auth/rutas.js'
 import chatRutas from './chat/rutas.js'
+import configuracionRutas from './configuracion/rutas.js'
 import { autenticacion } from './middlewares/autenticacion.js'
 import { manejoErrores } from './middlewares/errores.js'
 import {
@@ -54,14 +55,13 @@ export function crearAplicacion() {
     res.json({ estado: 'operativo', servicio: 'monitor-salud-astronauta', hora: new Date().toISOString() })
   })
 
-  aplicacion.get('/api/chat/estado', (_req, res) => {
-    res.json({ disponible: Boolean(process.env.GEMINI_API_KEY) })
-  })
-
   aplicacion.use('/api/v1/auth', limitadorLogin, authRutas)
 
   // Chatbot (versión segura, con rate limit por usuario y límite de tamaño).
   aplicacion.use('/api/v1/chat', chatRutas)
+
+  // Configuración y usuarios (solo administrador).
+  aplicacion.use('/api/v1', configuracionRutas)
 
   aplicacion.get('/api/registros', autenticacion, (_req, res) => {
     res.json(obtenerRegistros())
@@ -87,30 +87,6 @@ export function crearAplicacion() {
 
   aplicacion.get('/api/telemetria', autenticacion, (_req, res) => {
     res.json(obtenerTelemetria())
-  })
-
-  aplicacion.post('/api/chat', autenticacion, async (req, res) => {
-    const clave = process.env.GEMINI_API_KEY
-    if (!clave) return res.status(503).json({ error: 'IA no configurada en el servidor' })
-    const { mensaje = '', contexto = '' } = req.body ?? {}
-    try {
-      const respuesta = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${clave}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `Eres el médico de IA de una misión espacial. Contexto del astronauta:\n${contexto}\n\nPregunta del astronauta: ${mensaje}\nResponde en español, breve y accionable.` }] }],
-          }),
-        },
-      )
-      const datos = await respuesta.json()
-      const texto = datos?.candidates?.[0]?.content?.parts?.[0]?.text ?? null
-      if (!texto) return res.status(502).json({ error: 'Respuesta vacía del proveedor' })
-      res.json({ respuesta: texto })
-    } catch {
-      res.status(502).json({ error: 'Fallo del proveedor de IA' })
-    }
   })
 
   // Sirve el frontend (producción): estático + fallback a index.html.

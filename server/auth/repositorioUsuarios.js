@@ -55,6 +55,14 @@ export function buscarPorId(id) {
 }
 
 /**
+ * Lista todos los usuarios (sin el hash de contraseña).
+ * @returns {Array<{id: string, username: string, rol: string, nombre: string}>} Usuarios públicos.
+ */
+export function listarUsuarios() {
+  return [...usuarios.values()].map((u) => ({ id: u.id, username: u.username, rol: u.rol, nombre: u.nombre }))
+}
+
+/**
  * Calcula el hash SHA-256 de un token (para no guardar el token en claro).
  * @param {string} token - Token.
  * @returns {string} Hash del token.

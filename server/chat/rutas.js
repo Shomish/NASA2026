@@ -12,6 +12,11 @@ import { generarRespuestaChat } from './servicio.js'
 
 const rutas = Router()
 
+/** Estado del proveedor de IA (para que el front sepa si hay LLM en la nube). */
+rutas.get('/estado', (_req, res) => {
+  res.json({ disponible: Boolean(process.env.GEMINI_API_KEY) })
+})
+
 /** Esquema del mensaje de chat (límite de tamaño). */
 const esquemaMensaje = z.object({
   mensaje: z.string().min(1).max(1000),

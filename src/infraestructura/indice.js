@@ -165,7 +165,7 @@ export class ConectorLLM {
   /**
    * @param {string} [base] - URL base de la API.
    */
-  constructor(base = import.meta.env.VITE_API_URL || '/api') {
+  constructor(base = import.meta.env.VITE_API_URL || '/api/v1') {
     this.base = base
   }
 
