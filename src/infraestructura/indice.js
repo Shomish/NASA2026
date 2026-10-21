@@ -3,6 +3,8 @@
  * @module infraestructura/indice
  */
 
+import { obtenerTokenAcceso } from '../shared/tokenAcceso.js'
+
 /**
  * Genera un identificador único.
  * @returns {string} Identificador.
@@ -138,9 +140,13 @@ export class AdaptadorApi {
    */
   async guardarRegistro(registro) {
     try {
+      const token = obtenerTokenAcceso()
       const respuesta = await fetch(`${this.base}/registros`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(registro),
       })
       return respuesta.ok ? respuesta.json() : null
@@ -186,9 +192,13 @@ export class ConectorLLM {
    */
   async consultar(mensaje, contexto) {
     try {
+      const token = obtenerTokenAcceso()
       const respuesta = await fetch(`${this.base}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ mensaje, contexto }),
       })
       if (!respuesta.ok) return null

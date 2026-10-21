@@ -9,6 +9,7 @@ import globals from 'globals'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooksPlugin from 'eslint-plugin-react-hooks'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
+import boundaries from 'eslint-plugin-boundaries'
 
 export default [
   { ignores: ['dist', 'node_modules', 'server/data'] },
@@ -25,9 +26,19 @@ export default [
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       jsdoc: jsdocPlugin,
+      boundaries,
     },
     settings: {
       react: { version: 'detect' },
+      'boundaries/elements': [
+        { type: 'dominio', pattern: 'src/dominio/**/*' },
+        { type: 'aplicacion', pattern: 'src/aplicacion/**/*' },
+        { type: 'infraestructura', pattern: 'src/infraestructura/**/*' },
+        { type: 'presentacion', pattern: 'src/presentacion/**/*' },
+        { type: 'features', pattern: 'src/features/**/*' },
+        { type: 'datos', pattern: 'src/datos/**/*' },
+        { type: 'servidor', pattern: 'server/**/*' },
+      ],
     },
     rules: {
       ...reactPlugin.configs.recommended.rules,
@@ -36,6 +47,32 @@ export default [
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'jsdoc/require-jsdoc': 'off',
+      // Regla de límites en modo warn: alerta si se viola la regla de dependencia.
+      'boundaries/dependencies': [
+        'warn',
+        {
+          default: 'allow',
+          policies: [
+            {
+              from: { element: { type: 'dominio' } },
+              disallow: [
+                { to: { element: { type: 'aplicacion' } } },
+                { to: { element: { type: 'infraestructura' } } },
+                { to: { element: { type: 'presentacion' } } },
+                { to: { element: { type: 'features' } } },
+                { to: { element: { type: 'servidor' } } },
+              ],
+            },
+            {
+              from: { element: { type: 'servidor' } },
+              disallow: [
+                { to: { element: { type: 'presentacion' } } },
+                { to: { element: { type: 'features' } } },
+              ],
+            },
+          ],
+        },
+      ],
     },
   },
   {
