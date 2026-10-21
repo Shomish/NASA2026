@@ -13,6 +13,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { config } from './config.js'
 import authRutas from './auth/rutas.js'
+import chatRutas from './chat/rutas.js'
 import { autenticacion } from './middlewares/autenticacion.js'
 import { manejoErrores } from './middlewares/errores.js'
 import {
@@ -58,6 +59,9 @@ export function crearAplicacion() {
   })
 
   aplicacion.use('/api/v1/auth', limitadorLogin, authRutas)
+
+  // Chatbot (versión segura, con rate limit por usuario y límite de tamaño).
+  aplicacion.use('/api/v1/chat', chatRutas)
 
   aplicacion.get('/api/registros', autenticacion, (_req, res) => {
     res.json(obtenerRegistros())
