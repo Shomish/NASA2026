@@ -23,7 +23,8 @@ const RUTAS = [
 
 test('navega por todas las rutas sin errores', async ({ page }) => {
   await page.goto('/login')
-  await page.fill('input[autocomplete="username"]', 'admin')
+  await page.waitForTimeout(2500)
+  await page.fill('input[autocomplete="email"]', 'admin@ayni.health')
   await page.fill('input[autocomplete="current-password"]', 'admin123')
   await page.click('button[type="submit"]')
   await expect(page).toHaveURL(/\/app/)

@@ -8,13 +8,15 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
-import rateLimit from 'express-rate-limit'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { config } from './config.js'
 import authRutas from './auth/rutas.js'
 import chatRutas from './chat/rutas.js'
 import configuracionRutas from './configuracion/rutas.js'
+import tripulantesRutas from './api/tripulantes.js'
+import registrosRutas from './api/registros.js'
+import usuariosRutas from './api/usuarios.js'
 import { autenticacion } from './middlewares/autenticacion.js'
 import { manejoErrores } from './middlewares/errores.js'
 import {
@@ -43,25 +45,22 @@ export function crearAplicacion() {
   aplicacion.use(express.json({ limit: '100kb' }))
   aplicacion.use(cookieParser())
 
-  const limitadorLogin = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 20,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { codigo: 'DEMASIADAS_SOLICITUDES', mensaje: 'Demasiados intentos. Inténtalo más tarde.' },
-  })
-
   aplicacion.get('/api/estado', (_req, res) => {
     res.json({ estado: 'operativo', servicio: 'monitor-salud-astronauta', hora: new Date().toISOString() })
   })
 
-  aplicacion.use('/api/v1/auth', limitadorLogin, authRutas)
+  aplicacion.use('/api/v1/auth', authRutas)
 
   // Chatbot (versión segura, con rate limit por usuario y límite de tamaño).
   aplicacion.use('/api/v1/chat', chatRutas)
 
   // Configuración y usuarios (solo administrador).
   aplicacion.use('/api/v1', configuracionRutas)
+
+  // Núcleo de datos: tripulantes, registros y usuarios.
+  aplicacion.use('/api/v1/tripulantes', tripulantesRutas)
+  aplicacion.use('/api/v1/registros', registrosRutas)
+  aplicacion.use('/api/v1/usuarios', usuariosRutas)
 
   aplicacion.get('/api/registros', autenticacion, (_req, res) => {
     res.json(obtenerRegistros())

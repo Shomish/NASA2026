@@ -9,7 +9,6 @@ import { z } from 'zod'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { autorizar } from '../middlewares/autorizacion.js'
 import { obtenerUmbrales, actualizarUmbrales, restablecerUmbrales } from './umbrales.js'
-import { listarUsuarios } from '../auth/repositorioUsuarios.js'
 
 const rutas = Router()
 
@@ -39,11 +38,6 @@ rutas.put('/configuracion/umbrales', autenticacion, autorizar('administrador'), 
 // POST /api/v1/configuracion/umbrales/restablecer (administrador)
 rutas.post('/configuracion/umbrales/restablecer', autenticacion, autorizar('administrador'), (_req, res) => {
   res.json(restablecerUmbrales())
-})
-
-// GET /api/v1/usuarios (administrador)
-rutas.get('/usuarios', autenticacion, autorizar('administrador'), (_req, res) => {
-  res.json(listarUsuarios())
 })
 
 export default rutas

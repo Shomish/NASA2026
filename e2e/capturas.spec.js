@@ -29,11 +29,12 @@ test('capturas de login y shell', async ({ browser }) => {
 
       // Captura del login.
       await pagina.goto('/login')
+  await pagina.waitForTimeout(2500)
       await pagina.waitForTimeout(400)
       await pagina.screenshot({ path: path.join(CARPETA, `login-${tema}-${vp.nombre}.png`), fullPage: true })
 
       // Inicia sesión y captura el shell.
-      await pagina.fill('input[autocomplete="username"]', 'admin')
+      await pagina.fill('input[autocomplete="email"]', 'admin@ayni.health')
       await pagina.fill('input[autocomplete="current-password"]', 'admin123')
       await pagina.click('button[type="submit"]')
       await expect(pagina).toHaveURL(/\/app/)

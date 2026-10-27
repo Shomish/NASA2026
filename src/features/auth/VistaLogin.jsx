@@ -183,11 +183,11 @@ export function VistaLogin() {
 
           <form onSubmit={handleSubmit(alEnviar)} className="space-y-4" noValidate>
             <div>
-              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="usuario">Usuario</label>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="email">Email</label>
               <div className="relative">
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-tinta-suave" />
                 <input
-                  id="usuario"
+                  id="email"
                                     autoComplete="email"
                   className="h-11 w-full rounded-boton border border-borde bg-superficie-elevada pl-9 pr-3 text-base text-tinta placeholder:text-tinta-suave focus:outline-none focus:ring-2 focus:ring-primario"
                   placeholder="admin@ayni.health"
