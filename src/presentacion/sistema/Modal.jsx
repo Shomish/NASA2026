@@ -84,12 +84,12 @@ export function Modal({ abierto, alCerrar, titulo, tituloId = 'modal-titulo', ch
         tabIndex={-1}
         onKeyDown={atraparFoco}
         className={cn(
-          'relative w-full max-w-lg rounded-tarjeta border border-borde bg-superficie shadow-consola outline-none',
+          'relative flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-tarjeta border border-borde bg-superficie shadow-consola outline-none',
           className,
         )}
       >
         {titulo && (
-          <div className="flex items-center justify-between border-b border-borde px-5 py-4">
+          <div className="flex shrink-0 items-center justify-between border-b border-borde px-5 py-4">
             <h2 id={tituloId} className="text-lg font-semibold text-tinta">
               {titulo}
             </h2>
@@ -103,7 +103,7 @@ export function Modal({ abierto, alCerrar, titulo, tituloId = 'modal-titulo', ch
             </button>
           </div>
         )}
-        <div className="p-5">{children}</div>
+        <div className="overflow-y-auto p-5">{children}</div>
       </div>
     </div>,
     document.body,

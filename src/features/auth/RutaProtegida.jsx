@@ -4,7 +4,7 @@
  * @module features/auth/RutaProtegida
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAlmacenSesion } from './almacenSesion.js'
 import { apiRefresh } from './api.js'
@@ -21,24 +21,20 @@ export function RutaProtegida({ children }) {
   const iniciar = useAlmacenSesion((s) => s.iniciar)
   const ubicacion = useLocation()
   const [verificando, setVerificando] = useState(!accessToken)
+  // Evita el doble refresh de React.StrictMode (que rotaría dos veces el token).
+  const refrescando = useRef(false)
 
   // Recupera la sesión vía refresh al recargar (F5) si no hay token en memoria.
   useEffect(() => {
-    if (accessToken) return undefined
-    let activo = true
+    if (accessToken || refrescando.current) return undefined
+    refrescando.current = true
     apiRefresh()
-      .then((sesion) => {
-        if (activo) iniciar(sesion.accessToken, sesion.usuario)
-      })
+      .then((sesion) => iniciar(sesion.accessToken, sesion.usuario))
       .catch(() => {
         /* Sin cookie válida: se redirigirá a /login. */
       })
-      .finally(() => {
-        if (activo) setVerificando(false)
-      })
-    return () => {
-      activo = false
-    }
+      .finally(() => setVerificando(false))
+    return undefined
   }, [accessToken, iniciar])
 
   if (verificando) return <SplashCarga />

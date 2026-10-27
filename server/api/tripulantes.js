@@ -9,7 +9,7 @@ import { z } from 'zod'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { autorizar } from '../middlewares/autorizacion.js'
 import { modelos } from '../db/modelos.js'
-import { auditar } from './utilidades.js'
+import { auditar, tripulanteDelUsuario } from './utilidades.js'
 
 const { Tripulante } = modelos
 const rutas = Router()
@@ -29,7 +29,12 @@ const esquemaTripulante = z.object({
 })
 
 // GET /api/v1/tripulantes
-rutas.get('/', autenticacion, async (_req, res) => {
+// El tripulante ve solo su propio registro; médico/administrador ven todos.
+rutas.get('/', autenticacion, async (req, res) => {
+  if (req.usuario?.rol === 'tripulante') {
+    const propio = await tripulanteDelUsuario(req)
+    return res.json(propio ? [propio] : [])
+  }
   const tripulantes = await Tripulante.findAll()
   res.json(tripulantes)
 })

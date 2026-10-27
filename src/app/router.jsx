@@ -13,7 +13,6 @@ import { ShellApp } from './shell/ShellApp.jsx'
 // Carga diferida por módulo (no forman parte del bundle inicial de /login).
 const cargarVista = (nombre) => lazy(() => import('../features/salud/vistas.jsx').then((m) => ({ default: m[nombre] })))
 const VistaMonitorRuta = cargarVista('VistaMonitorRuta')
-const VistaTripulacionRuta = cargarVista('VistaTripulacionRuta')
 const VistaSignosRuta = cargarVista('VistaSignosRuta')
 const VistaSaludIntegralRuta = cargarVista('VistaSaludIntegralRuta')
 const VistaNutricionRuta = cargarVista('VistaNutricionRuta')
@@ -29,6 +28,12 @@ const VistaAyuda = lazy(() => import('../presentacion/componentes/VistaAyuda.jsx
 const VistaPresentacion = lazy(() => import('../presentacion/componentes/VistaPresentacion.jsx'))
 const VistaDesignSystem = lazy(() => import('../presentacion/componentes/VistaDesignSystem.jsx'))
 
+// Núcleo 2A (gestión): registro público y gestión de tripulantes/registros/usuarios.
+const VistaRegistro = lazy(() => import('../features/auth/VistaRegistro.jsx').then((m) => ({ default: m.VistaRegistro })))
+const VistaTripulantes = lazy(() => import('../features/gestion/indice.js').then((m) => ({ default: m.VistaTripulantes })))
+const VistaRegistros = lazy(() => import('../features/gestion/indice.js').then((m) => ({ default: m.VistaRegistros })))
+const VistaUsuarios = lazy(() => import('../features/gestion/indice.js').then((m) => ({ default: m.VistaUsuarios })))
+
 /**
  * Enrutador principal.
  * @returns {import('react').JSX.Element} Rutas.
@@ -37,11 +42,14 @@ export function Router() {
   return (
     <Routes>
       <Route path="/login" element={<VistaLogin />} />
+      <Route path="/registro" element={<Suspense fallback={<SplashCarga />}><VistaRegistro /></Suspense>} />
 
       <Route path="/app" element={<RutaProtegida><ShellApp /></RutaProtegida>}>
         <Route index element={<Suspense fallback={<SplashCarga />}><VistaDashboard /></Suspense>} />
         <Route path="monitor" element={<Suspense fallback={<SplashCarga />}><VistaMonitorRuta /></Suspense>} />
-        <Route path="tripulacion" element={<Suspense fallback={<SplashCarga />}><VistaTripulacionRuta /></Suspense>} />
+        <Route path="tripulacion" element={<Suspense fallback={<SplashCarga />}><VistaTripulantes /></Suspense>} />
+        <Route path="registros" element={<Suspense fallback={<SplashCarga />}><VistaRegistros /></Suspense>} />
+        <Route path="usuarios" element={<Suspense fallback={<SplashCarga />}><VistaUsuarios /></Suspense>} />
         <Route path="signos" element={<Suspense fallback={<SplashCarga />}><VistaSignosRuta /></Suspense>} />
         <Route path="salud-integral" element={<Suspense fallback={<SplashCarga />}><VistaSaludIntegralRuta /></Suspense>} />
         <Route path="nutricion" element={<Suspense fallback={<SplashCarga />}><VistaNutricionRuta /></Suspense>} />

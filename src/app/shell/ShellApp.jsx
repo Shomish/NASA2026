@@ -14,6 +14,7 @@ import {
   Calendar,
   ChevronsLeft,
   ChevronsRight,
+  ClipboardList,
   HeartPulse,
   HelpCircle,
   History,
@@ -28,6 +29,7 @@ import {
   Settings,
   Sun,
   User,
+  UserCog,
   Users,
 } from 'lucide-react'
 import { cn } from '../../presentacion/sistema/cn.js'
@@ -56,6 +58,7 @@ const NAVEGACION = [
   {
     seccion: 'Tripulación',
     items: [
+      { id: 'registros', etiqueta: 'Registros', icono: ClipboardList, ruta: '/app/registros' },
       { id: 'tripulacion', etiqueta: 'Tripulantes', icono: Users, ruta: '/app/tripulacion' },
       { id: 'historial', etiqueta: 'Historial', icono: History, ruta: '/app/historial' },
       { id: 'diario', etiqueta: 'Diario', icono: NotebookPen, ruta: '/app/diario' },
@@ -66,6 +69,7 @@ const NAVEGACION = [
     items: [
       { id: 'alertas', etiqueta: 'Alertas', icono: Bell, ruta: '/app/alertas', badge: 'alertas' },
       { id: 'chat-ia', etiqueta: 'Médico de IA', icono: Bot, ruta: '/app/chat-ia' },
+      { id: 'usuarios', etiqueta: 'Usuarios', icono: UserCog, ruta: '/app/usuarios', soloAdmin: true },
       { id: 'presentacion', etiqueta: 'Presentación', icono: Presentation, ruta: '/app/presentacion' },
       { id: 'configuracion', etiqueta: 'Configuración', icono: Settings, ruta: '/app/configuracion' },
       { id: 'ayuda', etiqueta: 'Ayuda', icono: HelpCircle, ruta: '/app/ayuda' },
@@ -126,32 +130,36 @@ export function ShellApp() {
 
   const contenidoSidebar = (
     <nav className="flex-1 space-y-5 overflow-y-auto">
-      {NAVEGACION.map((grupo) => (
-        <div key={grupo.seccion}>
-          <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-tinta-suave">{grupo.seccion}</div>
-          <div className="space-y-1">
-            {grupo.items.map((item) => (
-              <NavLink
-                key={item.id}
-                to={item.ruta}
-                end={item.ruta === '/app'}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-boton px-3 py-2 text-sm font-medium transition-colors',
-                    isActive ? 'bg-gradient-to-r from-primario to-primario-fuerte text-white shadow-glow' : 'text-tinta-suave hover:bg-superficie-alta hover:text-tinta',
-                  )
-                }
-              >
-                <item.icono size={18} />
-                {!colapsado && <span className="flex-1">{item.etiqueta}</span>}
-                {item.badge === 'alertas' && alertasSinLeer > 0 && (
-                  <span className="rounded-full bg-critico px-1.5 py-0.5 text-[10px] font-bold text-white">{alertasSinLeer}</span>
-                )}
-              </NavLink>
-            ))}
+      {NAVEGACION.map((grupo) => {
+        const items = grupo.items.filter((item) => !item.soloAdmin || usuario?.rol === 'administrador')
+        if (items.length === 0) return null
+        return (
+          <div key={grupo.seccion}>
+            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-tinta-suave">{grupo.seccion}</div>
+            <div className="space-y-1">
+              {items.map((item) => (
+                <NavLink
+                  key={item.id}
+                  to={item.ruta}
+                  end={item.ruta === '/app'}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-3 rounded-boton px-3 py-2 text-sm font-medium transition-colors',
+                      isActive ? 'bg-gradient-to-r from-primario to-primario-fuerte text-white shadow-glow' : 'text-tinta-suave hover:bg-superficie-alta hover:text-tinta',
+                    )
+                  }
+                >
+                  <item.icono size={18} />
+                  {!colapsado && <span className="flex-1">{item.etiqueta}</span>}
+                  {item.badge === 'alertas' && alertasSinLeer > 0 && (
+                    <span className="rounded-full bg-critico px-1.5 py-0.5 text-[10px] font-bold text-white">{alertasSinLeer}</span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </nav>
   )
 
@@ -247,7 +255,7 @@ export function ShellApp() {
       <div className="lg:hidden">
         <BarraInferior
           activo="dashboard"
-          alCambiar={(id) => navigate({ dashboard: '/app', monitor: '/app/monitor', tripulacion: '/app/tripulacion', nutricion: '/app/nutricion', mas: '/app/configuracion' }[id])}
+          alCambiar={(id) => navigate({ dashboard: '/app', monitor: '/app/monitor', registrar: '/app/registros', nutricion: '/app/nutricion', mas: '/app/configuracion' }[id])}
           destinos={[
             { id: 'dashboard', etiqueta: 'Inicio', icono: <LayoutDashboard size={20} /> },
             { id: 'monitor', etiqueta: 'Monitor', icono: <HeartPulse size={20} /> },

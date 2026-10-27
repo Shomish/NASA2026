@@ -7,7 +7,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import {
   Activity,
   Eye,
@@ -248,6 +248,11 @@ export function VistaLogin() {
               )}
             </button>
           </form>
+
+          <p className="text-center text-sm text-tinta-suave">
+            ¿No tienes cuenta?{' '}
+            <Link to="/registro" className="font-medium text-primario hover:underline">Crear una cuenta</Link>
+          </p>
 
           {modoDemo && (
             <div className="rounded-tarjeta border border-andino-dorado/40 bg-andino-dorado/10 p-3 text-sm">

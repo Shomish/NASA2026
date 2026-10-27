@@ -6,14 +6,30 @@
 import { randomBytes } from 'node:crypto'
 import { modelos } from '../db/modelos.js'
 
-const { Auditoria, Tripulante } = modelos
+const { Auditoria, Tripulante, Registro } = modelos
 
 /**
- * Genera un código único de registro (8 caracteres hexadecimales en mayúsculas).
- * @returns {string} Código único.
+ * Genera un código de registro (8 caracteres hexadecimales en mayúsculas).
+ * @returns {string} Código.
  */
 export function generarCodigo() {
   return randomBytes(4).toString('hex').toUpperCase()
+}
+
+/**
+ * Genera un código de registro garantizando que no colisione con uno existente.
+ * Reintenta (hasta 8 intentos) si el código generado ya está en uso; lanza si
+ * no consigue un código libre (colisión persistente).
+ * @param {() => string} [probar] - Generador inyectable para pruebas.
+ * @returns {Promise<string>} Código único.
+ */
+export async function generarCodigoUnico(probar = generarCodigo) {
+  for (let intento = 0; intento < 8; intento += 1) {
+    const codigo = probar()
+    const existe = await Registro.count({ where: { codigo } })
+    if (!existe) return codigo
+  }
+  throw new Error('CODIGO_COLISION')
 }
 
 /**
