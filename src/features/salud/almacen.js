@@ -25,6 +25,9 @@ function historialInicial() {
 const almacenamiento = new AdaptadorAlmacenamiento()
 const api = new AdaptadorApi()
 
+/** Adaptador de almacenamiento (exportado para tests y diagnóstico). */
+export { almacenamiento }
+
 /**
  * Store de salud.
  * @type {import('zustand').UseBoundStore<import('zustand').StoreApi<object>>}

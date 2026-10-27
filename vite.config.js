@@ -1,12 +1,16 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 
 // Configuración de Vite.
 // - host: por defecto solo escucha en localhost (contexto seguro). Activar con HOST=true
 //   solo si se necesita acceso desde un dispositivo en red (con el riesgo de contexto no seguro).
 // - proxy: en desarrollo, reenvía /api al backend Express.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    visualizer({ filename: 'dist/stats.html', gzipSize: true, open: false }),
+  ],
   server: {
     host: process.env.HOST === 'true',
     port: 5173,
