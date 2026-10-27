@@ -60,7 +60,7 @@ export function VistaLogin() {
   const alEnviar = async (datos) => {
     setError('')
     try {
-      const sesion = await apiLogin(datos.username, datos.contrasena)
+      const sesion = await apiLogin(datos.email, datos.contrasena)
       iniciar(sesion.accessToken, sesion.usuario)
       const destino = ubicacion.state?.desde?.pathname ?? '/app'
       navigate(destino, { replace: true })
@@ -73,7 +73,7 @@ export function VistaLogin() {
    * Autocompleta las credenciales de demostración.
    */
   const autocompletarDemo = () => {
-    setValue('username', 'admin')
+    setValue('email', 'admin@ayni.health')
     setValue('contrasena', 'admin123')
   }
 
@@ -188,14 +188,13 @@ export function VistaLogin() {
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-tinta-suave" />
                 <input
                   id="usuario"
-                  type="text"
-                  autoComplete="username"
+                                    autoComplete="email"
                   className="h-11 w-full rounded-boton border border-borde bg-superficie-elevada pl-9 pr-3 text-base text-tinta placeholder:text-tinta-suave focus:outline-none focus:ring-2 focus:ring-primario"
-                  placeholder="admin"
-                  {...register('username')}
+                  placeholder="admin@ayni.health"
+                  {...register('email')}
                 />
               </div>
-              {errors.username && <p className="mt-1 text-xs text-critico">{errors.username.message}</p>}
+              {errors.email && <p className="mt-1 text-xs text-critico">{errors.email.message}</p>}
             </div>
 
             <div>
@@ -253,7 +252,7 @@ export function VistaLogin() {
           {modoDemo && (
             <div className="rounded-tarjeta border border-andino-dorado/40 bg-andino-dorado/10 p-3 text-sm">
               <div className="font-medium text-tinta">Acceso de demostración</div>
-              <div className="mt-1 font-mono text-xs text-tinta-suave">admin / admin123</div>
+              <div className="mt-1 font-mono text-xs text-tinta-suave">admin@ayni.health / admin123</div>
               <button type="button" onClick={autocompletarDemo} className="mt-2 text-xs font-medium text-primario hover:underline">
                 Autocompletar credenciales
               </button>

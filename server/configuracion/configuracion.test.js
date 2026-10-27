@@ -4,13 +4,11 @@
  * @module server/configuracion/configuracion.test
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
 import { config } from '../config.js'
-import { crearAplicacion } from '../app.js'
-import { sembrarUsuarios } from '../auth/repositorioUsuarios.js'
-import { inicializarBaseDatos } from '../baseDatos.js'
+import { prepararApp, cerrarBase } from '../test/preparar.js'
 
 let app
 let tokenTripulante
@@ -18,12 +16,14 @@ let tokenMedico
 let tokenAdmin
 
 beforeAll(async () => {
-  await inicializarBaseDatos()
-  await sembrarUsuarios(true)
-  app = crearAplicacion()
+  app = await prepararApp()
   tokenTripulante = jwt.sign({ sub: '2', rol: 'tripulante' }, config.JWT_SECRET)
   tokenMedico = jwt.sign({ sub: '3', rol: 'medico' }, config.JWT_SECRET)
   tokenAdmin = jwt.sign({ sub: '1', rol: 'administrador' }, config.JWT_SECRET)
+})
+
+afterAll(async () => {
+  await cerrarBase()
 })
 
 describe('autorización por rol (servidor)', () => {

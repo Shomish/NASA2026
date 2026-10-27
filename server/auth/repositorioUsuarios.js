@@ -1,130 +1,100 @@
 /**
- * @fileoverview Repositorio de usuarios y refresh tokens.
- * Oculta el motor de almacenamiento: hoy es en memoria (Fase 10 → PostgreSQL).
+ * @fileoverview Repositorio de usuarios y sesiones contra MySQL (Sequelize).
+ * Oculta Sequelize a los servicios. Sustituye el repositorio en memoria.
  * @module server/auth/repositorioUsuarios
  */
 
 import { createHash } from 'node:crypto'
-import { hash } from 'bcryptjs'
+import { modelos } from '../db/modelos.js'
 
-/** Coste de bcrypt (ver ADR-0006). */
-const COSTE_BCRYPT = 12
-
-/** @type {Map<string, {id: string, username: string, hashContrasena: string, rol: string, nombre: string}>} */
-const usuarios = new Map()
-
-/** @type {Map<string, {usuarioId: string, revocado: boolean}>} */
-const refreshTokens = new Map()
+const { Usuario, SesionRefresh } = modelos
 
 /**
- * Siembra el usuario de demostración (admin/admin123) cuando el modo demo está activo.
- * @param {boolean} demoMode - Si el modo demo está habilitado.
- * @returns {Promise<void>} Promesa.
+ * Busca un usuario por email.
+ * @param {string} email - Email del usuario.
+ * @returns {Promise<object | null>} Usuario o null.
  */
-export async function sembrarUsuarios(demoMode) {
-  if (!demoMode || usuarios.has('admin')) return
-  const hashContrasena = await hash('admin123', COSTE_BCRYPT)
-  usuarios.set('admin', {
-    id: '1',
-    username: 'admin',
-    hashContrasena,
-    rol: 'administrador',
-    nombre: 'Administrador',
-  })
+export async function encontrarPorEmail(email) {
+  return Usuario.findOne({ where: { email } })
 }
 
 /**
- * Busca un usuario por nombre de usuario.
- * @param {string} username - Nombre de usuario.
- * @returns {object | null} Usuario o null.
+ * Busca un usuario por id.
+ * @param {number} id - Id del usuario.
+ * @returns {Promise<object | null>} Usuario o null.
  */
-export function encontrarPorUsername(username) {
-  return usuarios.get(username) ?? null
+export async function buscarPorId(id) {
+  return Usuario.findByPk(id)
 }
 
 /**
- * Busca un usuario por su id.
- * @param {string} id - Identificador del usuario.
- * @returns {object | null} Usuario o null.
+ * Crea un usuario.
+ * @param {object} datos - Datos del usuario.
+ * @returns {Promise<object>} Usuario creado.
  */
-export function buscarPorId(id) {
-  for (const usuario of usuarios.values()) {
-    if (usuario.id === id) return usuario
-  }
-  return null
+export async function crearUsuario(datos) {
+  return Usuario.create(datos)
 }
 
 /**
- * Lista todos los usuarios (sin el hash de contraseña).
- * @returns {Array<{id: string, username: string, rol: string, nombre: string}>} Usuarios públicos.
+ * Lista todos los usuarios (sin la contraseña).
+ * @returns {Promise<object[]>} Usuarios.
  */
-export function listarUsuarios() {
-  return [...usuarios.values()].map((u) => ({ id: u.id, username: u.username, rol: u.rol, nombre: u.nombre }))
+export async function listarUsuarios() {
+  const usuarios = await Usuario.findAll({ attributes: ['id', 'nombre', 'email', 'rol', 'activo'] })
+  return usuarios.map((u) => ({ id: u.id, nombre: u.nombre, email: u.email, rol: u.rol, activo: u.activo }))
 }
 
 /**
- * Calcula el hash SHA-256 de un token (para no guardar el token en claro).
+ * Calcula el hash SHA-256 de un token.
  * @param {string} token - Token.
- * @returns {string} Hash del token.
+ * @returns {string} Hash.
  */
 export function hashearToken(token) {
   return createHash('sha256').update(token).digest('hex')
 }
 
 /**
- * Guarda un refresh token (hasheado) asociado a un usuario.
- * @param {string} tokenHash - Hash del refresh token.
- * @param {string} usuarioId - Identificador del usuario.
+ * Guarda una sesión de refresh token.
+ * @param {object} datos - Datos de la sesión.
+ * @returns {Promise<object>} Sesión.
  */
-export function guardarRefreshToken(tokenHash, usuarioId) {
-  refreshTokens.set(tokenHash, { usuarioId, revocado: false })
+export async function guardarSesionRefresh(datos) {
+  return SesionRefresh.create(datos)
 }
 
 /**
- * Indica si un refresh token (hasheado) sigue siendo válido.
- * @param {string} tokenHash - Hash del refresh token.
- * @returns {boolean} Verdadero si es válido y no revocado.
+ * Busca una sesión de refresh por hash de token.
+ * @param {string} tokenHash - Hash del token.
+ * @returns {Promise<object | null>} Sesión o null.
  */
-export function esRefreshValido(tokenHash) {
-  const registro = refreshTokens.get(tokenHash)
-  return Boolean(registro && !registro.revocado)
+export async function encontrarSesionRefresh(tokenHash) {
+  return SesionRefresh.findOne({ where: { token_hash: tokenHash } })
 }
 
 /**
- * Estado de un refresh token: valido, reutilizado (revocado) o inexistente.
- * @param {string} tokenHash - Hash del refresh token.
- * @returns {'valido' | 'reutilizado' | 'inexistente'} Estado.
+ * Revoca una sesión de refresh.
+ * @param {number} id - Id de la sesión.
+ * @returns {Promise<void>} Promesa.
  */
-export function estadoRefresh(tokenHash) {
-  const registro = refreshTokens.get(tokenHash)
-  if (!registro) return 'inexistente'
-  return registro.revocado ? 'reutilizado' : 'valido'
+export async function revocarSesionRefresh(id) {
+  await SesionRefresh.update({ revocado_en: new Date() }, { where: { id } })
 }
 
 /**
- * Obtiene el id de usuario asociado a un refresh token.
- * @param {string} tokenHash - Hash del refresh token.
- * @returns {string | null} Id del usuario o null.
+ * Revoca todas las sesiones de una familia (reutilización detectada).
+ * @param {string} familia - Identificador de familia.
+ * @returns {Promise<void>} Promesa.
  */
-export function usuarioDeRefresh(tokenHash) {
-  return refreshTokens.get(tokenHash)?.usuarioId ?? null
+export async function revocarFamilia(familia) {
+  await SesionRefresh.update({ revocado_en: new Date() }, { where: { familia, revocado_en: null } })
 }
 
 /**
- * Revoca un refresh token (rotación).
- * @param {string} tokenHash - Hash del refresh token.
+ * Revoca todas las sesiones de un usuario (logout global).
+ * @param {number} usuarioId - Id del usuario.
+ * @returns {Promise<void>} Promesa.
  */
-export function revocarRefreshToken(tokenHash) {
-  const registro = refreshTokens.get(tokenHash)
-  if (registro) registro.revocado = true
-}
-
-/**
- * Revoca todos los refresh tokens de un usuario (logout).
- * @param {string} usuarioId - Identificador del usuario.
- */
-export function revocarTodosDeUsuario(usuarioId) {
-  for (const registro of refreshTokens.values()) {
-    if (registro.usuarioId === usuarioId) registro.revocado = true
-  }
+export async function revocarTodasDeUsuario(usuarioId) {
+  await SesionRefresh.update({ revocado_en: new Date() }, { where: { usuario_id: usuarioId, revocado_en: null } })
 }

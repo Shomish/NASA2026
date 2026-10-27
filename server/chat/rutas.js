@@ -6,7 +6,7 @@
 
 import { Router } from 'express'
 import { z } from 'zod'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { generarRespuestaChat } from './servicio.js'
 
@@ -29,7 +29,7 @@ const limitadorChat = rateLimit({
   limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.usuario?.id ?? req.ip,
+  keyGenerator: (req) => req.usuario?.id ?? ipKeyGenerator(req.ip),
   message: { codigo: 'DEMASIADAS_SOLICITUDES', mensaje: 'Demasiadas consultas. Inténtalo más tarde.' },
 })
 

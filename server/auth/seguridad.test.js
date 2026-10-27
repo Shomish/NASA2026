@@ -4,19 +4,19 @@
  * @module server/auth/seguridad.test
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
 import { validarConfig } from '../config.js'
-import { crearAplicacion } from '../app.js'
-import { sembrarUsuarios } from './repositorioUsuarios.js'
-import { inicializarBaseDatos } from '../baseDatos.js'
+import { prepararApp, cerrarBase, EMAIL_ADMIN, CONTRASENA_ADMIN } from '../test/preparar.js'
 
 let app
 
 beforeAll(async () => {
-  await inicializarBaseDatos()
-  await sembrarUsuarios(true)
-  app = crearAplicacion()
+  app = await prepararApp()
+})
+
+afterAll(async () => {
+  await cerrarBase()
 })
 
 describe('configuración de producción', () => {
@@ -52,10 +52,10 @@ describe('enumeración de usuarios', () => {
   it('usuario inexistente y contraseña incorrecta devuelven el mismo mensaje', async () => {
     const inexistente = await request(app)
       .post('/api/v1/auth/login')
-      .send({ username: 'noexiste', contrasena: 'clave' })
+      .send({ email: 'noexiste@ayni.health', contrasena: 'clave' })
     const incorrecta = await request(app)
       .post('/api/v1/auth/login')
-      .send({ username: 'admin', contrasena: 'clave-incorrecta' })
+      .send({ email: EMAIL_ADMIN, contrasena: 'clave-incorrecta' })
     expect(inexistente.status).toBe(401)
     expect(incorrecta.status).toBe(401)
     expect(inexistente.body.mensaje).toBe(incorrecta.body.mensaje)
@@ -64,7 +64,7 @@ describe('enumeración de usuarios', () => {
 
 describe('revocación de refresh reutilizado', () => {
   it('un refresh token reutilizado revoca toda la familia', async () => {
-    const login = await request(app).post('/api/v1/auth/login').send({ username: 'admin', contrasena: 'admin123' })
+    const login = await request(app).post('/api/v1/auth/login').send({ email: EMAIL_ADMIN, contrasena: CONTRASENA_ADMIN })
     const cookieA = login.headers['set-cookie'][0].split(';')[0]
 
     // Primer uso: rota y emite un nuevo refresh (cookieB).

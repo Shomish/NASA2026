@@ -9,20 +9,36 @@ const BASE = import.meta.env.VITE_API_URL || '/api/v1'
 
 /**
  * Inicia sesión.
- * @param {string} username - Usuario.
+ * @param {string} email - Email.
  * @param {string} contrasena - Contraseña.
  * @returns {Promise<{accessToken: string, usuario: object}>} Sesión.
  */
-export async function apiLogin(username, contrasena) {
+export async function apiLogin(email, contrasena) {
   const respuesta = await fetch(`${BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ username, contrasena }),
+    body: JSON.stringify({ email, contrasena }),
   })
   const datos = await respuesta.json()
   if (!respuesta.ok) throw new Error(datos.mensaje ?? 'Error al iniciar sesión')
   return datos
+}
+
+/**
+ * Registra un usuario.
+ * @param {object} datos - Datos del registro.
+ * @returns {Promise<object>} Usuario creado.
+ */
+export async function apiRegister(datos) {
+  const respuesta = await fetch(`${BASE}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  })
+  const resultado = await respuesta.json()
+  if (!respuesta.ok) throw new Error(resultado.mensaje ?? 'Error al registrarse')
+  return resultado
 }
 
 /**

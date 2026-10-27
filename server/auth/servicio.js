@@ -1,22 +1,21 @@
 /**
- * @fileoverview Servicio de autenticación.
- * Lógica de negocio: login, generación/rotación de tokens y logout.
- * No depende de Express (puro, testeable con Supertest).
+ * @fileoverview Servicio de autenticación (contra MySQL).
+ * Login, generación/rotación de tokens y logout. No depende de Express.
  * @module server/auth/servicio
  */
 
-import { compare, hash } from 'bcryptjs'
+import { compare, hash } from 'bcrypt'
 import { randomBytes } from 'node:crypto'
 import jwt from 'jsonwebtoken'
 import { config } from '../config.js'
 import {
-  encontrarPorUsername,
+  encontrarPorEmail,
   buscarPorId,
-  guardarRefreshToken,
-  estadoRefresh,
-  usuarioDeRefresh,
-  revocarRefreshToken,
-  revocarTodosDeUsuario,
+  crearUsuario,
+  guardarSesionRefresh,
+  encontrarSesionRefresh,
+  revocarSesionRefresh,
+  revocarFamilia,
   hashearToken,
 } from './repositorioUsuarios.js'
 
@@ -24,107 +23,120 @@ import {
 const ACCESO_EXPIRA = '15m'
 /** Vida del refresh token (7 días). */
 const REFRESH_EXPIRA_MS = 7 * 24 * 3600 * 1000
+/** Coste de bcrypt (ver ADR-0006). */
+const COSTE_BCRYPT = 12
 
 /**
- * Genera el access token JWT (vida corta).
+ * Genera el access token JWT.
  * @param {object} usuario - Usuario.
  * @returns {string} JWT firmado.
  */
 export function generarAccessToken(usuario) {
-  return jwt.sign({ sub: usuario.id, rol: usuario.rol }, config.JWT_SECRET, { expiresIn: ACCESO_EXPIRA })
+  return jwt.sign({ sub: String(usuario.id), rol: usuario.rol }, config.JWT_SECRET, { expiresIn: ACCESO_EXPIRA })
 }
 
 /**
- * Genera un refresh token opaco y lo registra (hasheado) en el repositorio.
- * @param {string} usuarioId - Id del usuario.
- * @returns {string} Refresh token en claro (para la cookie).
+ * Genera un refresh token y guarda su sesión (hash + familia).
+ * @param {number} usuarioId - Id del usuario.
+ * @param {string} [familia] - Familia a la que pertenece (para rotación).
+ * @returns {Promise<{token: string, familia: string}>} Token en claro y familia.
  */
-function generarRefreshToken(usuarioId) {
+async function generarRefreshToken(usuarioId, familia = null) {
   const token = randomBytes(32).toString('hex')
-  guardarRefreshToken(hashearToken(token), usuarioId)
-  return token
+  const familiaToken = familia ?? randomBytes(16).toString('hex')
+  await guardarSesionRefresh({
+    usuario_id: usuarioId,
+    token_hash: hashearToken(token),
+    familia: familiaToken,
+    expira_en: new Date(Date.now() + REFRESH_EXPIRA_MS),
+  })
+  return { token, familia: familiaToken }
 }
 
 /**
- * Datos públicos del usuario (sin hash ni datos sensibles).
+ * Datos públicos del usuario.
  * @param {object} usuario - Usuario.
- * @returns {{id: string, username: string, rol: string, nombre: string}} Usuario público.
+ * @returns {object} Usuario público.
  */
 function usuarioPublico(usuario) {
-  return { id: usuario.id, username: usuario.username, rol: usuario.rol, nombre: usuario.nombre }
+  return { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol }
 }
 
 /**
- * Hash dummy para igualar el tiempo de respuesta ante usuario inexistente (anti-enumeración).
- * @returns {Promise<string>} Hash bcrypt de un valor fijo.
+ * Hash dummy para igualar el tiempo ante email inexistente.
+ * @returns {Promise<string>} Hash.
  */
 function hashDummy() {
-  return hash('contrasena-dummy-inexistente', 12)
+  return hash('contrasena-dummy-inexistente', COSTE_BCRYPT)
 }
 
 /**
- * Inicia sesión. Devuelve null si las credenciales son inválidas (mensaje genérico,
- * sin revelar si falló usuario o contraseña).
- * @param {string} username - Nombre de usuario.
+ * Inicia sesión. Devuelve null si las credenciales son inválidas.
+ * @param {string} email - Email.
  * @param {string} contrasena - Contraseña.
  * @returns {Promise<{accessToken: string, refreshToken: string, usuario: object} | null>} Sesión o null.
  */
-export async function iniciarSesion(username, contrasena) {
-  const usuario = encontrarPorUsername(username)
-  const hashComparar = usuario ? usuario.hashContrasena : await hashDummy()
+export async function iniciarSesion(email, contrasena) {
+  const usuario = await encontrarPorEmail(email)
+  const hashComparar = usuario ? usuario.password : await hashDummy()
   const valida = await compare(contrasena, hashComparar)
   if (!usuario || !valida) return null
 
   const accessToken = generarAccessToken(usuario)
-  const refreshToken = generarRefreshToken(usuario.id)
+  const { token: refreshToken } = await generarRefreshToken(usuario.id)
   return { accessToken, refreshToken, usuario: usuarioPublico(usuario) }
 }
 
 /**
- * Rota el refresh token: valida el actual, lo revoca y emite uno nuevo.
- * Si el token ya fue usado (reutilización), revoca toda la familia del usuario.
- * @param {string} refreshToken - Refresh token en claro.
- * @returns {{accessToken: string, refreshToken: string, usuario: object} | null} Nueva sesión o null.
+ * Registra un usuario (rol tripulante por defecto) con su perfil.
+ * @param {object} datos - Datos del registro.
+ * @returns {Promise<object>} Usuario creado.
  */
-export function rotarRefreshToken(refreshToken) {
+export async function registrarUsuario(datos) {
+  const hashContrasena = await hash(datos.contrasena, COSTE_BCRYPT)
+  return crearUsuario({
+    nombre: datos.nombre,
+    email: datos.email,
+    password: hashContrasena,
+    rol: 'tripulante',
+  })
+}
+
+/**
+ * Rota el refresh token. Reutilización revoca la familia.
+ * @param {string} refreshToken - Refresh token en claro.
+ * @returns {Promise<{accessToken: string, refreshToken: string, usuario: object} | null>} Nueva sesión o null.
+ */
+export async function rotarRefreshToken(refreshToken) {
   const tokenHash = hashearToken(refreshToken)
-  const estado = estadoRefresh(tokenHash)
+  const sesion = await encontrarSesionRefresh(tokenHash)
+  if (!sesion) return null
 
-  if (estado === 'inexistente') return null
-
-  if (estado === 'reutilizado') {
-    // Detección de reutilización: revocar toda la familia de tokens del usuario.
-    const usuarioId = usuarioDeRefresh(tokenHash)
-    if (usuarioId) revocarTodosDeUsuario(usuarioId)
+  // Reutilización: token ya revocado → revocar toda la familia.
+  if (sesion.revocado_en) {
+    await revocarFamilia(sesion.familia)
     return null
   }
 
-  const usuarioId = usuarioDeRefresh(tokenHash)
-  const usuario = buscarPorId(usuarioId)
+  const usuario = await buscarPorId(sesion.usuario_id)
   if (!usuario) return null
 
-  // Rotación: revocar el refresh actual y emitir uno nuevo.
-  revocarRefreshToken(tokenHash)
-  const nuevoAccess = generarAccessToken(usuario)
-  const nuevoRefresh = generarRefreshToken(usuario.id)
-  return { accessToken: nuevoAccess, refreshToken: nuevoRefresh, usuario: usuarioPublico(usuario) }
+  await revocarSesionRefresh(sesion.id)
+  const accessToken = generarAccessToken(usuario)
+  const { token: nuevoRefresh } = await generarRefreshToken(usuario.id, sesion.familia)
+  return { accessToken, refreshToken: nuevoRefresh, usuario: usuarioPublico(usuario) }
 }
 
 /**
- * Cierra la sesión revocando el refresh token enviado.
+ * Cierra la sesión revocando el refresh token.
  * @param {string} refreshToken - Refresh token en claro.
+ * @returns {Promise<void>} Promesa.
  */
-export function cerrarSesion(refreshToken) {
-  if (refreshToken) revocarRefreshToken(hashearToken(refreshToken))
+export async function cerrarSesion(refreshToken) {
+  if (!refreshToken) return
+  const sesion = await encontrarSesionRefresh(hashearToken(refreshToken))
+  if (sesion) await revocarSesionRefresh(sesion.id)
 }
 
-/**
- * Revoca todos los refresh tokens de un usuario (logout global).
- * @param {string} usuarioId - Id del usuario.
- */
-export function revocarSesionesDeUsuario(usuarioId) {
-  revocarTodosDeUsuario(usuarioId)
-}
-
-/** Vida del refresh token en milisegundos (para la cookie). */
+/** Vida del refresh token en ms (para la cookie). */
 export const TIEMPO_REFRESH_MS = REFRESH_EXPIRA_MS
