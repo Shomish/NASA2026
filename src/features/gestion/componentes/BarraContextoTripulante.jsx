@@ -60,7 +60,7 @@ export function BarraContextoTripulante() {
           <div className="truncate text-sm font-semibold text-tinta" data-testid="contexto-nombre">{tripulanteActivo.nombre}</div>
           <div className="truncate text-xs text-tinta-suave">
             {tripulanteActivo.cargo || 'Tripulante'}
-            {tripulanteActivo.mision ? ` · ${tripulanteActivo.mision}` : ''}
+            {tripulanteActivo.EntornoMision?.nombre ? ` · ${tripulanteActivo.EntornoMision.nombre}` : ''}
             {tripulanteActivo.dia_mision ? ` · Día ${tripulanteActivo.dia_mision}` : ''}
           </div>
         </div>

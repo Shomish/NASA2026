@@ -1,5 +1,5 @@
 /**
- * @fileoverview Modelos del dominio (24 tablas) con Sequelize.
+ * @fileoverview Modelos del dominio (36 tablas) con Sequelize.
  * Núcleo: Usuario, Tripulante, Registro. Detalle, alertas, nutrición, chat y sistema.
  * @module server/db/modelos
  */
@@ -23,6 +23,7 @@ export const Usuario = sequelize.define('Usuario', {
 export const Tripulante = sequelize.define('Tripulante', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
   usuario_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true, unique: true },
+  entorno_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   nombre: { type: DataTypes.STRING(120), allowNull: false },
   cargo: { type: DataTypes.STRING(80), allowNull: true },
   edad: { type: DataTypes.INTEGER, allowNull: true },
@@ -40,7 +41,7 @@ export const Registro = sequelize.define('Registro', {
   codigo: { type: DataTypes.STRING(8), allowNull: false, unique: true },
   usuario_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
-  tipo: { type: DataTypes.ENUM('signos_vitales', 'sueno', 'salud_mental', 'radiacion', 'diario'), allowNull: false },
+  tipo: { type: DataTypes.ENUM('signos_vitales', 'sueno', 'salud_mental', 'radiacion', 'diario', 'glucosa', 'animo', 'ejercicio', 'sintomas_inmunes', 'estado_conductual', 'ambiente'), allowNull: false },
   estado: { type: DataTypes.ENUM('pendiente', 'validado', 'cerrado'), allowNull: false, defaultValue: 'pendiente' },
   fecha_registro: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   fecha_cierre: { type: DataTypes.DATE, allowNull: true },
@@ -91,6 +92,57 @@ export const NotaDiario = sequelize.define('NotaDiario', {
   contenido: { type: DataTypes.TEXT, allowNull: false },
   etiquetas: { type: DataTypes.JSON, allowNull: true },
 }, { tableName: 'notas_diario', timestamps: false })
+
+/* ==================== DETALLE DE REGISTROS (nuevos tipos del reto) ==================== */
+
+export const RegistroGlucosa = sequelize.define('RegistroGlucosa', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  glucosa_mgdl: { type: DataTypes.INTEGER, allowNull: false },
+  ayunas: { type: DataTypes.BOOLEAN, allowNull: true },
+}, { tableName: 'registros_glucosa', timestamps: false })
+
+export const RegistroAnimo = sequelize.define('RegistroAnimo', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  escala: { type: DataTypes.INTEGER, allowNull: false },
+  notas: { type: DataTypes.STRING(255), allowNull: true },
+}, { tableName: 'registros_animo', timestamps: false })
+
+export const RegistroEjercicio = sequelize.define('RegistroEjercicio', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  tipo: { type: DataTypes.ENUM('resistencia', 'cardio'), allowNull: false },
+  minutos: { type: DataTypes.INTEGER, allowNull: false },
+  cumplio_plan: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+}, { tableName: 'registros_ejercicio', timestamps: false })
+
+export const RegistroSintomasInmunes = sequelize.define('RegistroSintomasInmunes', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  fiebre: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  fatiga_inusual: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  infecciones: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  lesiones_cutaneas: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  cicatrizacion_lenta: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+}, { tableName: 'registros_sintomas_inmunes', timestamps: false })
+
+export const RegistroEstadoConductual = sequelize.define('RegistroEstadoConductual', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  gad7: { type: DataTypes.INTEGER, allowNull: true },
+  estres: { type: DataTypes.INTEGER, allowNull: true },
+  fatiga: { type: DataTypes.INTEGER, allowNull: true },
+}, { tableName: 'registros_estado_conductual', timestamps: false })
+
+export const RegistroAmbiente = sequelize.define('RegistroAmbiente', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  co2_ppm: { type: DataTypes.INTEGER, allowNull: true },
+  temperatura_c: { type: DataTypes.DECIMAL(4, 1), allowNull: true },
+  humedad: { type: DataTypes.DECIMAL(4, 1), allowNull: true },
+  ruido_db: { type: DataTypes.DECIMAL(4, 1), allowNull: true },
+}, { tableName: 'registros_ambiente', timestamps: false })
 
 /* ==================== ALERTAS ==================== */
 
@@ -265,6 +317,63 @@ export const RateLimit = sequelize.define('RateLimit', {
   vence_en: { type: DataTypes.DATE, allowNull: false },
 }, { tableName: 'rate_limits', timestamps: false, indexes: [{ fields: ['vence_en'] }] })
 
+/* ==================== RETO (catálogo, acciones, rutinas, logros, entornos) ==================== */
+
+export const CatalogoIndicador = sequelize.define('CatalogoIndicador', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  nombre: { type: DataTypes.STRING(120), allowNull: false, unique: true },
+  unidad: { type: DataTypes.STRING(20), allowNull: true },
+  rango_referencia: { type: DataTypes.STRING(120), allowNull: true },
+  peligro_asociado: { type: DataTypes.STRING(120), allowNull: true },
+  como_medir: { type: DataTypes.TEXT, allowNull: true },
+  por_que: { type: DataTypes.TEXT, allowNull: true },
+  como_afecta: { type: DataTypes.TEXT, allowNull: true },
+  cuando_escalar: { type: DataTypes.TEXT, allowNull: true },
+  acciones_preventivas: { type: DataTypes.TEXT, allowNull: true },
+  fuente: { type: DataTypes.STRING(160), allowNull: true },
+  estado_verificacion: { type: DataTypes.ENUM('pendiente', 'verificado'), allowNull: false, defaultValue: 'pendiente' },
+}, { tableName: 'catalogo_indicadores', timestamps: true })
+
+export const AccionSalud = sequelize.define('AccionSalud', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  dominio: { type: DataTypes.STRING(60), allowNull: false },
+  descripcion: { type: DataTypes.TEXT, allowNull: false },
+  origen: { type: DataTypes.ENUM('regla', 'manual'), allowNull: false, defaultValue: 'regla' },
+  estado: { type: DataTypes.ENUM('pendiente', 'hecha', 'descartada'), allowNull: false, defaultValue: 'pendiente' },
+  fecha: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+}, { tableName: 'acciones_salud', timestamps: false })
+
+export const EntornoMision = sequelize.define('EntornoMision', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  nombre: { type: DataTypes.STRING(120), allowNull: false, unique: true },
+  descripcion: { type: DataTypes.STRING(255), allowNull: true },
+  peligros_relevantes: { type: DataTypes.JSON, allowNull: true },
+  consejos: { type: DataTypes.JSON, allowNull: true },
+}, { tableName: 'entornos_mision', timestamps: false })
+
+export const RutinaMedicion = sequelize.define('RutinaMedicion', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  nombre: { type: DataTypes.STRING(120), allowNull: false },
+  frecuencia: { type: DataTypes.STRING(40), allowNull: false, defaultValue: 'diaria' },
+  hora: { type: DataTypes.STRING(5), allowNull: true },
+}, { tableName: 'rutinas_medicion', timestamps: false })
+
+export const CumplimientoRutina = sequelize.define('CumplimientoRutina', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  rutina_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  fecha: { type: DataTypes.DATEONLY, allowNull: false },
+  cumplida: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+}, { tableName: 'cumplimiento_rutinas', timestamps: false })
+
+export const LogroTripulante = sequelize.define('LogroTripulante', {
+  id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
+  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  logro: { type: DataTypes.STRING(120), allowNull: false },
+  fecha: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+}, { tableName: 'logros_tripulante', timestamps: false })
+
 /* ==================== ASOCIACIONES ==================== */
 
 Usuario.hasMany(Registro, { foreignKey: 'usuario_id' })
@@ -280,6 +389,19 @@ Registro.hasOne(RegistroSueno, { foreignKey: 'registro_id' })
 Registro.hasOne(EvaluacionPhq9, { foreignKey: 'registro_id' })
 Registro.hasOne(RegistroRadiacion, { foreignKey: 'registro_id' })
 Registro.hasOne(NotaDiario, { foreignKey: 'registro_id' })
+Registro.hasOne(RegistroGlucosa, { foreignKey: 'registro_id' })
+Registro.hasOne(RegistroAnimo, { foreignKey: 'registro_id' })
+Registro.hasOne(RegistroEjercicio, { foreignKey: 'registro_id' })
+Registro.hasOne(RegistroSintomasInmunes, { foreignKey: 'registro_id' })
+Registro.hasOne(RegistroEstadoConductual, { foreignKey: 'registro_id' })
+Registro.hasOne(RegistroAmbiente, { foreignKey: 'registro_id' })
+
+Tripulante.belongsTo(EntornoMision, { foreignKey: 'entorno_id' })
+EntornoMision.hasMany(Tripulante, { foreignKey: 'entorno_id' })
+Tripulante.hasMany(AccionSalud, { foreignKey: 'tripulante_id' })
+Tripulante.hasMany(RutinaMedicion, { foreignKey: 'tripulante_id' })
+Tripulante.hasMany(LogroTripulante, { foreignKey: 'tripulante_id' })
+RutinaMedicion.hasMany(CumplimientoRutina, { foreignKey: 'rutina_id' })
 
 Tripulante.hasMany(Alerta, { foreignKey: 'tripulante_id' })
 Alerta.belongsTo(Tripulante, { foreignKey: 'tripulante_id' })
@@ -301,7 +423,9 @@ ConfiguracionIA.belongsTo(Usuario, { foreignKey: 'actualizado_por' })
 
 export const modelos = {
   Usuario, Tripulante, Registro, SignoVital, RegistroSueno, EvaluacionPhq9, RegistroRadiacion,
-  NotaDiario, Alerta, Alimento, Contramedida, PlanNutricional, PlanAlimento, CacheImagen,
-  ConversacionIA, MensajeIA, UmbralClinico, SesionRefresh, Auditoria, OperacionSync,
-  ConsentimientoIA, UsoIA, ConfiguracionIA, RateLimit,
+  NotaDiario, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroSintomasInmunes,
+  RegistroEstadoConductual, RegistroAmbiente, Alerta, Alimento, Contramedida, PlanNutricional,
+  PlanAlimento, CacheImagen, ConversacionIA, MensajeIA, UmbralClinico, SesionRefresh, Auditoria,
+  OperacionSync, ConsentimientoIA, UsoIA, ConfiguracionIA, RateLimit, CatalogoIndicador,
+  AccionSalud, EntornoMision, RutinaMedicion, CumplimientoRutina, LogroTripulante,
 }

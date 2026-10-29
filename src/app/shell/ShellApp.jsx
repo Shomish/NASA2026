@@ -26,6 +26,7 @@ import {
   Plus,
   Presentation,
   Search,
+  ScrollText,
   Settings,
   Sun,
   User,
@@ -37,7 +38,6 @@ import { useTema } from '../../presentacion/sistema/tema.jsx'
 import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
 import { apiLogout } from '../../features/auth/api.js'
 import { useContextoTripulante } from '../../features/gestion/almacenContexto.js'
-import { useSaludStore } from '../../features/salud/almacen.js'
 import { tripulacionInicial } from '../../datos/mockDatos.js'
 import { Drawer } from '../../presentacion/sistema/movil/Drawer.jsx'
 import { BarraInferior } from '../../presentacion/sistema/movil/BarraInferior.jsx'
@@ -47,6 +47,9 @@ import { CommandPalette } from './CommandPalette.jsx'
 // del bundle inicial de /login ni del shell en rutas no de datos.
 const BarraContextoTripulante = lazy(() =>
   import('../../features/gestion/componentes/BarraContextoTripulante.jsx').then((m) => ({ default: m.BarraContextoTripulante })),
+)
+const BadgeAlertas = lazy(() =>
+  import('../../features/gestion/componentes/BadgeAlertas.jsx').then((m) => ({ default: m.BadgeAlertas })),
 )
 
 /** Rutas de módulos de datos (muestran la barra de contexto de tripulante). */
@@ -84,6 +87,7 @@ const NAVEGACION = [
       { id: 'alertas', etiqueta: 'Alertas', icono: Bell, ruta: '/app/alertas', badge: 'alertas' },
       { id: 'chat-ia', etiqueta: 'Médico de IA', icono: Bot, ruta: '/app/chat-ia' },
       { id: 'usuarios', etiqueta: 'Usuarios', icono: UserCog, ruta: '/app/usuarios', soloAdmin: true },
+      { id: 'auditoria', etiqueta: 'Auditoría', icono: ScrollText, ruta: '/app/auditoria', soloAdmin: true },
       { id: 'presentacion', etiqueta: 'Presentación', icono: Presentation, ruta: '/app/presentacion' },
       { id: 'configuracion', etiqueta: 'Configuración', icono: Settings, ruta: '/app/configuracion' },
       { id: 'ayuda', etiqueta: 'Ayuda', icono: HelpCircle, ruta: '/app/ayuda' },
@@ -126,9 +130,6 @@ export function ShellApp() {
   useEffect(() => {
     setDrawerAbierto(false)
   }, [ubicacion.pathname])
-  const alertasSinLeer = useSaludStore(
-    (s) => s.historial.filter((r) => r.tipo === 'alerta' && !r.leida && r.personaId === s.personaId).length,
-  )
 
   // Atajo Ctrl/Cmd + K para abrir el buscador global.
   useEffect(() => {
@@ -173,8 +174,10 @@ export function ShellApp() {
                 >
                   <item.icono size={18} />
                   {!colapsado && <span className="flex-1">{item.etiqueta}</span>}
-                  {item.badge === 'alertas' && alertasSinLeer > 0 && (
-                    <span className="rounded-full bg-critico px-1.5 py-0.5 text-[10px] font-bold text-white">{alertasSinLeer}</span>
+                  {item.badge === 'alertas' && (
+                    <Suspense fallback={null}>
+                      <BadgeAlertas />
+                    </Suspense>
                   )}
                 </NavLink>
               ))}

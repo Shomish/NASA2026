@@ -9,6 +9,7 @@ import { logger } from './logger.js'
 import { crearAplicacion } from './app.js'
 import { verificarConexion, sequelize } from './db/conexion.js'
 import { sembrar } from './db/seed.js'
+import { aplicarMigraciones } from './db/migraciones.js'
 import { inicializarBaseDatos } from './baseDatos.js'
 
 const PUERTO = config.PUERTO
@@ -18,6 +19,8 @@ async function arrancar() {
   // 1. MySQL (motor principal). Falla rápido si no responde en el puerto configurado.
   await verificarConexion()
   await sequelize.sync()
+  // Migraciones ligeras (columnas y ENUMs que sync no altera en tablas existentes).
+  await aplicarMigraciones()
   logger.info({ host: config.DB_HOST, port: config.DB_PORT, base: config.DB_NAME }, 'MySQL conectado y esquema sincronizado')
 
   // 2. Siembra de datos iniciales.

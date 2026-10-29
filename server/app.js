@@ -17,6 +17,11 @@ import configuracionRutas from './configuracion/rutas.js'
 import tripulantesRutas from './api/tripulantes.js'
 import registrosRutas from './api/registros.js'
 import usuariosRutas from './api/usuarios.js'
+import alertasRutas from './api/alertas.js'
+import saludRutas from './api/salud.js'
+import auditoriaRutas from './api/auditoria.js'
+import syncRutas from './api/sync.js'
+import demoRutas from './api/demo.js'
 import { autenticacion } from './middlewares/autenticacion.js'
 import { manejoErrores } from './middlewares/errores.js'
 import {
@@ -61,6 +66,15 @@ export function crearAplicacion() {
   aplicacion.use('/api/v1/tripulantes', tripulantesRutas)
   aplicacion.use('/api/v1/registros', registrosRutas)
   aplicacion.use('/api/v1/usuarios', usuariosRutas)
+
+  // Salud complementaria: alertas, nutrición, catálogo, entornos, acciones.
+  aplicacion.use('/api/v1/alertas', alertasRutas)
+  aplicacion.use('/api/v1', saludRutas)
+
+  // Auditoría (solo administrador), sincronización offline y demo.
+  aplicacion.use('/api/v1/auditoria', auditoriaRutas)
+  aplicacion.use('/api/v1/sync', syncRutas)
+  aplicacion.use('/api/v1/demo', demoRutas)
 
   aplicacion.get('/api/registros', autenticacion, (_req, res) => {
     res.json(obtenerRegistros())

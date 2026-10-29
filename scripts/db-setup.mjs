@@ -9,6 +9,7 @@ import mysql from 'mysql2/promise'
 import { config } from '../server/config.js'
 import { sequelize } from '../server/db/conexion.js'
 import { sembrar } from '../server/db/seed.js'
+import { aplicarMigraciones } from '../server/db/migraciones.js'
 
 async function crearBases() {
   const conexion = await mysql.createConnection({
@@ -27,7 +28,8 @@ try {
   await crearBases()
   console.log('Bases creadas.')
   await sequelize.sync()
-  console.log('Esquema sincronizado (24 tablas).')
+  await aplicarMigraciones()
+  console.log('Esquema sincronizado (36 tablas).')
   await sembrar()
   console.log('Datos sembrados.')
   await sequelize.close()

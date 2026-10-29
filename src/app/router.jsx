@@ -34,6 +34,7 @@ const VistaRegistro = lazy(() => import('../features/auth/VistaRegistro.jsx').th
 const VistaTripulantes = lazy(() => import('../features/gestion/indice.js').then((m) => ({ default: m.VistaTripulantes })))
 const VistaRegistros = lazy(() => import('../features/gestion/indice.js').then((m) => ({ default: m.VistaRegistros })))
 const VistaUsuarios = lazy(() => import('../features/gestion/indice.js').then((m) => ({ default: m.VistaUsuarios })))
+const VistaAuditoria = lazy(() => import('../features/gestion/componentes/VistaAuditoria.jsx').then((m) => ({ default: m.VistaAuditoria })))
 
 /**
  * Enrutador principal.
@@ -51,6 +52,7 @@ export function Router() {
         <Route path="tripulacion" element={<Suspense fallback={<SplashCarga />}><VistaTripulantes /></Suspense>} />
         <Route path="registros" element={<Suspense fallback={<SplashCarga />}><VistaRegistros /></Suspense>} />
         <Route path="usuarios" element={<Suspense fallback={<SplashCarga />}><RutaAdmin><VistaUsuarios /></RutaAdmin></Suspense>} />
+        <Route path="auditoria" element={<Suspense fallback={<SplashCarga />}><RutaAdmin><VistaAuditoria /></RutaAdmin></Suspense>} />
         <Route path="signos" element={<Suspense fallback={<SplashCarga />}><VistaSignosRuta /></Suspense>} />
         <Route path="salud-integral" element={<Suspense fallback={<SplashCarga />}><VistaSaludIntegralRuta /></Suspense>} />
         <Route path="nutricion" element={<Suspense fallback={<SplashCarga />}><VistaNutricionRuta /></Suspense>} />

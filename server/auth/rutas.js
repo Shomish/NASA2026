@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { login, register, refresh, logout, me } from './controlador.js'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { verificarOrigen } from '../middlewares/csrf.js'
@@ -18,7 +18,7 @@ const rutas = Router()
 const esProduccion = config.NODE_ENV === 'production'
 
 /** Genera una clave con prefijo a partir de la IP del cliente. */
-const clavePrefijo = (prefijo) => (req) => `${prefijo}:${req.ip ?? 'desconocido'}`
+const clavePrefijo = (prefijo) => (req) => `${prefijo}:${ipKeyGenerator(req.ip)}`
 
 // Login (anti fuerza bruta).
 const limitadorLogin = rateLimit({

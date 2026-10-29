@@ -105,6 +105,37 @@ export function restaurarRegistro(id) {
   return peticion(`/registros/${id}/restaurar`, { metodo: 'POST' })
 }
 
+/* ============ Alertas ============ */
+
+/** Lista alertas (opcionalmente filtradas por estado). */
+export function listarAlertas(estado) {
+  return peticion(`/alertas${estado ? `?estado=${estado}` : ''}`)
+}
+
+/** Marca una alerta como leída. */
+export function leerAlerta(id) {
+  return peticion(`/alertas/${id}/leer`, { metodo: 'PUT' })
+}
+
+/* ============ Demo ============ */
+
+/** Avanza un día de misión (solo modo demo). */
+export function avanzarDiaDemo() {
+  return peticion('/demo/avanzar-dia', { metodo: 'POST' })
+}
+
+/* ============ Auditoría ============ */
+
+/** Lista la auditoría (solo administrador). */
+export function listarAuditoria(filtros = {}) {
+  const parametros = new URLSearchParams()
+  for (const [clave, valor] of Object.entries(filtros)) {
+    if (valor !== undefined && valor !== null && valor !== '') parametros.set(clave, valor)
+  }
+  const cadena = parametros.toString()
+  return peticion(`/auditoria${cadena ? `?${cadena}` : ''}`)
+}
+
 /* ============ Usuarios ============ */
 
 /** Lista los usuarios (solo administrador). */

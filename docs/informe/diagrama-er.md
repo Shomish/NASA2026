@@ -1,6 +1,6 @@
 # Diagrama ER · Núcleo (3 tablas)
 
-Las tres tablas núcleo del modelo relacional de AYNI HEALTH. El diagrama completo (24 tablas) se incluye como anexo.
+Las tres tablas núcleo del modelo relacional de AYNI HEALTH. El diagrama completo (36 tablas) se incluye como anexo.
 
 ```mermaid
 erDiagram
@@ -55,10 +55,10 @@ erDiagram
 
 ---
 
-## Anexo · Modelo ampliado (24 tablas)
+## Anexo · Modelo ampliado (36 tablas)
 
 ### Detalle de registros (1:1 con `registros`)
-`signos_vitales`, `registros_sueno`, `evaluaciones_phq9`, `registros_radiacion`, `notas_diario` (cada una con `registro_id` FK).
+`signos_vitales`, `registros_sueno`, `evaluaciones_phq9`, `registros_radiacion`, `notas_diario`, `registros_glucosa`, `registros_animo`, `registros_ejercicio`, `registros_sintomas_inmunes`, `registros_estado_conductual`, `registros_ambiente` (cada una con `registro_id` FK).
 
 ### Alertas
 `alertas` (tripulante_id FK, registro_origen_id FK, severidad, estado).
@@ -68,6 +68,9 @@ erDiagram
 
 ### Chat de IA
 `conversaciones_ia` (usuario_id, tripulante_id FK), `mensajes_ia` (conversacion_id FK, alerta_id FK opcional).
+
+### Reto (catálogo, acciones, rutinas, logros, entornos)
+`catalogo_indicadores`, `acciones_salud`, `rutinas_medicion`, `cumplimiento_rutinas`, `logros_tripulante`, `entornos_mision` (con `entorno_id` en `tripulantes`).
 
 ### Sistema
 `umbrales_clinicos`, `sesiones_refresh`, `auditoria`, `operaciones_sync`, `consentimientos_ia`, `uso_ia`, `configuracion_ia`, `rate_limits` (rate limit persistente).

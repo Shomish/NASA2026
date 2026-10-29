@@ -4,6 +4,7 @@
  */
 
 import bcrypt from 'bcrypt'
+import { randomBytes } from 'node:crypto'
 import { config } from '../config.js'
 import { modelos } from './modelos.js'
 
@@ -18,7 +19,7 @@ import { modelos } from './modelos.js'
 export async function sembrar(nodeEnv = config.NODE_ENV) {
   if (nodeEnv === 'production') return
 
-  const { Usuario, Tripulante, Alimento, Contramedida, UmbralClinico, ConfiguracionIA, RateLimit } = modelos
+  const { Usuario, Tripulante, Alimento, Contramedida, UmbralClinico, ConfiguracionIA, RateLimit, EntornoMision, CatalogoIndicador, Registro, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud } = modelos
 
   // Los contadores de rate limit son transitorios (ventana de 15 min): se limpian
   // en cada siembra para que los arranques en desarrollo/CI no arrastren límites.
@@ -38,18 +39,56 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
   }
 
   // Tripulantes actuales (existen sin cuenta vinculada).
-  await Tripulante.findOrCreate({
+  const [ana] = await Tripulante.findOrCreate({
     where: { nombre: 'Ana Quispe' },
     defaults: { cargo: 'Comandante', edad: 38, peso_kg: 62, altura_cm: 165, dia_mision: 120, mision: 'Misión Artemis', objetivo: 'Mantener densidad ósea y gestionar el estrés', alergias: ['lactosa'] },
   })
-  await Tripulante.findOrCreate({
+  const [diego] = await Tripulante.findOrCreate({
     where: { nombre: 'Diego Mamani' },
     defaults: { cargo: 'Ingeniero de Vuelo', edad: 41, peso_kg: 78, altura_cm: 178, dia_mision: 120, mision: 'Misión Artemis' },
   })
-  await Tripulante.findOrCreate({
+  const [lucia] = await Tripulante.findOrCreate({
     where: { nombre: 'Lucía Condori' },
     defaults: { cargo: 'Oficial Médico', edad: 35, peso_kg: 58, altura_cm: 160, dia_mision: 120, mision: 'Misión Artemis' },
   })
+
+  // Entornos de misión (reto).
+  const entornos = [
+    { nombre: 'Nave en tránsito', descripcion: 'Nave espacial en trayecto a la Luna o Marte.', peligros_relevantes: ['radiacion', 'aislamiento', 'distancia', 'gravedad', 'entorno_cerrado'] },
+    { nombre: 'Estación orbital', descripcion: 'Estación en órbita baja terrestre.', peligros_relevantes: ['radiacion', 'gravedad', 'entorno_cerrado'] },
+    { nombre: 'Rover', descripcion: 'Vehículo de exploración en superficie.', peligros_relevantes: ['radiacion', 'aislamiento', 'distancia'] },
+    { nombre: 'Base lunar', descripcion: 'Hábitat en la superficie de la Luna.', peligros_relevantes: ['radiacion', 'gravedad', 'entorno_cerrado'] },
+    { nombre: 'Base marciana', descripcion: 'Hábitat en la superficie de Marte.', peligros_relevantes: ['radiacion', 'aislamiento', 'distancia', 'entorno_cerrado'] },
+    { nombre: 'Análogo terrestre Cusco', descripcion: 'Análogo a 3 400 m sobre el nivel del mar (Perú).', peligros_relevantes: ['aislamiento', 'entorno_cerrado'] },
+  ]
+  const entornoPorNombre = {}
+  for (const e of entornos) {
+    const [entorno] = await EntornoMision.findOrCreate({ where: { nombre: e.nombre }, defaults: e })
+    entornoPorNombre[e.nombre] = entorno
+  }
+  // Vincula a los tripulantes al análogo Cusco (si no tienen entorno).
+  for (const t of [ana, diego, lucia]) {
+    if (!t.entorno_id) await t.update({ entorno_id: entornoPorNombre['Análogo terrestre Cusco'].id })
+  }
+
+  // Catálogo de indicadores (guía del reto). Fuentes pendientes de verificar.
+  const indicadores = [
+    { nombre: 'Presión arterial', unidad: 'mmHg', rango_referencia: '120/80', peligro_asociado: 'cardiovascular', como_medir: 'Con un tensiómetro, en reposo, brazo izquierdo.', por_que: 'Detecta cambios cardiovasculares por microgravedad.', fuente: 'NASA Human Research Program (pendiente de verificar)' },
+    { nombre: 'Frecuencia cardíaca', unidad: 'lpm', rango_referencia: '60-100', peligro_asociado: 'cardiovascular', como_medir: 'Con pulsómetro o monitor de pecho.', por_que: 'Refleja la carga cardiovascular y el estrés.', fuente: 'NASA HRP (pendiente de verificar)' },
+    { nombre: 'Glucosa', unidad: 'mg/dL', rango_referencia: '70-100 (ayunas)', peligro_asociado: 'nutricion', como_medir: 'Glucómetro con gota de sangre capilar.', por_que: 'Controla el metabolismo y la nutrición.', fuente: 'Agencias espaciales (pendiente de verificar)' },
+    { nombre: 'Temperatura', unidad: '°C', rango_referencia: '36-37.5', peligro_asociado: 'inmune', como_medir: 'Termómetro digital.', por_que: 'Detecta fiebre o hipotermia.', fuente: 'General (pendiente de verificar)' },
+    { nombre: 'Sueño', unidad: 'horas', rango_referencia: '7-9', peligro_asociado: 'conductual', como_medir: 'Registro de horas y calidad percibida.', por_que: 'El sueño insuficiente afecta ánimo y rendimiento.', fuente: 'NASA HRP (pendiente de verificar)' },
+    { nombre: 'Ánimo', unidad: 'escala 1-10', rango_referencia: '≥7', peligro_asociado: 'conductual', como_medir: 'Autoevaluación diaria.', por_que: 'Detecta deterioro conductual por aislamiento.', fuente: 'NASA HRP (pendiente de verificar)' },
+    { nombre: 'Radiación', unidad: 'mSv', rango_referencia: 'según umbral', peligro_asociado: 'radiacion', como_medir: 'Dosímetro personal.', por_que: 'Controla la dosis acumulada.', fuente: 'NASA HRP (pendiente de verificar)' },
+  ]
+  for (const i of indicadores) {
+    await CatalogoIndicador.findOrCreate({ where: { nombre: i.nombre }, defaults: i })
+  }
+
+  // Escenario de demostración (120 días) solo en modo demo.
+  if (config.DEMO_MODE === 'true') {
+    await sembrarEscenarioDemo({ ana, diego, lucia, Registro, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud })
+  }
 
   // Alimentos (superalimentos andinos y despensa).
   const alimentos = [
@@ -84,6 +123,7 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
     { parametro: 'frecuencia_cardiaca', min_normal: 60, max_normal: 100, min_critico: 40, max_critico: 150, unidad: 'lpm' },
     { parametro: 'temperatura', min_normal: 36, max_normal: 37.5, min_critico: 34, max_critico: 40, unidad: '°C' },
     { parametro: 'phq9', min_normal: 0, max_normal: 9, min_critico: 20, max_critico: 27, unidad: 'puntos' },
+    { parametro: 'glucosa', min_normal: 70, max_normal: 100, min_critico: 54, max_critico: 250, unidad: 'mg/dL' },
   ]
   for (const u of umbrales) {
     await UmbralClinico.findOrCreate({ where: { parametro: u.parametro }, defaults: u })
@@ -100,5 +140,53 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
       limite_mensual_global: 10000,
       version_prompt_sistema: 'v1',
     },
+  })
+}
+
+/**
+ * Siembra el escenario de demostración de 120 días con tendencias realistas
+ * (sueño que empeora, ánimo que cae, ejercicio que baja). Solo se ejecuta en modo
+ * demo y una única vez (si ya hay registros, no resiembra).
+ * @param {object} params - Modelos y tripulantes.
+ * @returns {Promise<void>} Promesa.
+ */
+async function sembrarEscenarioDemo({ ana, diego, lucia, Registro, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud }) {
+  if (await Registro.count() > 0) return
+
+  const { Usuario } = modelos
+  const admin = await Usuario.findOne({ where: { email: 'admin@ayni.health' } })
+
+  /** Crea una cabecera + detalle con código único. */
+  const crear = async (tripulante, tipo, detalle, modeloDetalle, estado = 'validado', diasAtras = 0) => {
+    const registro = await Registro.create({
+      codigo: randomBytes(4).toString('hex').toUpperCase(),
+      usuario_id: admin?.id ?? null,
+      tripulante_id: tripulante.id,
+      tipo,
+      estado,
+      fecha_registro: new Date(Date.now() - diasAtras * 86400000),
+    })
+    await modeloDetalle.create({ registro_id: registro.id, ...detalle })
+    return registro
+  }
+
+  // Ana: sueño empeora, ánimo cae, ejercicio baja, glucosa estable.
+  await crear(ana, 'sueno', { horas: 8, calidad: 8, despertares: 1 }, RegistroSueno, 'validado', 14)
+  await crear(ana, 'sueno', { horas: 6, calidad: 5, despertares: 4 }, RegistroSueno, 'validado', 1)
+  await crear(ana, 'animo', { escala: 8, notas: 'Energía estable' }, RegistroAnimo, 'validado', 14)
+  await crear(ana, 'animo', { escala: 5, notas: 'Cansancio acumulado' }, RegistroAnimo, 'validado', 1)
+  await crear(ana, 'ejercicio', { tipo: 'resistencia', minutos: 45, cumplio_plan: true }, RegistroEjercicio, 'validado', 14)
+  await crear(ana, 'ejercicio', { tipo: 'resistencia', minutos: 15, cumplio_plan: false }, RegistroEjercicio, 'validado', 1)
+  await crear(ana, 'glucosa', { glucosa_mgdl: 95, ayunas: true }, RegistroGlucosa, 'validado', 1)
+  await crear(ana, 'estado_conductual', { gad7: 8, estres: 5, fatiga: 6 }, RegistroEstadoConductual, 'validado', 1)
+
+  // Diego y Lucía: un registro cada uno.
+  await crear(diego, 'sueno', { horas: 7, calidad: 7, despertares: 2 }, RegistroSueno, 'validado', 1)
+  await crear(lucia, 'glucosa', { glucosa_mgdl: 90, ayunas: true }, RegistroGlucosa, 'validado', 1)
+
+  // Acción de salud sugerida por las reglas.
+  await AccionSalud.findOrCreate({
+    where: { tripulante_id: ana.id, dominio: 'conductual', descripcion: 'Higiene del sueño y apoyo psicológico', origen: 'regla' },
+    defaults: { estado: 'pendiente', fecha: new Date() },
   })
 }

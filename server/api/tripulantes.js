@@ -30,12 +30,14 @@ const esquemaTripulante = z.object({
 
 // GET /api/v1/tripulantes
 // El tripulante ve solo su propio registro; médico/administrador ven todos.
+// Incluye el entorno de misión (entornos_mision) para la barra de contexto.
 rutas.get('/', autenticacion, async (req, res) => {
+  const incluir = { model: modelos.EntornoMision, as: 'EntornoMision' }
   if (req.usuario?.rol === 'tripulante') {
     const propio = await tripulanteDelUsuario(req)
     return res.json(propio ? [propio] : [])
   }
-  const tripulantes = await Tripulante.findAll()
+  const tripulantes = await Tripulante.findAll({ include: [incluir] })
   res.json(tripulantes)
 })
 

@@ -60,6 +60,12 @@ export function useRegistros(filtros = {}) {
   return useConsultaCaché(CLAVES.registros(filtros), () => api.listarRegistros(filtros), 'cache-registros')
 }
 
+/** Conteo de alertas no leídas (para el badge del menú). */
+export function useAlertasNoLeidas() {
+  const { data } = useQuery({ queryKey: ['alertas', 'nueva'], queryFn: () => api.listarAlertas('nueva') })
+  return Array.isArray(data) ? data.length : 0
+}
+
 /** Mutación genérica con invalidación y toast. */
 function useMutacion({ fn, clave, exito, errorMensaje = 'No se pudo completar la operación.' }) {
   const cliente = useQueryClient()

@@ -10,8 +10,13 @@ import { autenticacion } from '../middlewares/autenticacion.js'
 import { modelos } from '../db/modelos.js'
 import { sequelize } from '../db/conexion.js'
 import { generarCodigoUnico, esMedicoOAdmin, tripulanteDelUsuario, auditar } from './utilidades.js'
+import { generarAlertas } from './alertas.js'
 
-const { Registro, SignoVital, RegistroSueno, EvaluacionPhq9, RegistroRadiacion, NotaDiario } = modelos
+const {
+  Registro, SignoVital, RegistroSueno, EvaluacionPhq9, RegistroRadiacion, NotaDiario,
+  RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroSintomasInmunes,
+  RegistroEstadoConductual, RegistroAmbiente,
+} = modelos
 const rutas = Router()
 
 /** Mapeo de tipo → modelo de detalle. */
@@ -21,6 +26,12 @@ const MODELOS_DETALLE = {
   salud_mental: EvaluacionPhq9,
   radiacion: RegistroRadiacion,
   diario: NotaDiario,
+  glucosa: RegistroGlucosa,
+  animo: RegistroAnimo,
+  ejercicio: RegistroEjercicio,
+  sintomas_inmunes: RegistroSintomasInmunes,
+  estado_conductual: RegistroEstadoConductual,
+  ambiente: RegistroAmbiente,
 }
 
 /**
@@ -57,12 +68,43 @@ const ESQUEMAS_DETALLE = {
     contenido: z.string().min(1),
     etiquetas: z.array(z.string()).optional(),
   }),
+  glucosa: z.object({
+    glucosa_mgdl: z.number().int().min(0).max(600),
+    ayunas: z.boolean().optional(),
+  }),
+  animo: z.object({
+    escala: z.number().int().min(1).max(10),
+    notas: z.string().max(255).optional(),
+  }),
+  ejercicio: z.object({
+    tipo: z.enum(['resistencia', 'cardio']),
+    minutos: z.number().int().min(1).max(600),
+    cumplio_plan: z.boolean().optional(),
+  }),
+  sintomas_inmunes: z.object({
+    fiebre: z.number().int().min(0).max(3).optional(),
+    fatiga_inusual: z.number().int().min(0).max(3).optional(),
+    infecciones: z.number().int().min(0).max(3).optional(),
+    lesiones_cutaneas: z.number().int().min(0).max(3).optional(),
+    cicatrizacion_lenta: z.number().int().min(0).max(3).optional(),
+  }),
+  estado_conductual: z.object({
+    gad7: z.number().int().min(0).max(21).optional(),
+    estres: z.number().int().min(0).max(10).optional(),
+    fatiga: z.number().int().min(0).max(10).optional(),
+  }),
+  ambiente: z.object({
+    co2_ppm: z.number().int().min(0).optional(),
+    temperatura_c: z.number().optional(),
+    humedad: z.number().min(0).max(100).optional(),
+    ruido_db: z.number().min(0).optional(),
+  }),
 }
 
 /** Esquema de creación de registro. */
 const esquemaRegistro = z.object({
   tripulante_id: z.number().int().positive(),
-  tipo: z.enum(['signos_vitales', 'sueno', 'salud_mental', 'radiacion', 'diario']),
+  tipo: z.enum(['signos_vitales', 'sueno', 'salud_mental', 'radiacion', 'diario', 'glucosa', 'animo', 'ejercicio', 'sintomas_inmunes', 'estado_conductual', 'ambiente']),
   detalle: z.record(z.unknown()).optional().default({}),
 })
 
@@ -152,6 +194,7 @@ rutas.post('/', autenticacion, async (req, res) => {
     await modeloDetalle.create({ registro_id: registro.id, ...detalle.detalle }, { transaction: transaccion })
     await transaccion.commit()
     await auditar({ usuarioId: req.usuario.id, accion: 'crear', entidad: 'registro', entidadId: registro.id, req })
+    await generarAlertas(registro, detalle.detalle)
     res.status(201).json(registro)
   } catch (error) {
     await transaccion.rollback()
