@@ -37,6 +37,35 @@ export async function crearUsuario(datos) {
 }
 
 /**
+ * Registra un intento de login fallido de forma persistente.
+ * Al alcanzar `maxIntentos` bloquea la cuenta (`bloqueado_hasta`) y reinicia el
+ * contador. Si el email no existe no hace nada (anti-enumeración y anti-DoS).
+ * @param {string} email - Email del usuario.
+ * @param {number} maxIntentos - Intentos máximos antes de bloquear.
+ * @param {number} bloqueoMs - Duración del bloqueo en milisegundos.
+ * @returns {Promise<void>} Promesa.
+ */
+export async function registrarIntentoFallido(email, maxIntentos, bloqueoMs) {
+  const usuario = await Usuario.findOne({ where: { email } })
+  if (!usuario) return
+  const intentos = (usuario.intentos_fallidos ?? 0) + 1
+  if (intentos >= maxIntentos) {
+    await usuario.update({ intentos_fallidos: 0, bloqueado_hasta: new Date(Date.now() + bloqueoMs) })
+  } else {
+    await usuario.update({ intentos_fallidos: intentos })
+  }
+}
+
+/**
+ * Limpia los intentos fallidos y el bloqueo de un usuario (login correcto).
+ * @param {string} email - Email del usuario.
+ * @returns {Promise<void>} Promesa.
+ */
+export async function limpiarIntentosFallidos(email) {
+  await Usuario.update({ intentos_fallidos: 0, bloqueado_hasta: null }, { where: { email } })
+}
+
+/**
  * Lista todos los usuarios (sin la contraseña).
  * @returns {Promise<object[]>} Usuarios.
  */

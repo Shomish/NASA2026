@@ -1,6 +1,7 @@
 /**
  * @fileoverview Componente TarjetaEstadoGlobal
  * Puntaje de salud compuesto (circular) y sparklines de FC y O₂ (Recharts).
+ * Los colores provienen de los tokens del tema (cero colores a mano).
  * @module presentacion/componentes/TarjetaEstadoGlobal
  */
 
@@ -18,9 +19,7 @@ import {
 import { HeartPulse, Activity } from 'lucide-react'
 import { Tarjeta, EncabezadoPanel, InsigniaEstado } from './UtilidadesUi.jsx'
 import { vitales24Horas } from '../../datos/mockDatos.js'
-
-/** Color del radial según nivel. */
-const COLOR_NIVEL = { optimo: '#10b981', atencion: '#f97316', critico: '#f43f5e' }
+import { useTema } from '../sistema/tema.jsx'
 
 /**
  * Tarjeta de estado global con puntaje y tendencias.
@@ -29,10 +28,30 @@ const COLOR_NIVEL = { optimo: '#10b981', atencion: '#f97316', critico: '#f43f5e'
  * @returns {import('react').JSX.Element} Tarjeta.
  */
 export default function TarjetaEstadoGlobal({ resultado }) {
+  const { tema, modoEfectivo } = useTema()
+  const tokens = tema[modoEfectivo] ?? tema.oscuro
+
   const puntaje = resultado?.puntaje ?? 0
   const nivel = resultado?.nivel ?? 'critico'
-  const color = COLOR_NIVEL[nivel] ?? '#6b7280'
+
+  // Color del radial según nivel, desde los tokens semánticos.
+  const COLOR_NIVEL = {
+    optimo: `rgb(${tokens.exito})`,
+    atencion: `rgb(${tokens.advertencia})`,
+    critico: `rgb(${tokens.critico})`,
+  }
+  const color = COLOR_NIVEL[nivel] ?? `rgb(${tokens.tinta})`
   const datoRadial = [{ nombre: 'Salud', valor: puntaje, relleno: color }]
+
+  const estiloTooltip = {
+    backgroundColor: `rgb(${tokens.superficie})`,
+    border: `1px solid rgb(${tokens.borde})`,
+    borderRadius: '8px',
+    fontSize: '12px',
+    color: `rgb(${tokens.tinta})`,
+  }
+  const colorFc = `rgb(${tokens.critico})`
+  const colorO2 = `rgb(${tokens.exito})`
 
   return (
     <Tarjeta clase="p-5 flex flex-col gap-4">
@@ -58,7 +77,7 @@ export default function TarjetaEstadoGlobal({ resultado }) {
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-mono text-3xl font-bold text-neutral-50">{puntaje}</span>
+            <span className="font-mono text-3xl font-bold text-tinta">{puntaje}</span>
             <span className="font-mono text-[10px] text-tinta-suave uppercase">/ 100</span>
           </div>
         </div>
@@ -84,14 +103,14 @@ export default function TarjetaEstadoGlobal({ resultado }) {
               <AreaChart data={vitales24Horas} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                 <defs>
                   <linearGradient id="gradFc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#f43f5e" stopOpacity={0} />
+                    <stop offset="0%" stopColor={colorFc} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={colorFc} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="hora" hide />
                 <YAxis domain={['dataMin - 5', 'dataMax + 5']} hide />
                 <Tooltip contentStyle={estiloTooltip} />
-                <Area type="monotone" dataKey="frecuenciaCardiaca" stroke="#f43f5e" strokeWidth={2} fill="url(#gradFc)" />
+                <Area type="monotone" dataKey="frecuenciaCardiaca" stroke={colorFc} strokeWidth={2} fill="url(#gradFc)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -107,14 +126,14 @@ export default function TarjetaEstadoGlobal({ resultado }) {
               <AreaChart data={vitales24Horas} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
                 <defs>
                   <linearGradient id="gradO2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="0%" stopColor={colorO2} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={colorO2} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="hora" hide />
                 <YAxis domain={['dataMin - 2', 'dataMax + 2']} hide />
                 <Tooltip contentStyle={estiloTooltip} />
-                <Area type="monotone" dataKey="saturacion" stroke="#10b981" strokeWidth={2} fill="url(#gradO2)" />
+                <Area type="monotone" dataKey="saturacion" stroke={colorO2} strokeWidth={2} fill="url(#gradO2)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -122,14 +141,4 @@ export default function TarjetaEstadoGlobal({ resultado }) {
       </div>
     </Tarjeta>
   )
-}
-
-/** Estilo del tooltip de Recharts. */
-const estiloTooltip = {
-  backgroundColor: '#171717',
-  border: '1px solid #262626',
-  borderRadius: '8px',
-  fontSize: '12px',
-  fontFamily: 'JetBrains Mono, monospace',
-  color: '#e5e5e5',
 }

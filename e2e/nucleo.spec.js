@@ -47,7 +47,7 @@ test('flujo completo: registrar → login → tripulante → registro → valida
   await page.selectOption('#r-tripulante', { label: NOMBRE_TRIPULANTE })
   await page.fill('#r-frecuencia_cardiaca', '72')
   await page.fill('#r-spo2', '97')
-  await page.getByRole('button', { name: 'Crear' }).click()
+  await page.getByRole('button', { name: /Guardar para/ }).click()
 
   // Muestra el código y el estado pendiente.
   const codigo = (await page.getByTestId('ultimo-codigo').textContent())?.trim()

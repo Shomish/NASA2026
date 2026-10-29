@@ -1,6 +1,6 @@
 # Diagrama ER · Núcleo (3 tablas)
 
-Las tres tablas núcleo del modelo relacional de AYNI HEALTH. El diagrama completo (23 tablas) se incluye como anexo.
+Las tres tablas núcleo del modelo relacional de AYNI HEALTH. El diagrama completo (24 tablas) se incluye como anexo.
 
 ```mermaid
 erDiagram
@@ -55,7 +55,7 @@ erDiagram
 
 ---
 
-## Anexo · Modelo ampliado (23 tablas)
+## Anexo · Modelo ampliado (24 tablas)
 
 ### Detalle de registros (1:1 con `registros`)
 `signos_vitales`, `registros_sueno`, `evaluaciones_phq9`, `registros_radiacion`, `notas_diario` (cada una con `registro_id` FK).
@@ -70,4 +70,4 @@ erDiagram
 `conversaciones_ia` (usuario_id, tripulante_id FK), `mensajes_ia` (conversacion_id FK, alerta_id FK opcional).
 
 ### Sistema
-`umbrales_clinicos`, `sesiones_refresh`, `auditoria`, `operaciones_sync`, `consentimientos_ia`, `uso_ia`, `configuracion_ia`.
+`umbrales_clinicos`, `sesiones_refresh`, `auditoria`, `operaciones_sync`, `consentimientos_ia`, `uso_ia`, `configuracion_ia`, `rate_limits` (rate limit persistente).

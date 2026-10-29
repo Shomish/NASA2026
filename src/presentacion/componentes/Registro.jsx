@@ -7,13 +7,14 @@ import { useState } from 'react'
 import { Trash2, Pencil, CalendarDays, NotebookPen, Bell, Plus } from 'lucide-react'
 import { Tarjeta, EncabezadoPanel, InsigniaEstado } from './UtilidadesUi.jsx'
 import { RANGOS_SIGNO_VITAL } from '../../dominio/indice.js'
+import { useTema } from '../sistema/tema.jsx'
 
-/** Etiquetas y color por tipo de registro. */
+/** Etiqueta e índice de la serie cromática por tipo de registro. */
 const INFO_TIPO = {
-  signo: { etiqueta: 'Signos vitales', color: '#14b8a6' },
-  sueno: { etiqueta: 'Sueño', color: '#60a5fa' },
-  mental: { etiqueta: 'Salud mental', color: '#a78bfa' },
-  radiacion: { etiqueta: 'Radiación', color: '#fbbf24' },
+  signo: { etiqueta: 'Signos vitales', serie: 2 },
+  sueno: { etiqueta: 'Sueño', serie: 5 },
+  mental: { etiqueta: 'Salud mental', serie: 4 },
+  radiacion: { etiqueta: 'Radiación', serie: 1 },
 }
 
 /**
@@ -41,6 +42,8 @@ export function describirRegistro(registro) {
  */
 export function PanelHistorial({ registros = [], alEliminar }) {
   const [filtro, setFiltro] = useState('todos')
+  const { tema } = useTema()
+  const series = tema.series
   const filtrados = registros
     .filter((r) => filtro === 'todos' || r.tipo === filtro)
     .sort((a, b) => new Date(b.instante) - new Date(a.instante))
@@ -74,11 +77,12 @@ export function PanelHistorial({ registros = [], alEliminar }) {
             <tbody>
               {filtrados.map((r) => {
                 const info = INFO_TIPO[r.tipo]
+                const color = info ? series[info.serie % series.length] : undefined
                 return (
                   <tr key={r.id} className="border-b border-borde/60 hover:bg-superficie-alta/40">
                     <td className="py-2 pr-3 font-mono text-xs text-tinta-suave">{new Date(r.instante).toLocaleDateString('es-PE')}</td>
                     <td className="py-2 pr-3">
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono" style={{ color: info?.color, backgroundColor: `${info?.color}1A` }}>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-mono" style={{ color, backgroundColor: color ? `${color}1A` : undefined }}>
                         {info?.etiqueta}
                       </span>
                     </td>

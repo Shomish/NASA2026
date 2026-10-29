@@ -23,6 +23,11 @@ export default {
         critico: 'rgb(var(--critico) / <alpha-value>)',
         'andino-dorado': 'rgb(var(--andino-dorado) / <alpha-value>)',
         'andino-terracota': 'rgb(var(--andino-terracota) / <alpha-value>)',
+        teja: 'rgb(var(--teja) / <alpha-value>)',
+        'teja-fuerte': 'rgb(var(--teja-fuerte) / <alpha-value>)',
+        'hero-inicio': 'rgb(var(--hero-inicio) / <alpha-value>)',
+        'hero-medio': 'rgb(var(--hero-medio) / <alpha-value>)',
+        'hero-fin': 'rgb(var(--hero-fin) / <alpha-value>)',
       },
       borderRadius: {
         tarjeta: 'var(--radio-tarjeta)',

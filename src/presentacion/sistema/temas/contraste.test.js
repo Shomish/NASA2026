@@ -19,6 +19,13 @@ describe('contrasteWCAG', () => {
     const cumple = cumpleAA('#F7F1E8', '#12100E')
     expect(cumple).toBe(true)
   })
+
+  it('verifica que el blanco sobre los tonos teja (hero y botón) cumple AA', () => {
+    const teja = rgbAHex('162 84 42')
+    const tejaFuerte = rgbAHex('138 62 30')
+    expect(cumpleAA(teja, '#FFFFFF')).toBe(true)
+    expect(cumpleAA(tejaFuerte, '#FFFFFF')).toBe(true)
+  })
 })
 
 describe('conversiones', () => {

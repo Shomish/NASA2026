@@ -7,6 +7,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { VistaLogin, RutaProtegida } from '../features/auth/index.js'
+import { RutaAdmin } from '../features/auth/RutaAdmin.jsx'
 import SplashCarga from '../presentacion/componentes/SplashCarga.jsx'
 import { ShellApp } from './shell/ShellApp.jsx'
 
@@ -49,7 +50,7 @@ export function Router() {
         <Route path="monitor" element={<Suspense fallback={<SplashCarga />}><VistaMonitorRuta /></Suspense>} />
         <Route path="tripulacion" element={<Suspense fallback={<SplashCarga />}><VistaTripulantes /></Suspense>} />
         <Route path="registros" element={<Suspense fallback={<SplashCarga />}><VistaRegistros /></Suspense>} />
-        <Route path="usuarios" element={<Suspense fallback={<SplashCarga />}><VistaUsuarios /></Suspense>} />
+        <Route path="usuarios" element={<Suspense fallback={<SplashCarga />}><RutaAdmin><VistaUsuarios /></RutaAdmin></Suspense>} />
         <Route path="signos" element={<Suspense fallback={<SplashCarga />}><VistaSignosRuta /></Suspense>} />
         <Route path="salud-integral" element={<Suspense fallback={<SplashCarga />}><VistaSaludIntegralRuta /></Suspense>} />
         <Route path="nutricion" element={<Suspense fallback={<SplashCarga />}><VistaNutricionRuta /></Suspense>} />

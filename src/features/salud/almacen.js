@@ -4,6 +4,7 @@
  * @module features/salud/almacen
  */
 
+import { useMemo } from 'react'
 import { create } from 'zustand'
 import { tripulacionInicial } from '../../datos/mockDatos.js'
 import { AdaptadorAlmacenamiento, AdaptadorApi, generarId } from '../../infraestructura/indice.js'
@@ -144,26 +145,38 @@ export function calcularSignos(historial, personaId) {
 
 /**
  * Hook: tripulante activo.
+ * Suscribe a referencias estables (`tripulacion`) y a un primitivo (`personaId`);
+ * el valor derivado se calcula con `useMemo` fuera del selector.
  * @returns {object | null} Persona activa.
  */
 export function usePersona() {
-  return useSaludStore((s) => s.tripulacion.find((p) => p.id === s.personaId) ?? s.tripulacion[0] ?? null)
+  const tripulacion = useSaludStore((s) => s.tripulacion)
+  const personaId = useSaludStore((s) => s.personaId)
+  return useMemo(() => tripulacion.find((p) => p.id === personaId) ?? tripulacion[0] ?? null, [tripulacion, personaId])
 }
 
 /**
  * Hook: registros del tripulante activo (ordenados).
+ * El valor derivado se memoiza fuera del selector para devolver siempre una
+ * referencia estable y evitar el bucle de re-render de Zustand 5.
  * @returns {object[]} Registros.
  */
 export function useRegistrosPersona() {
-  return useSaludStore((s) =>
-    s.historial.filter((r) => r.personaId === s.personaId).sort((a, b) => new Date(a.instante) - new Date(b.instante)),
+  const historial = useSaludStore((s) => s.historial)
+  const personaId = useSaludStore((s) => s.personaId)
+  return useMemo(
+    () => historial.filter((r) => r.personaId === personaId).sort((a, b) => new Date(a.instante) - new Date(b.instante)),
+    [historial, personaId],
   )
 }
 
 /**
  * Hook: signos vitales del tripulante activo.
+ * El objeto se memoiza fuera del selector (depende de `historial` y `personaId`).
  * @returns {object} Signos vitales.
  */
 export function useSignos() {
-  return useSaludStore((s) => calcularSignos(s.historial, s.personaId))
+  const historial = useSaludStore((s) => s.historial)
+  const personaId = useSaludStore((s) => s.personaId)
+  return useMemo(() => calcularSignos(historial, personaId), [historial, personaId])
 }

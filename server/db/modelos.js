@@ -1,5 +1,5 @@
 /**
- * @fileoverview Modelos del dominio (23 tablas) con Sequelize.
+ * @fileoverview Modelos del dominio (24 tablas) con Sequelize.
  * Núcleo: Usuario, Tripulante, Registro. Detalle, alertas, nutrición, chat y sistema.
  * @module server/db/modelos
  */
@@ -257,6 +257,14 @@ export const ConfiguracionIA = sequelize.define('ConfiguracionIA', {
   actualizado_por: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
 }, { tableName: 'configuracion_ia', timestamps: true })
 
+/* ==================== SISTEMA (rate limit persistente) ==================== */
+
+export const RateLimit = sequelize.define('RateLimit', {
+  clave: { type: DataTypes.STRING(255), primaryKey: true },
+  total: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+  vence_en: { type: DataTypes.DATE, allowNull: false },
+}, { tableName: 'rate_limits', timestamps: false, indexes: [{ fields: ['vence_en'] }] })
+
 /* ==================== ASOCIACIONES ==================== */
 
 Usuario.hasMany(Registro, { foreignKey: 'usuario_id' })
@@ -295,5 +303,5 @@ export const modelos = {
   Usuario, Tripulante, Registro, SignoVital, RegistroSueno, EvaluacionPhq9, RegistroRadiacion,
   NotaDiario, Alerta, Alimento, Contramedida, PlanNutricional, PlanAlimento, CacheImagen,
   ConversacionIA, MensajeIA, UmbralClinico, SesionRefresh, Auditoria, OperacionSync,
-  ConsentimientoIA, UsoIA, ConfiguracionIA,
+  ConsentimientoIA, UsoIA, ConfiguracionIA, RateLimit,
 }

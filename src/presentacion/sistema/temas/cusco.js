@@ -33,6 +33,11 @@ export const temaCusco = {
     critico: '220 38 38',
     'andino-dorado': '224 176 79',
     'andino-terracota': '194 96 58',
+    teja: '162 84 42',
+    'teja-fuerte': '138 62 30',
+    'hero-inicio': '26 16 60',
+    'hero-medio': '58 31 27',
+    'hero-fin': '194 96 58',
   },
   claro: {
     fondo: '250 246 240',
@@ -54,6 +59,11 @@ export const temaCusco = {
     critico: '185 28 28',
     'andino-dorado': '200 146 46',
     'andino-terracota': '194 96 58',
+    teja: '162 84 42',
+    'teja-fuerte': '138 62 30',
+    'hero-inicio': '26 16 60',
+    'hero-medio': '58 31 27',
+    'hero-fin': '194 96 58',
   },
   series: ['#E8894F', '#E0B04F', '#2BB3A3', '#3FA37A', '#B83A6B', '#2F5D8A'],
 }

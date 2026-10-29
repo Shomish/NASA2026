@@ -82,7 +82,7 @@ export function VistaLogin() {
   return (
     <div className="min-h-dvh flex flex-col lg:flex-row">
       {/* ============ Panel izquierdo (hero) ============ */}
-      <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-b from-[#1A103C] via-[#3A1F1B] to-[#C2603A] p-6 lg:w-[55%] lg:min-h-dvh">
+      <div className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-b from-hero-inicio via-hero-medio to-hero-fin p-6 lg:w-[55%] lg:min-h-dvh">
         <div className="absolute inset-0 textura-andina opacity-40" />
         {!reducirMovimiento && (
           <Suspense fallback={null}>
@@ -92,7 +92,7 @@ export function VistaLogin() {
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#E8894F] to-[#C2603A] shadow-glow">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teja to-teja-fuerte shadow-glow">
             <Activity size={20} className="text-white" />
           </div>
           <div>
@@ -105,7 +105,7 @@ export function VistaLogin() {
         <div className="relative z-10 my-8 space-y-5">
           <h1 className="font-serif text-3xl font-bold leading-tight text-white lg:text-5xl">
             Cuida la salud de tu tripulación,{' '}
-            <span className="bg-gradient-to-r from-[#E0B04F] to-[#2BB3A3] bg-clip-text text-transparent">incluso sin conexión.</span>
+            <span className="bg-gradient-to-r from-andino-dorado to-acento bg-clip-text text-transparent">incluso sin conexión.</span>
           </h1>
           <p className="max-w-md text-white/80">
             Signos vitales, nutrición andina, sueño, salud mental y un médico de IA que funciona sin
@@ -117,7 +117,7 @@ export function VistaLogin() {
             <div className="relative h-20 w-20">
               <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
                 <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="8" />
-                <circle cx="50" cy="50" r="42" fill="none" stroke="#E0B04F" strokeWidth="8" strokeDasharray="264" strokeDashoffset="0" strokeLinecap="round" />
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgb(var(--andino-dorado))" strokeWidth="8" strokeDasharray="264" strokeDashoffset="0" strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="font-mono text-lg font-bold text-white">100</span>
@@ -139,7 +139,7 @@ export function VistaLogin() {
               { icono: <Sparkles size={16} />, texto: 'Médico de IA offline' },
             ].map((c) => (
               <div key={c.texto} className="flex items-center gap-2 rounded-tarjeta border border-white/20 bg-white/10 p-3 text-xs text-white backdrop-blur-sm">
-                <span className="text-[#E0B04F]">{c.icono}</span>
+                <span className="text-andino-dorado">{c.icono}</span>
                 {c.texto}
               </div>
             ))}
@@ -239,7 +239,7 @@ export function VistaLogin() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-boton bg-gradient-to-r from-[#E8894F] to-[#C2603A] text-base font-semibold text-white shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-boton bg-gradient-to-r from-teja to-teja-fuerte text-base font-semibold text-white shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {isSubmitting ? (
                 <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />

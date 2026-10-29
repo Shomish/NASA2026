@@ -32,6 +32,11 @@ export const temaCosmos = {
     critico: '239 68 68',
     'andino-dorado': '212 162 76',
     'andino-terracota': '194 96 58',
+    teja: '162 84 42',
+    'teja-fuerte': '138 62 30',
+    'hero-inicio': '26 16 60',
+    'hero-medio': '58 31 27',
+    'hero-fin': '194 96 58',
   },
   claro: {
     fondo: '245 247 251',
@@ -53,6 +58,11 @@ export const temaCosmos = {
     critico: '220 38 38',
     'andino-dorado': '176 132 56',
     'andino-terracota': '194 96 58',
+    teja: '162 84 42',
+    'teja-fuerte': '138 62 30',
+    'hero-inicio': '26 16 60',
+    'hero-medio': '58 31 27',
+    'hero-fin': '194 96 58',
   },
   series: ['#6366F1', '#06B6D4', '#10B981', '#F59E0B', '#B83A6B', '#7C3AED'],
 }

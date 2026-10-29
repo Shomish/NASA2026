@@ -21,6 +21,7 @@ import {
   useRestaurarRegistro,
 } from '../consultas.js'
 import { esquemaRegistroForm, detalleDesdeFormulario, TIPOS_REGISTRO } from '../esquemas.js'
+import { useContextoTripulante } from '../useContextoTripulante.js'
 import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaEstado } from './InsigniaEstado.jsx'
 
@@ -35,22 +36,27 @@ const ETIQUETA_TIPO = { signos_vitales: 'Signos vitales', sueno: 'Sueño', salud
  */
 function FormularioRegistro({ alCerrar, alCreado }) {
   const crear = useCrearRegistro()
-  const { data: tripulantesData } = useTripulantes()
-  const tripulantes = Array.isArray(tripulantesData) ? tripulantesData : []
+  const { esTripulante, tripulantes, tripulanteActivo } = useContextoTripulante()
 
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm({ resolver: zodResolver(esquemaRegistroForm), defaultValues: { tipo: 'signos_vitales', tripulante_id: '' } })
+  } = useForm({
+    resolver: zodResolver(esquemaRegistroForm),
+    defaultValues: { tipo: 'signos_vitales', tripulante_id: tripulanteActivo ? String(tripulanteActivo.id) : '' },
+  })
 
   const tipo = watch('tipo')
+  const tripulanteIdSel = watch('tripulante_id')
+  const tripulanteSel = tripulantes.find((t) => String(t.id) === String(tripulanteIdSel)) ?? tripulanteActivo
+  const primerNombre = tripulanteSel?.nombre?.split(' ')[0] ?? ''
 
   const alEnviar = async (datos) => {
     const detalle = detalleDesdeFormulario(datos)
     const registro = await crear.mutateAsync({ tripulante_id: Number(datos.tripulante_id), tipo: datos.tipo, detalle })
-    alCreado(registro)
+    alCreado(registro, tripulanteSel)
     alCerrar()
   }
 
@@ -58,12 +64,21 @@ function FormularioRegistro({ alCerrar, alCreado }) {
     <Modal abierto alCerrar={alCerrar} titulo="Nuevo registro" tituloId="registro-form-titulo">
       <form onSubmit={handleSubmit(alEnviar)} className="space-y-3" noValidate>
         <div>
-          <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="r-tripulante">Tripulante</label>
-          <select id="r-tripulante" className="h-10 w-full rounded-boton border border-borde bg-superficie-elevada px-3 text-sm text-tinta" {...register('tripulante_id')}>
-            <option value="">Elige un tripulante…</option>
-            {tripulantes.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-          </select>
-          {errors.tripulante_id && <p className="mt-1 text-xs text-critico">{errors.tripulante_id.message}</p>}
+          {esTripulante ? (
+            <div className="rounded-tarjeta border border-borde bg-superficie-alta px-3 py-2 text-sm text-tinta">
+              Registrando para: <span className="font-semibold">{tripulanteActivo?.nombre}</span>
+              {tripulanteActivo?.cargo ? ` (${tripulanteActivo.cargo})` : ''}
+            </div>
+          ) : (
+            <>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="r-tripulante">Registrando para</label>
+              <select id="r-tripulante" className="h-10 w-full rounded-boton border border-borde bg-superficie-elevada px-3 text-sm text-tinta" {...register('tripulante_id')}>
+                <option value="">Elige un tripulante…</option>
+                {tripulantes.map((t) => <option key={t.id} value={t.id}>{t.nombre}</option>)}
+              </select>
+              {errors.tripulante_id && <p className="mt-1 text-xs text-critico">{errors.tripulante_id.message}</p>}
+            </>
+          )}
         </div>
 
         <div>
@@ -119,7 +134,7 @@ function FormularioRegistro({ alCerrar, alCreado }) {
 
         <div className="flex justify-end gap-2 pt-2">
           <Boton type="button" variante="secundario" onClick={alCerrar} disabled={crear.isPending}>Cancelar</Boton>
-          <Boton type="submit" disabled={crear.isPending}>{crear.isPending ? 'Creando…' : 'Crear'}</Boton>
+          <Boton type="submit" disabled={crear.isPending}>{crear.isPending ? 'Guardando…' : primerNombre ? `Guardar para ${primerNombre}` : 'Guardar'}</Boton>
         </div>
       </form>
     </Modal>
@@ -287,7 +302,7 @@ export function VistaRegistros() {
         </div>
       )}
 
-      {formAbierto && <FormularioRegistro alCerrar={() => setFormAbierto(false)} alCreado={(r) => { setUltimoCreado(r); toast.success('Registro creado', { description: `Código ${r.codigo}` }) }} />}
+      {formAbierto && <FormularioRegistro alCerrar={() => setFormAbierto(false)} alCreado={(r, t) => { setUltimoCreado(r); toast.success(t?.nombre ? `Medición guardada para ${t.nombre}` : 'Registro creado', { description: `Código ${r.codigo}` }) }} />}
 
       <ConfirmarModal
         abierto={Boolean(aEliminar)}

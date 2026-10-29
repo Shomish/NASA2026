@@ -6,11 +6,11 @@
 import { config } from '../config.js'
 import { esquemaLogin, esquemaRegistro } from '../../shared/esquemaLogin.js'
 import { iniciarSesion, registrarUsuario, rotarRefreshToken, cerrarSesion, TIEMPO_REFRESH_MS } from './servicio.js'
+import { encontrarPorEmail, registrarIntentoFallido, limpiarIntentosFallidos } from './repositorioUsuarios.js'
 
 const COOKIE_REFRESH = 'refresh_token'
 
-/** Bloqueo temporal por intentos fallidos (en memoria). */
-const intentosFallidos = new Map()
+/** Bloqueo temporal por intentos fallidos (persistente en MySQL). */
 const MAX_INTENTOS = 5
 const BLOQUEO_MS = 15 * 60 * 1000
 
@@ -20,17 +20,6 @@ function opcionesCookie() {
 function opcionesLimpiezaCookie() {
   return { httpOnly: true, secure: config.NODE_ENV === 'production', sameSite: 'strict', path: '/api/v1/auth' }
 }
-function estaBloqueado(email) {
-  const r = intentosFallidos.get(email)
-  return Boolean(r && r.bloqueadoHasta > Date.now())
-}
-function registrarFallo(email) {
-  const r = intentosFallidos.get(email) ?? { contador: 0, bloqueadoHasta: 0 }
-  r.contador += 1
-  if (r.contador >= MAX_INTENTOS) { r.bloqueadoHasta = Date.now() + BLOQUEO_MS; r.contador = 0 }
-  intentosFallidos.set(email, r)
-}
-function limpiarIntentos(email) { intentosFallidos.delete(email) }
 
 /**
  * POST /api/v1/auth/login
@@ -40,14 +29,18 @@ export async function login(req, res) {
   if (!validacion.success) return res.status(400).json({ codigo: 'DATOS_INVALIDOS', mensaje: 'Datos inválidos.' })
   const { email, contrasena } = validacion.data
 
-  if (estaBloqueado(email)) return res.status(429).json({ codigo: 'BLOQUEO_TEMPORAL', mensaje: 'Demasiados intentos. Inténtalo más tarde.' })
+  // Bloqueo temporal persistente (sobrevive al reinicio del servidor).
+  const usuario = await encontrarPorEmail(email)
+  if (usuario?.bloqueado_hasta && new Date(usuario.bloqueado_hasta).getTime() > Date.now()) {
+    return res.status(429).json({ codigo: 'BLOQUEO_TEMPORAL', mensaje: 'Demasiados intentos. Inténtalo más tarde.' })
+  }
 
   const sesion = await iniciarSesion(email, contrasena)
   if (!sesion) {
-    registrarFallo(email)
+    await registrarIntentoFallido(email, MAX_INTENTOS, BLOQUEO_MS)
     return res.status(401).json({ codigo: 'CREDENCIALES_INVALIDAS', mensaje: 'Usuario o contraseña incorrectos.' })
   }
-  limpiarIntentos(email)
+  await limpiarIntentosFallidos(email)
   res.cookie(COOKIE_REFRESH, sesion.refreshToken, opcionesCookie())
   return res.json({ accessToken: sesion.accessToken, usuario: sesion.usuario })
 }

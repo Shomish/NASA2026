@@ -22,7 +22,7 @@ test('ruta privada sin sesión redirige a /login', async ({ page }) => {
 test('login con credenciales incorrectas muestra error', async ({ page }) => {
   await page.goto('/login')
   await page.waitForTimeout(2500)
-  await page.fill('input[autocomplete="email"]', 'admin@ayni.health')
+  await page.fill('input[autocomplete="email"]', 'usuario-incorrecto@ayni.health')
   await page.fill('input[autocomplete="current-password"]', 'incorrecta')
   await page.click('button[type="submit"]')
   await expect(page.getByRole('alert')).toBeVisible()

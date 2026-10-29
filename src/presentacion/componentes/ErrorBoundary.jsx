@@ -22,7 +22,7 @@ export default class ErrorBoundary extends Component {
    */
   constructor(props) {
     super(props)
-    this.state = { error: null, hasError: false, restableciendo: false, mostrarConfirmacion: false }
+    this.state = { error: null, hasError: false, restableciendo: false, mostrarConfirmacion: false, componentStack: '' }
   }
 
   /**
@@ -41,6 +41,7 @@ export default class ErrorBoundary extends Component {
    */
   componentDidCatch(error, info) {
     console.error('[ErrorBoundary] Error no controlado:', error, info)
+    this.setState({ componentStack: info?.componentStack ?? '' })
   }
 
   /**
@@ -141,6 +142,9 @@ export default class ErrorBoundary extends Component {
   render() {
     if (!this.state.hasError) return this.props.children
 
+    const esDesarrollo = import.meta.env.DEV
+    const mensaje = this.state.error?.message ?? 'Error desconocido'
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0B0F19] p-6">
         <div className="max-w-md w-full bg-[#111827] border border-[#374151] rounded-2xl p-8 text-center space-y-4">
@@ -149,12 +153,21 @@ export default class ErrorBoundary extends Component {
           </div>
           <h1 className="text-xl font-semibold text-[#F9FAFB]">Algo salió mal</h1>
           <p className="text-sm text-[#9CA3AF]">
-            Ocurrió un error inesperado al cargar la aplicación. Intenta recargar; si persiste,
-            restablece los datos locales.
+            {esDesarrollo
+              ? 'Ocurrió un error durante el renderizado. A continuación se muestra el detalle técnico para diagnosticarlo.'
+              : 'Ocurrió un error inesperado. Intenta recargar; si persiste, restablece los datos locales.'}
           </p>
-          <pre className="text-left text-xs font-mono text-critico bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-40">
-            {this.state.error?.message ?? 'Error desconocido'}
-          </pre>
+          {esDesarrollo && (
+            <pre className="text-left text-xs font-mono text-critico bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-40 whitespace-pre-wrap break-words">
+              {mensaje}
+              {this.state.componentStack ? `\n\n${this.state.componentStack}` : ''}
+            </pre>
+          )}
+          {!esDesarrollo && (
+            <pre className="text-left text-xs font-mono text-critico bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-40">
+              {mensaje}
+            </pre>
+          )}
           <div className="flex flex-col gap-2">
             <button
               type="button"

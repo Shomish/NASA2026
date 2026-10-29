@@ -9,14 +9,11 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, 
 import { Activity, HeartPulse, Moon, AlertTriangle, TrendingUp } from 'lucide-react'
 import { vitales24Horas } from '../../datos/mockDatos.js'
 import { SelectorSegmentado } from '../sistema/movil/SelectorSegmentado.jsx'
+import { useTema } from '../sistema/tema.jsx'
 
-/** Datos de la dona (registros por tipo). */
-const DATOS_DONA = [
-  { nombre: 'Signos', valor: 14, color: '#E8894F' },
-  { nombre: 'Sueño', valor: 7, color: '#E0B04F' },
-  { nombre: 'Mental', valor: 4, color: '#2BB3A3' },
-  { nombre: 'Radiación', valor: 3, color: '#3FA37A' },
-]
+/** Etiquetas de la dona (los colores vienen de `tema.series`). */
+const ETIQUETAS_DONA = ['Signos', 'Sueño', 'Mental', 'Radiación']
+const VALORES_DONA = [14, 7, 4, 3]
 
 /**
  * Saludo según la hora.
@@ -35,8 +32,15 @@ function saludoPorHora() {
  */
 export default function VistaDashboard() {
   const [rango, setRango] = useState('7')
+  const { tema, modoEfectivo } = useTema()
+  const tokens = tema[modoEfectivo] ?? tema.oscuro
+  const serie = tema.series
 
   const series = useMemo(() => vitales24Horas.map((v, i) => ({ ...v, indice: i })), [])
+
+  const datosDona = ETIQUETAS_DONA.map((nombre, i) => ({ nombre, valor: VALORES_DONA[i], color: serie[i % serie.length] }))
+
+  const estiloTooltip = { background: `rgb(${tokens.superficie})`, border: `1px solid rgb(${tokens.borde})`, borderRadius: 8, color: `rgb(${tokens.tinta})` }
 
   const kpis = [
     { etiqueta: 'Frecuencia cardíaca', valor: '72', unidad: 'lpm', icono: HeartPulse, color: 'text-primario', fondo: 'bg-primario/10', tendencia: '+2% vs ayer' },
@@ -48,18 +52,18 @@ export default function VistaDashboard() {
   return (
     <div className="space-y-5">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-tarjeta border border-borde bg-gradient-to-r from-primario to-primario-fuerte p-6">
+      <div className="relative overflow-hidden rounded-tarjeta border border-borde bg-gradient-to-r from-teja to-teja-fuerte p-6">
         <div className="textura-andina absolute inset-0 opacity-30" />
         <div className="relative flex flex-wrap items-center gap-6">
           <div className="flex-1">
             <div className="flex items-center gap-2 text-sm text-white/90">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-              <span className="font-mono">● En vivo · Sistema estable</span>
+              <span className="font-mono">En vivo · Sistema estable</span>
             </div>
             <h1 className="mt-1 font-serif text-3xl font-bold text-white">{saludoPorHora()}, Ana 👋</h1>
             <p className="mt-1 text-white/80">Hoy llevas 2 mediciones registradas y 0 alertas. Tu estado global es óptimo.</p>
             <div className="mt-4 flex gap-2">
-              <button type="button" className="rounded-boton bg-white px-4 py-2 text-sm font-semibold text-primario-fuerte">Registrar medición</button>
+              <button type="button" className="rounded-boton bg-white px-4 py-2 text-sm font-semibold text-teja-fuerte">Registrar medición</button>
               <button type="button" className="rounded-boton border border-white/40 px-4 py-2 text-sm font-medium text-white">Ver historial</button>
             </div>
           </div>
@@ -67,7 +71,7 @@ export default function VistaDashboard() {
           <div className="relative h-28 w-28">
             <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
               <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="8" />
-              <circle cx="50" cy="50" r="42" fill="none" stroke="#E0B04F" strokeWidth="8" strokeDasharray="264" strokeDashoffset="0" strokeLinecap="round" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgb(var(--andino-dorado))" strokeWidth="8" strokeDasharray="264" strokeDashoffset="0" strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="font-mono text-xl font-bold text-white">100</span>
@@ -78,22 +82,22 @@ export default function VistaDashboard() {
       </div>
 
       {/* Estado de misión */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-tarjeta border border-borde bg-[#0E1A2B] p-5 text-white">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-exito" />
-            <span className="font-mono text-xs uppercase tracking-widest">Operativo</span>
-          </div>
-          <div className="mt-3 font-mono text-4xl font-bold">Día 120</div>
-          <div className="mt-2 space-y-1 font-mono text-xs text-white/70">
-            <div>IMC: 22.8</div>
-            <div>Conexión: Autónomo · offline</div>
-            <div>Última medición: 15:42</div>
-          </div>
-          <div className="mt-2 text-xs text-white/60">Ana Quispe · Comandante · desde 05:42</div>
+      <div className="rounded-tarjeta border border-borde bg-superficie-elevada p-5">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-exito" />
+          <span className="font-mono text-xs uppercase tracking-widest text-tinta-suave">Operativo</span>
         </div>
+        <div className="mt-3 font-mono text-4xl font-bold text-tinta">Día 120</div>
+        <div className="mt-2 space-y-1 font-mono text-xs text-tinta-suave">
+          <div>IMC: 22.8</div>
+          <div>Conexión: Autónomo · offline</div>
+          <div>Última medición: 15:42</div>
+        </div>
+        <div className="mt-2 text-xs text-tinta-suave">Ana Quispe · Comandante · desde 05:42</div>
+      </div>
 
-        {/* KPIs */}
+      {/* KPIs */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi) => (
           <div key={kpi.etiqueta} className="rounded-tarjeta border border-borde bg-superficie p-5">
             <div className="flex items-start justify-between">
@@ -126,19 +130,19 @@ export default function VistaDashboard() {
               <AreaChart data={series}>
                 <defs>
                   <linearGradient id="gFc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#E8894F" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#E8894F" stopOpacity={0} />
+                    <stop offset="0%" stopColor={serie[0]} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={serie[0]} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gO2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3FA37A" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="#3FA37A" stopOpacity={0} />
+                    <stop offset="0%" stopColor={serie[3]} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={serie[3]} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="hora" hide />
                 <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
-                <Tooltip contentStyle={{ background: '#1A1613', border: '1px solid #3A322A', borderRadius: 8, color: '#F7F1E8' }} />
-                <Area type="monotone" dataKey="frecuenciaCardiaca" name="FC" stroke="#E8894F" strokeWidth={2} fill="url(#gFc)" />
-                <Area type="monotone" dataKey="saturacion" name="SpO₂" stroke="#3FA37A" strokeWidth={2} fill="url(#gO2)" />
+                <Tooltip contentStyle={estiloTooltip} />
+                <Area type="monotone" dataKey="frecuenciaCardiaca" name="FC" stroke={serie[0]} strokeWidth={2} fill="url(#gFc)" />
+                <Area type="monotone" dataKey="saturacion" name="SpO₂" stroke={serie[3]} strokeWidth={2} fill="url(#gO2)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -149,17 +153,17 @@ export default function VistaDashboard() {
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={DATOS_DONA} dataKey="valor" nameKey="nombre" innerRadius={50} outerRadius={70} paddingAngle={3}>
-                  {DATOS_DONA.map((d) => (
+                <Pie data={datosDona} dataKey="valor" nameKey="nombre" innerRadius={50} outerRadius={70} paddingAngle={3}>
+                  {datosDona.map((d) => (
                     <Cell key={d.nombre} fill={d.color} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ background: '#1A1613', border: '1px solid #3A322A', borderRadius: 8, color: '#F7F1E8' }} />
+                <Tooltip contentStyle={estiloTooltip} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="space-y-1">
-            {DATOS_DONA.map((d) => (
+            {datosDona.map((d) => (
               <div key={d.nombre} className="flex items-center justify-between text-sm">
                 <span className="flex items-center gap-2 text-tinta-suave">
                   <span className="h-2 w-2 rounded-full" style={{ background: d.color }} /> {d.nombre}

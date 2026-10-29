@@ -9,6 +9,7 @@ import { z } from 'zod'
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { generarRespuestaChat } from './servicio.js'
+import { AlmacenRateLimitMySQL } from '../auth/almacenRateLimit.js'
 
 const rutas = Router()
 
@@ -23,13 +24,14 @@ const esquemaMensaje = z.object({
   contexto: z.record(z.unknown()).optional().default({}),
 })
 
-// Rate limit por usuario (identificado por su id del JWT).
+// Rate limit por usuario (identificado por su id del JWT), persistente en MySQL.
 const limitadorChat = rateLimit({
   windowMs: 60 * 1000,
   limit: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.usuario?.id ?? ipKeyGenerator(req.ip),
+  store: new AlmacenRateLimitMySQL(),
+  keyGenerator: (req) => `chat:${req.usuario?.id ?? ipKeyGenerator(req.ip)}`,
   message: { codigo: 'DEMASIADAS_SOLICITUDES', mensaje: 'Demasiadas consultas. Inténtalo más tarde.' },
 })
 

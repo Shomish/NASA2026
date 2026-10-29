@@ -9,6 +9,9 @@ import { test, expect } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
 
+// Las capturas (múltiples viewports × temas × pantallas) tardan más de 45 s.
+test.setTimeout(180000)
+
 const CARPETA = path.join('docs', 'capturas')
 const VIEWPORTS = [
   { nombre: '360', ancho: 360, alto: 640 },

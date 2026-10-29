@@ -4,8 +4,8 @@
  * @module app/shell/ShellApp
  */
 
-import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect, useState, lazy, Suspense } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Activity,
   Bell,
@@ -36,11 +36,25 @@ import { cn } from '../../presentacion/sistema/cn.js'
 import { useTema } from '../../presentacion/sistema/tema.jsx'
 import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
 import { apiLogout } from '../../features/auth/api.js'
+import { useContextoTripulante } from '../../features/gestion/almacenContexto.js'
 import { useSaludStore } from '../../features/salud/almacen.js'
 import { tripulacionInicial } from '../../datos/mockDatos.js'
 import { Drawer } from '../../presentacion/sistema/movil/Drawer.jsx'
 import { BarraInferior } from '../../presentacion/sistema/movil/BarraInferior.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
+
+// Carga diferida: la barra de contexto (y su feature de gestión) no forma parte
+// del bundle inicial de /login ni del shell en rutas no de datos.
+const BarraContextoTripulante = lazy(() =>
+  import('../../features/gestion/componentes/BarraContextoTripulante.jsx').then((m) => ({ default: m.BarraContextoTripulante })),
+)
+
+/** Rutas de módulos de datos (muestran la barra de contexto de tripulante). */
+const RUTAS_DE_DATOS = [
+  '/app/monitor', '/app/signos', '/app/salud-integral', '/app/calendario',
+  '/app/nutricion', '/app/registros', '/app/historial', '/app/diario',
+  '/app/alertas', '/app/chat-ia',
+]
 
 /** Elementos de navegación del sidebar (secciones). */
 const NAVEGACION = [
@@ -88,7 +102,7 @@ function usarReloj() {
     return () => clearInterval(id)
   }, [])
   return {
-    hora: ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    hora: ahora.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
     fecha: ahora.toLocaleDateString('es-PE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }),
   }
 }
@@ -99,6 +113,7 @@ function usarReloj() {
  */
 export function ShellApp() {
   const navigate = useNavigate()
+  const ubicacion = useLocation()
   const { modoEfectivo, alternarModo } = useTema()
   const usuario = useAlmacenSesion((s) => s.usuario)
   const cerrar = useAlmacenSesion((s) => s.cerrar)
@@ -106,6 +121,11 @@ export function ShellApp() {
   const [drawerAbierto, setDrawerAbierto] = useState(false)
   const [paletteAbierto, setPaletteAbierto] = useState(false)
   const reloj = usarReloj()
+
+  // Cierra el drawer al navegar (asegura que no quede abierto tras tocar un ítem).
+  useEffect(() => {
+    setDrawerAbierto(false)
+  }, [ubicacion.pathname])
   const alertasSinLeer = useSaludStore(
     (s) => s.historial.filter((r) => r.tipo === 'alerta' && !r.leida && r.personaId === s.personaId).length,
   )
@@ -123,7 +143,9 @@ export function ShellApp() {
   }, [])
 
   const cerrarSesion = async () => {
+    const usuarioId = usuario?.id
     await apiLogout()
+    if (usuarioId) useContextoTripulante.getState().limpiar(usuarioId)
     cerrar()
     navigate('/login', { replace: true })
   }
@@ -219,7 +241,7 @@ export function ShellApp() {
             </select>
             <div className="hidden text-right font-mono text-xs text-tinta-suave md:block">
               <div>{reloj.hora}</div>
-              <div className="capitalize">{reloj.fecha}</div>
+              <div>{reloj.fecha}</div>
             </div>
             <button
               type="button"
@@ -247,6 +269,11 @@ export function ShellApp() {
         </header>
 
         <main className="flex-1 px-4 py-6 pb-24 lg:pb-6">
+          {RUTAS_DE_DATOS.some((r) => ubicacion.pathname.startsWith(r)) && (
+            <Suspense fallback={null}>
+              <BarraContextoTripulante />
+            </Suspense>
+          )}
           <Outlet />
         </main>
       </div>

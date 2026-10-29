@@ -32,6 +32,11 @@ export const temaSacsayhuaman = {
     critico: '220 38 38',
     'andino-dorado': '212 162 76',
     'andino-terracota': '194 96 58',
+    teja: '162 84 42',
+    'teja-fuerte': '138 62 30',
+    'hero-inicio': '26 16 60',
+    'hero-medio': '58 31 27',
+    'hero-fin': '194 96 58',
   },
   claro: {
     fondo: '245 242 236',
@@ -53,6 +58,11 @@ export const temaSacsayhuaman = {
     critico: '185 28 28',
     'andino-dorado': '176 132 56',
     'andino-terracota': '194 96 58',
+    teja: '162 84 42',
+    'teja-fuerte': '138 62 30',
+    'hero-inicio': '26 16 60',
+    'hero-medio': '58 31 27',
+    'hero-fin': '194 96 58',
   },
   series: ['#2F5D8A', '#D4A24C', '#2BB3A3', '#3FA37A', '#B83A6B', '#E8894F'],
 }

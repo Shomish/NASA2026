@@ -9,10 +9,20 @@ import { modelos } from './modelos.js'
 
 /**
  * Siembra los datos iniciales si la base está vacía.
+ * En producción NO se ejecuta (no crea datos demo ni toca la base).
+ * Nunca resetea `intentos_fallidos` ni `bloqueado_hasta` de usuarios existentes:
+ * solo usa `findOrCreate`, que no actualiza filas ya presentes.
+ * @param {string} [nodeEnv] - Entorno (por defecto `config.NODE_ENV`). Parametrizado para pruebas.
  * @returns {Promise<void>} Promesa.
  */
-export async function sembrar() {
-  const { Usuario, Tripulante, Alimento, Contramedida, UmbralClinico, ConfiguracionIA } = modelos
+export async function sembrar(nodeEnv = config.NODE_ENV) {
+  if (nodeEnv === 'production') return
+
+  const { Usuario, Tripulante, Alimento, Contramedida, UmbralClinico, ConfiguracionIA, RateLimit } = modelos
+
+  // Los contadores de rate limit son transitorios (ventana de 15 min): se limpian
+  // en cada siembra para que los arranques en desarrollo/CI no arrastren límites.
+  await RateLimit.destroy({ where: {} })
 
   // Administrador demo (solo DEMO_MODE=true).
   if (config.DEMO_MODE === 'true') {

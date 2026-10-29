@@ -98,7 +98,7 @@ export function VistaRegistro() {
             </p>
           )}
 
-          <button type="submit" disabled={isSubmitting} className="flex h-12 w-full items-center justify-center gap-2 rounded-boton bg-gradient-to-r from-[#E8894F] to-[#C2603A] text-base font-semibold text-white shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
+          <button type="submit" disabled={isSubmitting} className="flex h-12 w-full items-center justify-center gap-2 rounded-boton bg-gradient-to-r from-teja to-teja-fuerte text-base font-semibold text-white shadow-glow transition-opacity hover:opacity-90 disabled:opacity-60">
             {isSubmitting ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : 'Crear cuenta'}
           </button>
         </form>

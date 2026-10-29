@@ -27,7 +27,7 @@ try {
   await crearBases()
   console.log('Bases creadas.')
   await sequelize.sync()
-  console.log('Esquema sincronizado (23 tablas).')
+  console.log('Esquema sincronizado (24 tablas).')
   await sembrar()
   console.log('Datos sembrados.')
   await sequelize.close()
