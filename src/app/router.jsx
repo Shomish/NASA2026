@@ -27,7 +27,7 @@ const VistaDashboard = lazy(() => import('../presentacion/componentes/VistaDashb
 const VistaConfiguracion = lazy(() => import('../presentacion/componentes/VistaConfiguracion.jsx'))
 const VistaAyuda = lazy(() => import('../presentacion/componentes/VistaAyuda.jsx'))
 const VistaDesignSystem = lazy(() => import('../presentacion/componentes/VistaDesignSystem.jsx'))
-const VistaLanding = lazy(() => import('../presentacion/componentes/VistaLanding.jsx'))
+const VistaLanding = lazy(() => import('../presentacion/componentes/VistaLanding.jsx').then((m) => ({ default: m.VistaLanding })))
 
 // Núcleo 2A (gestión): registro público y gestión de tripulantes/registros/usuarios.
 const VistaRegistro = lazy(() => import('../features/auth/VistaRegistro.jsx').then((m) => ({ default: m.VistaRegistro })))
