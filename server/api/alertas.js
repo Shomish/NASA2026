@@ -10,6 +10,7 @@ import { autenticacion } from '../middlewares/autenticacion.js'
 import { autorizar } from '../middlewares/autorizacion.js'
 import { modelos } from '../db/modelos.js'
 import { esMedicoOAdmin, tripulanteDelUsuario } from './utilidades.js'
+import { item9Phq9Positivo } from '../../shared/evaluaciones.js'
 
 const { Alerta, UmbralClinico } = modelos
 const rutas = Router()
@@ -33,7 +34,7 @@ export async function generarAlertas(registro, detalle) {
 
   // Ítem 9 del PHQ-9 (ideación): activa SIEMPRE una alerta crítica.
   if (registro.tipo === 'salud_mental') {
-    const item9 = detalle.item9_positivo || (Array.isArray(detalle.respuestas) && detalle.respuestas[8] > 0)
+    const item9 = detalle.item9_positivo || item9Phq9Positivo(detalle.respuestas)
     if (item9) {
       alertas.push({
         tripulante_id: registro.tripulante_id,

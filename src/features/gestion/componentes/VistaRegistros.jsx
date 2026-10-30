@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle2, ClipboardList, FilePlus2, Lock, RotateCcw, Trash2 } from 'lucide-react'
+import { CheckCircle2, ClipboardList, FilePlus2, Lock, RotateCcw, Trash2, Download } from 'lucide-react'
 import { Boton, Entrada, Esqueleto, EstadoVacio, Modal, Tarjeta, toast } from '../../../presentacion/sistema/indice.js'
 import { useAlmacenSesion } from '../../auth/almacenSesion.js'
 import {
@@ -20,8 +20,10 @@ import {
   useEliminarRegistro,
   useRestaurarRegistro,
 } from '../consultas.js'
-import { esquemaRegistroForm, detalleDesdeFormulario, TIPOS_REGISTRO } from '../esquemas.js'
+import { esquemaRegistroForm, detalleDesdeFormulario, TIPOS_REGISTRO, PREGUNTAS_PHQ9 } from '../esquemas.js'
 import { useContextoTripulante } from '../useContextoTripulante.js'
+import { encolar } from '../outbox.js'
+import { aCsv, descargarCsv } from '../exportacion.js'
 import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaEstado } from './InsigniaEstado.jsx'
 
@@ -55,7 +57,17 @@ function FormularioRegistro({ alCerrar, alCreado }) {
 
   const alEnviar = async (datos) => {
     const detalle = detalleDesdeFormulario(datos)
-    const registro = await crear.mutateAsync({ tripulante_id: Number(datos.tripulante_id), tipo: datos.tipo, detalle })
+    const cuerpo = { tripulante_id: Number(datos.tripulante_id), tipo: datos.tipo, detalle }
+
+    // Sin conexión: encola en la cola outbox (se sincronizará al reconectar).
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      await encolar('crear_registro', cuerpo)
+      toast.info('Sin conexión: guardado en la cola. Se sincronizará al reconectar.')
+      alCerrar()
+      return
+    }
+
+    const registro = await crear.mutateAsync(cuerpo)
     alCreado(registro, tripulanteSel)
     alCerrar()
   }
@@ -114,6 +126,108 @@ function FormularioRegistro({ alCerrar, alCreado }) {
                 {errors[nombre] && <p className="mt-1 text-xs text-critico">{errors[nombre].message}</p>}
               </div>
             ))}
+          </div>
+        )}
+
+        {tipo === 'glucosa' && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="r-glucosa_mgdl">Glucosa (mg/dL)</label>
+              <Entrada id="r-glucosa_mgdl" type="number" inputMode="decimal" error={Boolean(errors.glucosa_mgdl)} {...register('glucosa_mgdl')} />
+              {errors.glucosa_mgdl && <p className="mt-1 text-xs text-critico">{errors.glucosa_mgdl.message}</p>}
+            </div>
+            <label className="flex items-center gap-2 text-sm text-tinta">
+              <input type="checkbox" className="h-4 w-4 rounded border-borde" {...register('ayunas')} /> En ayunas
+            </label>
+          </div>
+        )}
+
+        {tipo === 'animo' && (
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="r-escala_animo">Ánimo (1-10)</label>
+              <Entrada id="r-escala_animo" type="number" min={1} max={10} error={Boolean(errors.escala_animo)} {...register('escala_animo')} />
+              {errors.escala_animo && <p className="mt-1 text-xs text-critico">{errors.escala_animo.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="r-notas_animo">Notas</label>
+              <Entrada id="r-notas_animo" {...register('notas_animo')} />
+            </div>
+          </div>
+        )}
+
+        {tipo === 'ejercicio' && (
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="r-ejercicio_tipo">Tipo</label>
+              <select id="r-ejercicio_tipo" className="h-10 w-full rounded-boton border border-borde bg-superficie-elevada px-3 text-sm text-tinta" {...register('ejercicio_tipo')}>
+                <option value="resistencia">Resistencia</option>
+                <option value="cardio">Cardio</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="r-minutos">Minutos</label>
+              <Entrada id="r-minutos" type="number" inputMode="numeric" error={Boolean(errors.minutos)} {...register('minutos')} />
+              {errors.minutos && <p className="mt-1 text-xs text-critico">{errors.minutos.message}</p>}
+            </div>
+            <label className="flex items-center gap-2 text-sm text-tinta">
+              <input type="checkbox" className="h-4 w-4 rounded border-borde" {...register('cumplio_plan')} /> Cumplió plan
+            </label>
+          </div>
+        )}
+
+        {tipo === 'sintomas_inmunes' && (
+          <div className="grid grid-cols-2 gap-3">
+            {[['fiebre', 'Fiebre'], ['fatiga_inusual', 'Fatiga inusual'], ['infecciones', 'Infecciones'], ['lesiones_cutaneas', 'Lesiones cutáneas'], ['cicatrizacion_lenta', 'Cicatrización lenta']].map(([nombre, etiqueta]) => (
+              <div key={nombre}>
+                <label className="mb-1 block text-sm font-medium text-tinta" htmlFor={`r-${nombre}`}>{etiqueta} (0-3)</label>
+                <select id={`r-${nombre}`} className="h-10 w-full rounded-boton border border-borde bg-superficie-elevada px-3 text-sm text-tinta" {...register(nombre)}>
+                  {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tipo === 'estado_conductual' && (
+          <div className="grid grid-cols-3 gap-3">
+            {[['gad7', 'GAD-7 (0-21)'], ['estres', 'Estrés (0-10)'], ['fatiga', 'Fatiga (0-10)']].map(([nombre, etiqueta]) => (
+              <div key={nombre}>
+                <label className="mb-1 block text-sm font-medium text-tinta" htmlFor={`r-${nombre}`}>{etiqueta}</label>
+                <Entrada id={`r-${nombre}`} type="number" min={0} error={Boolean(errors[nombre])} {...register(nombre)} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tipo === 'ambiente' && (
+          <div className="grid grid-cols-2 gap-3">
+            {[['co2_ppm', 'CO₂ (ppm)'], ['temperatura_c', 'Temp (°C)'], ['humedad', 'Humedad (%)'], ['ruido_db', 'Ruido (dB)']].map(([nombre, etiqueta]) => (
+              <div key={nombre}>
+                <label className="mb-1 block text-sm font-medium text-tinta" htmlFor={`r-${nombre}`}>{etiqueta}</label>
+                <Entrada id={`r-${nombre}`} type="number" step="any" error={Boolean(errors[nombre])} {...register(nombre)} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tipo === 'salud_mental' && (
+          <div className="space-y-2">
+            <p className="text-xs text-tinta-suave">En las últimas dos semanas, ¿con qué frecuencia te ha molestado…? (0 = nunca, 3 = casi todos los días)</p>
+            {PREGUNTAS_PHQ9.map((pregunta, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="mt-2 w-6 shrink-0 font-mono text-xs text-tinta-suave">{i + 1}.</span>
+                <div className="flex-1">
+                  <p className={`text-sm ${i === 8 ? 'font-semibold text-critico' : 'text-tinta'}`}>{pregunta}</p>
+                  <select className="h-9 w-full rounded-boton border border-borde bg-superficie-elevada px-2 text-sm text-tinta" {...register(`phq9_${i}`)}>
+                    {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
+            ))}
+            <p className="rounded-tarjeta border border-advertencia/40 bg-advertencia/10 px-3 py-2 text-xs text-tinta">
+              Si la pregunta 9 es distinta de &quot;nunca&quot;, se activará automáticamente un aviso de apoyo y una alerta.
+            </p>
           </div>
         )}
 
@@ -180,6 +294,18 @@ export function VistaRegistros() {
 
   const cambiarPagina = (n) => setPagina((p) => Math.min(Math.max(1, p + n), totalPaginas))
 
+  const exportarCsvRegistros = () => {
+    const fecha = new Date().toLocaleDateString('es-PE').split('/').join('-')
+    const filas = registros.map((r) => ({
+      codigo: r.codigo,
+      tipo: r.tipo,
+      estado: r.estado,
+      tripulante: nombreTripulante(r.tripulante_id),
+      fecha: new Date(r.fecha_registro).toLocaleString('es-PE', { hour12: false }),
+    }))
+    descargarCsv(aCsv(filas, ['codigo', 'tipo', 'estado', 'tripulante', 'fecha']), `registros-${fecha}.csv`)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -187,9 +313,14 @@ export function VistaRegistros() {
           <h1 className="font-serif text-2xl font-bold text-tinta">Registros</h1>
           <p className="text-sm text-tinta-suave">Solicitudes de salud: pendiente → validado → cerrado.</p>
         </div>
-        <Boton variante="primario" onClick={() => setFormAbierto(true)} data-testid="nuevo-registro">
-          <FilePlus2 size={16} /> Nuevo registro
-        </Boton>
+        <div className="flex items-center gap-2">
+          <Boton variante="secundario" onClick={exportarCsvRegistros} disabled={registros.length === 0}>
+            <Download size={16} /> Exportar CSV
+          </Boton>
+          <Boton variante="primario" onClick={() => setFormAbierto(true)} data-testid="nuevo-registro">
+            <FilePlus2 size={16} /> Nuevo registro
+          </Boton>
+        </div>
       </div>
 
       {ultimoCreado && (

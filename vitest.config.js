@@ -12,7 +12,7 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.js', 'src/**/*.test.jsx', 'server/**/*.test.js'],
+    include: ['src/**/*.test.js', 'src/**/*.test.jsx', 'server/**/*.test.js', 'shared/**/*.test.js'],
     globals: false,
     env: { NODE_ENV: 'test' },
     testTimeout: 15000,
