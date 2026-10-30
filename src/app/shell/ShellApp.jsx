@@ -9,6 +9,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Activity,
   Bell,
+  BookOpen,
   Bot,
   Brain,
   Calendar,
@@ -92,6 +93,7 @@ const NAVEGACION = [
       { id: 'usuarios', etiqueta: 'Usuarios', icono: UserCog, ruta: '/app/usuarios', soloAdmin: true },
       { id: 'auditoria', etiqueta: 'Auditoría', icono: ScrollText, ruta: '/app/auditoria', soloAdmin: true },
       { id: 'presentacion', etiqueta: 'Presentación', icono: Presentation, ruta: '/app/presentacion' },
+      { id: 'fundamento', etiqueta: 'Fundamento científico', icono: BookOpen, ruta: '/app/fundamento' },
       { id: 'configuracion', etiqueta: 'Configuración', icono: Settings, ruta: '/app/configuracion' },
       { id: 'ayuda', etiqueta: 'Ayuda', icono: HelpCircle, ruta: '/app/ayuda' },
     ],

@@ -134,6 +134,11 @@ export function obtenerResumen(tripulanteId) {
   return peticion(`/resumen${tripulanteId ? `?tripulante_id=${tripulanteId}` : ''}`)
 }
 
+/** Catálogo de indicadores (guía del reto). */
+export function listarCatalogo() {
+  return peticion('/catalogo')
+}
+
 /* ============ Auditoría ============ */
 
 /** Lista la auditoría (solo administrador). */

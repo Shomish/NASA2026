@@ -26,8 +26,8 @@ const TEMAS = ['oscuro', 'claro']
  * @param {string} tema - Tema.
  * @param {string} vp - Nombre del viewport.
  */
-async function capturar(pagina, nombre, tema, vp) {
-  await pagina.screenshot({ path: path.join(CARPETA, `${nombre}-${tema}-${vp}.png`), fullPage: true })
+async function capturar(pagina, nombre, tema, vp, fullPage = true) {
+  await pagina.screenshot({ path: path.join(CARPETA, `${nombre}-${tema}-${vp}.png`), fullPage })
 }
 
 test('capturas de login, registro y shell', async ({ browser }) => {
@@ -85,15 +85,15 @@ test('capturas del núcleo 2A (tripulantes, registros, usuarios)', async ({ brow
       await pagina.click('button[type="submit"]')
       await expect(pagina).toHaveURL(/\/app/)
 
-      for (const [ruta, nombre] of [
-        ['/app/tripulacion', 'tripulantes'],
-        ['/app/registros', 'registros'],
-        ['/app/usuarios', 'usuarios'],
-        ['/app/auditoria', 'auditoria'],
+      for (const [ruta, nombre, fullPage] of [
+        ['/app/tripulacion', 'tripulantes', true],
+        ['/app/registros', 'registros', true],
+        ['/app/usuarios', 'usuarios', true],
+        ['/app/auditoria', 'auditoria', false],
       ]) {
         await pagina.goto(ruta)
         await pagina.waitForTimeout(800)
-        await capturar(pagina, nombre, tema, vp.nombre)
+        await capturar(pagina, nombre, tema, vp.nombre, fullPage)
       }
 
       await contexto.close()
