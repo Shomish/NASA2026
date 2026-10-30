@@ -50,7 +50,18 @@ function FormularioTripulante({ tripulante, alCerrar }) {
   } = useForm({
     resolver: zodResolver(esquemaTripulante),
     defaultValues: tripulante
-      ? { ...tripulante, alergias: (tripulante.alergias ?? []).join(', ') }
+      ? {
+          nombre: tripulante.nombre,
+          cargo: tripulante.cargo ?? '',
+          edad: tripulante.edad ?? undefined,
+          peso_kg: tripulante.peso_kg ?? undefined,
+          altura_cm: tripulante.altura_cm ?? undefined,
+          dia_mision: tripulante.dia_mision ?? undefined,
+          mision: tripulante.mision ?? '',
+          objetivo: tripulante.objetivo ?? '',
+          entorno_id: tripulante.entorno_id ?? tripulante.EntornoMision?.id ?? undefined,
+          alergias: (tripulante.alergias ?? []).join(', '),
+        }
       : { alergias: '' },
   })
 

@@ -81,6 +81,9 @@ rutas.get('/', autenticacion, async (req, res) => {
   const porTipo = {}
   for (const r of registros) porTipo[r.tipo] = (porTipo[r.tipo] ?? 0) + 1
 
+  // Serializa explícitamente las instancias de Sequelize (evita referencias y `toJSON`).
+  const plano = (x) => (x ? JSON.parse(JSON.stringify(x)) : null)
+
   res.json({
     tripulante: {
       id: tripulante.id,
@@ -89,17 +92,17 @@ rutas.get('/', autenticacion, async (req, res) => {
       dia_mision: tripulante.dia_mision,
       entorno: tripulante.EntornoMision?.nombre ?? null,
     },
-    signos,
-    sueno,
-    animo,
-    glucosa,
-    ejercicio,
-    conductual,
+    signos: plano(signos),
+    sueno: plano(sueno),
+    animo: plano(animo),
+    glucosa: plano(glucosa),
+    ejercicio: plano(ejercicio),
+    conductual: plano(conductual),
     alertas: {
       total: alertas.length,
       nuevas: alertas.filter((a) => a.estado === 'nueva').length,
       criticas: alertas.filter((a) => a.severidad === 'critica').length,
-      recientes: alertas.slice(0, 5),
+      recientes: plano(alertas.slice(0, 5)),
     },
     tendencias,
     porTipo,
