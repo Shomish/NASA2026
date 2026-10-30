@@ -24,6 +24,7 @@ import {
   Menu,
   Moon,
   NotebookPen,
+  PersonStanding,
   Plus,
   Presentation,
   Search,
@@ -39,7 +40,6 @@ import { useTema } from '../../presentacion/sistema/tema.jsx'
 import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
 import { apiLogout } from '../../features/auth/api.js'
 import { useContextoTripulante } from '../../features/gestion/almacenContexto.js'
-import { tripulacionInicial } from '../../datos/mockDatos.js'
 import { Drawer } from '../../presentacion/sistema/movil/Drawer.jsx'
 import { BarraInferior } from '../../presentacion/sistema/movil/BarraInferior.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
@@ -54,6 +54,9 @@ const BadgeAlertas = lazy(() =>
 )
 const IndicadorSincronizacion = lazy(() =>
   import('../../features/gestion/componentes/IndicadorSincronizacion.jsx').then((m) => ({ default: m.IndicadorSincronizacion })),
+)
+const PanelNotificaciones = lazy(() =>
+  import('../../features/gestion/componentes/PanelNotificaciones.jsx').then((m) => ({ default: m.PanelNotificaciones })),
 )
 
 /** Rutas de módulos de datos (muestran la barra de contexto de tripulante). */
@@ -70,6 +73,7 @@ const NAVEGACION = [
     seccion: 'Monitoreo',
     items: [
       { id: 'monitor', etiqueta: 'Monitor de salud', icono: HeartPulse, ruta: '/app/monitor' },
+      { id: 'cuerpo', etiqueta: 'Mi cuerpo', icono: PersonStanding, ruta: '/app/cuerpo' },
       { id: 'signos', etiqueta: 'Signos vitales', icono: Activity, ruta: '/app/signos' },
       { id: 'salud-integral', etiqueta: 'Salud integral', icono: Brain, ruta: '/app/salud-integral' },
       { id: 'calendario', etiqueta: 'Calendario', icono: Calendar, ruta: '/app/calendario' },
@@ -242,11 +246,6 @@ export function ShellApp() {
             <button type="button" onClick={() => setPaletteAbierto(true)} className="rounded-boton p-2 text-tinta-suave hover:text-tinta" aria-label="Buscar (Ctrl+K)">
               <Search size={18} />
             </button>
-            <select className="hidden rounded-boton border border-borde bg-superficie-alta px-2 py-1.5 text-sm text-tinta sm:block" aria-label="Tripulante activo">
-              {tripulacionInicial.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
-            </select>
             <div className="hidden text-right font-mono text-xs text-tinta-suave md:block">
               <div>{reloj.hora}</div>
               <div>{reloj.fecha}</div>
@@ -258,7 +257,7 @@ export function ShellApp() {
             </div>
             <button
               type="button"
-              onClick={() => navigate('/app/monitor')}
+              onClick={() => navigate('/app/registros')}
               className="flex items-center gap-1.5 rounded-boton bg-gradient-to-r from-primario to-primario-fuerte px-3 py-2 text-sm font-semibold text-white shadow-glow"
             >
               <Plus size={16} /> <span className="hidden sm:inline">Registrar medición</span>
@@ -266,10 +265,9 @@ export function ShellApp() {
             <button type="button" onClick={alternarModo} className="rounded-boton p-2 text-tinta-suave hover:text-tinta" aria-label="Alternar modo">
               {modoEfectivo === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            <button type="button" className="relative rounded-boton p-2 text-tinta-suave hover:text-tinta" aria-label="Notificaciones">
-              <Bell size={18} />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-critico" />
-            </button>
+            <Suspense fallback={null}>
+              <PanelNotificaciones />
+            </Suspense>
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primario to-primario-fuerte text-xs font-semibold text-white">
                 {usuario?.nombre?.charAt(0) ?? 'A'}

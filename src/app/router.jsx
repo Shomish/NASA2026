@@ -28,6 +28,7 @@ const VistaConfiguracion = lazy(() => import('../presentacion/componentes/VistaC
 const VistaAyuda = lazy(() => import('../presentacion/componentes/VistaAyuda.jsx'))
 const VistaPresentacion = lazy(() => import('../presentacion/componentes/VistaPresentacion.jsx'))
 const VistaDesignSystem = lazy(() => import('../presentacion/componentes/VistaDesignSystem.jsx'))
+const VistaLanding = lazy(() => import('../presentacion/componentes/VistaLanding.jsx'))
 
 // Núcleo 2A (gestión): registro público y gestión de tripulantes/registros/usuarios.
 const VistaRegistro = lazy(() => import('../features/auth/VistaRegistro.jsx').then((m) => ({ default: m.VistaRegistro })))
@@ -36,6 +37,7 @@ const VistaRegistros = lazy(() => import('../features/gestion/indice.js').then((
 const VistaUsuarios = lazy(() => import('../features/gestion/indice.js').then((m) => ({ default: m.VistaUsuarios })))
 const VistaAuditoria = lazy(() => import('../features/gestion/componentes/VistaAuditoria.jsx').then((m) => ({ default: m.VistaAuditoria })))
 const VistaFundamento = lazy(() => import('../features/gestion/componentes/VistaFundamento.jsx').then((m) => ({ default: m.VistaFundamento })))
+const VistaCuerpo = lazy(() => import('../features/gestion/componentes/VistaCuerpo.jsx').then((m) => ({ default: m.VistaCuerpo })))
 
 /**
  * Enrutador principal.
@@ -55,6 +57,7 @@ export function Router() {
         <Route path="usuarios" element={<Suspense fallback={<SplashCarga />}><RutaAdmin><VistaUsuarios /></RutaAdmin></Suspense>} />
         <Route path="auditoria" element={<Suspense fallback={<SplashCarga />}><RutaAdmin><VistaAuditoria /></RutaAdmin></Suspense>} />
         <Route path="fundamento" element={<Suspense fallback={<SplashCarga />}><VistaFundamento /></Suspense>} />
+        <Route path="cuerpo" element={<Suspense fallback={<SplashCarga />}><VistaCuerpo /></Suspense>} />
         <Route path="signos" element={<Suspense fallback={<SplashCarga />}><VistaSignosRuta /></Suspense>} />
         <Route path="salud-integral" element={<Suspense fallback={<SplashCarga />}><VistaSaludIntegralRuta /></Suspense>} />
         <Route path="nutricion" element={<Suspense fallback={<SplashCarga />}><VistaNutricionRuta /></Suspense>} />
@@ -69,7 +72,7 @@ export function Router() {
       </Route>
 
       <Route path="/design-system" element={<Suspense fallback={<SplashCarga />}><VistaDesignSystem /></Suspense>} />
-      <Route path="/" element={<Navigate to="/app" replace />} />
+      <Route path="/" element={<Suspense fallback={<SplashCarga />}><VistaLanding /></Suspense>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   )

@@ -269,11 +269,17 @@ export function VistaRegistros() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroTipo, setFiltroTipo] = useState('')
   const [incluirEliminados, setIncluirEliminados] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [desde, setDesde] = useState('')
+  const [hasta, setHasta] = useState('')
   const [pagina, setPagina] = useState(1)
 
   const { data, isLoading, isError } = useRegistros({
     estado: filtroEstado,
     tipo: filtroTipo,
+    q: busqueda,
+    desde,
+    hasta,
     incluir_eliminados: incluirEliminados ? 'true' : '',
     pagina,
     por_pagina: 10,
@@ -355,6 +361,16 @@ export function VistaRegistros() {
           <option value="">Todos los tipos</option>
           {Object.entries(ETIQUETA_TIPO).map(([id, etiqueta]) => <option key={id} value={id}>{etiqueta}</option>)}
         </select>
+        <input
+          type="search"
+          className="h-9 rounded-boton border border-borde bg-superficie px-2 text-sm text-tinta"
+          placeholder="Buscar código…"
+          value={busqueda}
+          onChange={(e) => { setBusqueda(e.target.value); setPagina(1) }}
+          aria-label="Buscar por código"
+        />
+        <input type="date" className="h-9 rounded-boton border border-borde bg-superficie px-2 text-sm text-tinta" value={desde} onChange={(e) => { setDesde(e.target.value); setPagina(1) }} aria-label="Desde" />
+        <input type="date" className="h-9 rounded-boton border border-borde bg-superficie px-2 text-sm text-tinta" value={hasta} onChange={(e) => { setHasta(e.target.value); setPagina(1) }} aria-label="Hasta" />
         <label className="flex items-center gap-2 text-sm text-tinta-suave">
           <input type="checkbox" className="h-4 w-4 rounded border-borde" checked={incluirEliminados} onChange={(e) => { setIncluirEliminados(e.target.checked); setPagina(1) }} />
           Mostrar eliminados

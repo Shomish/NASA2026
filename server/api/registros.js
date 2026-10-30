@@ -6,6 +6,7 @@
 
 import { Router } from 'express'
 import { z } from 'zod'
+import { Op } from 'sequelize'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { modelos } from '../db/modelos.js'
 import { sequelize } from '../db/conexion.js'
@@ -145,16 +146,22 @@ async function accesoRegistro(req, registro) {
   return Boolean(tripulante && tripulante.id === registro.tripulante_id)
 }
 
-// GET /api/v1/registros (filtros y paginación)
+// GET /api/v1/registros (filtros, búsqueda, rango de fechas y paginación)
 rutas.get('/', autenticacion, async (req, res) => {
   const tripulanteId = await restriccionTripulante(req)
-  const { tipo, estado, tripulante_id, pagina = 1, por_pagina = 20, incluir_eliminados } = req.query
+  const { tipo, estado, tripulante_id, pagina = 1, por_pagina = 20, incluir_eliminados, q, desde, hasta } = req.query
 
   const where = incluir_eliminados === 'true' ? {} : { eliminado_en: null }
   if (tripulanteId !== null) where.tripulante_id = tripulanteId
   if (tripulante_id && tripulanteId === null) where.tripulante_id = Number(tripulante_id)
   if (tipo) where.tipo = tipo
   if (estado) where.estado = estado
+  if (q) where.codigo = { [Op.like]: `%${q}%` }
+  if (desde || hasta) {
+    where.fecha_registro = {}
+    if (desde) where.fecha_registro[Op.gte] = new Date(desde)
+    if (hasta) where.fecha_registro[Op.lte] = new Date(`${hasta}T23:59:59`)
+  }
 
   const { rows, count } = await Registro.findAndCountAll({
     where,
