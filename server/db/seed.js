@@ -19,7 +19,7 @@ import { modelos } from './modelos.js'
 export async function sembrar(nodeEnv = config.NODE_ENV) {
   if (nodeEnv === 'production') return
 
-  const { Usuario, Tripulante, Alimento, Contramedida, UmbralClinico, ConfiguracionIA, RateLimit, EntornoMision, CatalogoIndicador, Registro, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud } = modelos
+  const { Usuario, Tripulante, Alimento, Contramedida, UmbralClinico, ConfiguracionIA, RateLimit, EntornoMision, CatalogoIndicador, Registro, SignoVital, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud, Alerta } = modelos
 
   // Los contadores de rate limit son transitorios (ventana de 15 min): se limpian
   // en cada siembra para que los arranques en desarrollo/CI no arrastren límites.
@@ -99,7 +99,7 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
 
   // Escenario de demostración (120 días) solo en modo demo.
   if (config.DEMO_MODE === 'true') {
-    await sembrarEscenarioDemo({ ana, diego, lucia, Registro, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud })
+    await sembrarEscenarioDemo({ ana, diego, lucia, Registro, SignoVital, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud, Alerta })
   }
 
   // Alimentos (superalimentos andinos y despensa).
@@ -164,48 +164,103 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
 
 /**
  * Siembra el escenario de demostración de 120 días con tendencias realistas
- * (sueño que empeora, ánimo que cae, ejercicio que baja). Solo se ejecuta en modo
- * demo y una única vez (si ya hay registros, no resiembra).
+ * (sueño que empeora, frecuencia cardíaca que sube, ánimo que cae, ejercicio que
+ * baja). Solo se ejecuta en modo demo y una única vez (si ya hay registros, no
+ * resiembra). Incluye signos vitales, sueño, ánimo, glucosa, ejercicio, estado
+ * conductual y alertas, para que el dashboard, el mapa corporal y el historial
+ * tengan datos con los que probar.
  * @param {object} params - Modelos y tripulantes.
  * @returns {Promise<void>} Promesa.
  */
-async function sembrarEscenarioDemo({ ana, diego, lucia, Registro, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud }) {
+async function sembrarEscenarioDemo({ ana, diego, lucia, Registro, SignoVital, RegistroSueno, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroEstadoConductual, AccionSalud, Alerta }) {
   if (await Registro.count() > 0) return
 
   const { Usuario } = modelos
   const admin = await Usuario.findOne({ where: { email: 'admin@ayni.health' } })
 
-  /** Crea una cabecera + detalle con código único. */
-  const crear = async (tripulante, tipo, detalle, modeloDetalle, estado = 'validado', diasAtras = 0) => {
+  /** Crea una cabecera + detalle con código único y fecha en el pasado. */
+  const crear = async (tripulante, tipo, detalle, modeloDetalle, diasAtras) => {
     const registro = await Registro.create({
       codigo: randomBytes(4).toString('hex').toUpperCase(),
       usuario_id: admin?.id ?? null,
       tripulante_id: tripulante.id,
       tipo,
-      estado,
+      estado: 'validado',
       fecha_registro: new Date(Date.now() - diasAtras * 86400000),
     })
     await modeloDetalle.create({ registro_id: registro.id, ...detalle })
     return registro
   }
 
-  // Ana: sueño empeora, ánimo cae, ejercicio baja, glucosa estable.
-  await crear(ana, 'sueno', { horas: 8, calidad: 8, despertares: 1 }, RegistroSueno, 'validado', 14)
-  await crear(ana, 'sueno', { horas: 6, calidad: 5, despertares: 4 }, RegistroSueno, 'validado', 1)
-  await crear(ana, 'animo', { escala: 8, notas: 'Energía estable' }, RegistroAnimo, 'validado', 14)
-  await crear(ana, 'animo', { escala: 5, notas: 'Cansancio acumulado' }, RegistroAnimo, 'validado', 1)
-  await crear(ana, 'ejercicio', { tipo: 'resistencia', minutos: 45, cumplio_plan: true }, RegistroEjercicio, 'validado', 14)
-  await crear(ana, 'ejercicio', { tipo: 'resistencia', minutos: 15, cumplio_plan: false }, RegistroEjercicio, 'validado', 1)
-  await crear(ana, 'glucosa', { glucosa_mgdl: 95, ayunas: true }, RegistroGlucosa, 'validado', 1)
-  await crear(ana, 'estado_conductual', { gad7: 8, estres: 5, fatiga: 6 }, RegistroEstadoConductual, 'validado', 1)
+  // 16 puntos a lo largo de 120 días (más densos en las últimas dos semanas).
+  const DIAS = [120, 105, 90, 75, 60, 45, 30, 21, 14, 10, 7, 5, 3, 2, 1, 0]
+  const n = DIAS.length
 
-  // Diego y Lucía: un registro cada uno.
-  await crear(diego, 'sueno', { horas: 7, calidad: 7, despertares: 2 }, RegistroSueno, 'validado', 1)
-  await crear(lucia, 'glucosa', { glucosa_mgdl: 90, ayunas: true }, RegistroGlucosa, 'validado', 1)
+  /** Interpola linealmente entre inicio y fin según el índice. */
+  const interpolar = (inicio, fin, i) => inicio + ((fin - inicio) * (i / (n - 1)))
 
-  // Acción de salud sugerida por las reglas.
+  // Perfil por persona (variación individual).
+  const perfiles = [
+    { tripulante: ana, factor: 1.0, alerta: 'Sueño insuficiente y ánimo bajo: priorizar higiene del sueño.' },
+    { tripulante: diego, factor: 1.08, alerta: 'Frecuencia cardíaca en reposo elevada: revisar carga de entrenamiento.' },
+    { tripulante: lucia, factor: 0.94, alerta: 'Leve aumento de estrés: programar apoyo psicológico.' },
+  ]
+
+  for (const { tripulante, factor, alerta } of perfiles) {
+    for (let i = 0; i < n; i += 1) {
+      const d = DIAS[i]
+
+      // Signos vitales: FC sube, SpO₂ baja, presión y temperatura estables.
+      await crear(tripulante, 'signos_vitales', {
+        frecuencia_cardiaca: Math.round(interpolar(66, 94, i) * factor),
+        spo2: Number(interpolar(98.5, 93.5, i).toFixed(1)),
+        presion_sistolica: Math.round(interpolar(118, 128, i)),
+        presion_diastolica: Math.round(interpolar(76, 82, i)),
+        temperatura_c: Number(interpolar(36.5, 36.9, i).toFixed(1)),
+      }, SignoVital, d)
+
+      // Sueño: horas y calidad bajan, despertares suben.
+      await crear(tripulante, 'sueno', {
+        horas: Number(interpolar(8.2, 5.6, i).toFixed(1)),
+        calidad: Math.round(interpolar(9, 5, i)),
+        despertares: Math.round(interpolar(1, 4, i)),
+      }, RegistroSueno, d)
+
+      // Ánimo: baja.
+      await crear(tripulante, 'animo', { escala: Math.round(interpolar(9, 4, i)) }, RegistroAnimo, d)
+
+      // Ejercicio: minutos bajan y el plan se cumple menos.
+      await crear(tripulante, 'ejercicio', {
+        tipo: i % 2 === 0 ? 'resistencia' : 'cardio',
+        minutos: Math.round(interpolar(45, 15, i) * factor),
+        cumplio_plan: i < n - 4,
+      }, RegistroEjercicio, d)
+
+      // Glucosa: estable con variación ligera.
+      await crear(tripulante, 'glucosa', { glucosa_mgdl: Math.round(interpolar(92, 96, i) + (i % 3)), ayunas: true }, RegistroGlucosa, d)
+
+      // Estado conductual: GAD-7, estrés y fatiga suben.
+      await crear(tripulante, 'estado_conductual', {
+        gad7: Math.round(interpolar(2, 9, i) * factor),
+        estres: Math.round(interpolar(2, 7, i)),
+        fatiga: Math.round(interpolar(2, 7, i)),
+      }, RegistroEstadoConductual, d)
+    }
+
+    // Una alerta activa por tripulante (para notificaciones y badge).
+    await Alerta.findOrCreate({
+      where: { tripulante_id: tripulante.id, mensaje: alerta },
+      defaults: { severidad: 'atencion', estado: 'nueva' },
+    })
+  }
+
+  // Acciones de salud sugeridas por las reglas.
   await AccionSalud.findOrCreate({
     where: { tripulante_id: ana.id, dominio: 'conductual', descripcion: 'Higiene del sueño y apoyo psicológico', origen: 'regla' },
+    defaults: { estado: 'pendiente', fecha: new Date() },
+  })
+  await AccionSalud.findOrCreate({
+    where: { tripulante_id: ana.id, dominio: 'oseo', descripcion: 'Aumentar ejercicio de resistencia (20-30 min/día)', origen: 'regla' },
     defaults: { estado: 'pendiente', fecha: new Date() },
   })
 }
