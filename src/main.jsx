@@ -12,6 +12,7 @@ import ErrorBoundary from './presentacion/componentes/ErrorBoundary.jsx'
 import SplashCarga from './presentacion/componentes/SplashCarga.jsx'
 import { Router } from './app/router.jsx'
 import { ProveedorTema, ContenedorTostadas } from './presentacion/sistema/indice.js'
+import { useIdioma } from './shared/idioma.js'
 import './index.css'
 
 // Tipografías autoalojadas (@fontsource) para funcionamiento offline.
@@ -29,6 +30,9 @@ import '@fontsource/atkinson-hyperlegible-next/700.css'
 const clienteConsulta = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
 })
+
+// Carga el idioma guardado (acceso diferido y seguro a localStorage).
+useIdioma.getState().cargarIdioma()
 
 createRoot(document.getElementById('raiz')).render(
   <React.StrictMode>

@@ -144,6 +144,7 @@ export default class ErrorBoundary extends Component {
 
     const esDesarrollo = import.meta.env.DEV
     const mensaje = this.state.error?.message ?? 'Error desconocido'
+    const pila = this.state.error?.stack ?? ''
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0B0F19] p-6">
@@ -158,8 +159,8 @@ export default class ErrorBoundary extends Component {
               : 'Ocurrió un error inesperado. Intenta recargar; si persiste, restablece los datos locales.'}
           </p>
           {esDesarrollo && (
-            <pre className="text-left text-xs font-mono text-critico bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-40 whitespace-pre-wrap break-words">
-              {mensaje}
+            <pre className="text-left text-xs font-mono text-critico bg-[#0B0F19] border border-[#374151] rounded-lg p-3 overflow-x-auto max-h-60 whitespace-pre-wrap break-words">
+              {pila || mensaje}
               {this.state.componentStack ? `\n\n${this.state.componentStack}` : ''}
             </pre>
           )}

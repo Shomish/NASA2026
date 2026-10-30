@@ -1,8 +1,7 @@
 /**
  * @fileoverview Internacionalización mínima (es/en).
- * Guarda el idioma en localStorage y expone `t()` para los textos clave.
- * La traducción completa de la aplicación es una iteración posterior; aquí se
- * deja la infraestructura y las cadenas más visibles (landing).
+ * Guarda el idioma en localStorage (acceso diferido, nunca en la evaluación del módulo)
+ * y expone `t()` para los textos clave.
  * @module shared/idioma
  */
 
@@ -28,22 +27,33 @@ const TRADUCCIONES = {
   },
 }
 
-const IDIOMAS = ['es', 'en']
+/** Idiomas disponibles. */
+export const IDIOMAS = ['es', 'en']
 
 /**
- * Store de idioma.
+ * Lee el idioma guardado de forma segura (sin tocar localStorage en el módulo).
+ * @returns {'es'|'en'} Idioma guardado o 'es'.
+ */
+function leerIdioma() {
+  try {
+    return localStorage.getItem('ayni-idioma') === 'en' ? 'en' : 'es'
+  } catch {
+    return 'es'
+  }
+}
+
+/**
+ * Store de idioma (se inicializa de forma perezosa, no en la evaluación del módulo).
  * @type {import('zustand').UseBoundStore<import('zustand').StoreApi<object>>}
  */
 export const useIdioma = create((set) => ({
-  idioma: (() => { try { return localStorage.getItem('ayni-idioma') === 'en' ? 'en' : 'es' } catch { return 'es' } })(),
+  idioma: 'es',
+  cargarIdioma: () => set({ idioma: leerIdioma() }),
   fijarIdioma: (idioma) => {
-    try { localStorage.setItem('ayni-idioma', idioma) } catch { /* */ }
+    try { localStorage.setItem('ayni-idioma', idioma) } catch { /* sin almacenamiento */ }
     set({ idioma })
   },
 }))
-
-/** Idiomas disponibles. */
-export { IDIOMAS }
 
 /**
  * Traduce una clave según el idioma actual.
