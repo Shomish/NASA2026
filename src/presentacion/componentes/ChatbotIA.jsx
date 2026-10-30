@@ -94,12 +94,20 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
         <div className="w-9 h-9 rounded-lg bg-primario/20 border border-primario/30 flex items-center justify-center text-primario">
           <Bot size={18} />
         </div>
-        <div>
+        <div className="flex-1">
           <h3 className="font-semibold text-tinta leading-tight">Médico de IA</h3>
           <p className="text-xs font-mono text-tinta-suave">
-            {enLinea ? 'LLM en la nube · en línea' : 'Motor local · offline'}
+            {contexto.persona?.nombre ? `Trabajando con ${contexto.persona.nombre}` : 'Sin tripulante'} · {enLinea ? 'Motor en la nube · en línea' : 'Motor local · offline'}
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setEnLinea((v) => !v)}
+          className="rounded-boton border border-borde px-2.5 py-1.5 text-xs text-tinta-suave hover:text-tinta"
+          aria-label="Cambiar motor"
+        >
+          {enLinea ? 'Usar motor local' : 'Usar nube'}
+        </button>
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto max-h-[460px] pr-1">

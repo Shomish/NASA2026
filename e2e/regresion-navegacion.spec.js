@@ -16,7 +16,7 @@ const FIRMA_ERROR = /Maximum update depth|getSnapshot should be cached|The above
 const MENU = [
   'Dashboard', 'Monitor de salud', 'Signos vitales', 'Salud integral', 'Calendario',
   'Nutrición inteligente', 'Registros', 'Tripulantes', 'Historial', 'Diario',
-  'Alertas', 'Médico de IA', 'Usuarios', 'Presentación', 'Configuración', 'Ayuda',
+  'Alertas', 'Médico de IA', 'Usuarios', 'Configuración', 'Ayuda',
 ]
 
 /** Ítems de la barra inferior (móvil). */

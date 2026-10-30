@@ -26,7 +26,6 @@ import {
   NotebookPen,
   PersonStanding,
   Plus,
-  Presentation,
   Search,
   ScrollText,
   Settings,
@@ -40,6 +39,7 @@ import { useTema } from '../../presentacion/sistema/tema.jsx'
 import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
 import { apiLogout } from '../../features/auth/api.js'
 import { useContextoTripulante } from '../../features/gestion/almacenContexto.js'
+import { useIdioma, IDIOMAS } from '../../shared/idioma.js'
 import { Drawer } from '../../presentacion/sistema/movil/Drawer.jsx'
 import { BarraInferior } from '../../presentacion/sistema/movil/BarraInferior.jsx'
 import { CommandPalette } from './CommandPalette.jsx'
@@ -57,6 +57,9 @@ const IndicadorSincronizacion = lazy(() =>
 )
 const PanelNotificaciones = lazy(() =>
   import('../../features/gestion/componentes/PanelNotificaciones.jsx').then((m) => ({ default: m.PanelNotificaciones })),
+)
+const Tour = lazy(() =>
+  import('../../features/gestion/componentes/Tour.jsx').then((m) => ({ default: m.Tour })),
 )
 
 /** Rutas de módulos de datos (muestran la barra de contexto de tripulante). */
@@ -96,7 +99,6 @@ const NAVEGACION = [
       { id: 'chat-ia', etiqueta: 'Médico de IA', icono: Bot, ruta: '/app/chat-ia' },
       { id: 'usuarios', etiqueta: 'Usuarios', icono: UserCog, ruta: '/app/usuarios', soloAdmin: true },
       { id: 'auditoria', etiqueta: 'Auditoría', icono: ScrollText, ruta: '/app/auditoria', soloAdmin: true },
-      { id: 'presentacion', etiqueta: 'Presentación', icono: Presentation, ruta: '/app/presentacion' },
       { id: 'fundamento', etiqueta: 'Fundamento científico', icono: BookOpen, ruta: '/app/fundamento' },
       { id: 'configuracion', etiqueta: 'Configuración', icono: Settings, ruta: '/app/configuracion' },
       { id: 'ayuda', etiqueta: 'Ayuda', icono: HelpCircle, ruta: '/app/ayuda' },
@@ -130,6 +132,8 @@ export function ShellApp() {
   const { modoEfectivo, alternarModo } = useTema()
   const usuario = useAlmacenSesion((s) => s.usuario)
   const cerrar = useAlmacenSesion((s) => s.cerrar)
+  const idioma = useIdioma((s) => s.idioma)
+  const fijarIdioma = useIdioma((s) => s.fijarIdioma)
   const [colapsado, setColapsado] = useState(false)
   const [drawerAbierto, setDrawerAbierto] = useState(false)
   const [paletteAbierto, setPaletteAbierto] = useState(false)
@@ -265,6 +269,14 @@ export function ShellApp() {
             <button type="button" onClick={alternarModo} className="rounded-boton p-2 text-tinta-suave hover:text-tinta" aria-label="Alternar modo">
               {modoEfectivo === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+            <select
+              className="hidden rounded-boton border border-borde bg-superficie px-1.5 py-1 text-xs text-tinta sm:block"
+              value={idioma}
+              onChange={(e) => fijarIdioma(e.target.value)}
+              aria-label="Idioma"
+            >
+              {IDIOMAS.map((i) => <option key={i} value={i}>{i.toUpperCase()}</option>)}
+            </select>
             <Suspense fallback={null}>
               <PanelNotificaciones />
             </Suspense>
@@ -306,6 +318,11 @@ export function ShellApp() {
 
       {/* Buscador global (Ctrl/Cmd + K) */}
       <CommandPalette abierto={paletteAbierto} alCerrar={() => setPaletteAbierto(false)} />
+
+      {/* Recorrido de bienvenida (una sola vez) */}
+      <Suspense fallback={null}>
+        <Tour />
+      </Suspense>
     </div>
   )
 }

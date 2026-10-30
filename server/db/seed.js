@@ -25,17 +25,17 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
   // en cada siembra para que los arranques en desarrollo/CI no arrastren límites.
   await RateLimit.destroy({ where: {} })
 
-  // Administrador demo (solo DEMO_MODE=true).
+  // Administrador demo (solo DEMO_MODE=true), con su propio perfil de tripulante.
   if (config.DEMO_MODE === 'true') {
-    const admin = await Usuario.findOne({ where: { email: 'admin@ayni.health' } })
-    if (!admin) {
-      await Usuario.create({
+    await Usuario.findOrCreate({
+      where: { email: 'admin@ayni.health' },
+      defaults: {
         nombre: 'Administrador',
         email: 'admin@ayni.health',
         password: await bcrypt.hash('admin123', 12),
         rol: 'administrador',
-      })
-    }
+      },
+    })
   }
 
   // Tripulantes actuales (existen sin cuenta vinculada).
@@ -71,6 +71,18 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
     if (!t.entorno_id) await t.update({ entorno_id: entornoPorNombre['Análogo terrestre Cusco'].id })
   }
 
+  // Perfil de tripulante del administrador (para que también pueda registrarse a sí mismo).
+  if (config.DEMO_MODE === 'true') {
+    const admin = await Usuario.findOne({ where: { email: 'admin@ayni.health' } })
+    if (admin) {
+      const [perfilAdmin] = await Tripulante.findOrCreate({
+        where: { usuario_id: admin.id },
+        defaults: { nombre: 'Admin Médico', cargo: 'Supervisor de misión', edad: 40, dia_mision: 120, mision: 'Misión Artemis', entorno_id: entornoPorNombre['Análogo terrestre Cusco'].id, usuario_id: admin.id },
+      })
+      if (!perfilAdmin.entorno_id) await perfilAdmin.update({ entorno_id: entornoPorNombre['Análogo terrestre Cusco'].id })
+    }
+  }
+
   // Catálogo de indicadores (guía del reto). Fuentes pendientes de verificar.
   const indicadores = [
     { nombre: 'Presión arterial', unidad: 'mmHg', rango_referencia: '120/80', peligro_asociado: 'cardiovascular', como_medir: 'Con un tensiómetro, en reposo y con el brazo a la altura del corazón.', por_que: 'Detecta cambios cardiovasculares por la microgravedad y el estrés.', como_afecta: 'La microgravedad desplaza líquidos hacia la parte superior del cuerpo y puede elevar la presión.', cuando_escalar: 'Avisa al oficial médico si se mantiene por encima de 140/90 o por debajo de 90/60 con síntomas.', acciones_preventivas: 'Ejercicio aeróbico diario, hidratación y control de la ingesta de sodio.', fuente: 'NASA Human Research Program (pendiente de verificar)' },
@@ -101,8 +113,15 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
     { nombre: 'Chuño', categoria: 'superalimento_andino', beneficio: 'Energía de altura', origen_andino: true },
     { nombre: 'Mashua', categoria: 'superalimento_andino', beneficio: 'Nutriente andino', origen_andino: true },
     { nombre: 'Sacha Inchi', categoria: 'superalimento_andino', beneficio: 'Omega-3 antiinflamatorio', origen_andino: true },
-    { nombre: 'Arroz fortificado', categoria: 'despensa', kcal: 210, proteina_g: 5, carbohidratos_g: 45, grasa_g: 1, origen_andino: false },
-    { nombre: 'Verduras rehidratadas', categoria: 'despensa', kcal: 60, proteina_g: 3, carbohidratos_g: 12, grasa_g: 0, origen_andino: false },
+    { nombre: 'Arroz fortificado', categoria: 'despensa', kcal: 210, proteina_g: 5, carbohidratos_g: 45, grasa_g: 1, porcion: '100 g', beneficio: 'Energía de base', origen_andino: false },
+    { nombre: 'Verduras rehidratadas', categoria: 'despensa', kcal: 60, proteina_g: 3, carbohidratos_g: 12, grasa_g: 0, porcion: '150 g', beneficio: 'Vitaminas y fibra', origen_andino: false },
+    { nombre: 'Lentejas', categoria: 'despensa', kcal: 116, proteina_g: 9, carbohidratos_g: 20, grasa_g: 0.4, porcion: '100 g cocidas', beneficio: 'Proteína vegetal y hierro', origen_andino: false },
+    { nombre: 'Garbanzos', categoria: 'despensa', kcal: 164, proteina_g: 9, carbohidratos_g: 27, grasa_g: 2.6, porcion: '100 g cocidos', beneficio: 'Fibra y proteína', origen_andino: false },
+    { nombre: 'Pescado enlatado', categoria: 'despensa', kcal: 200, proteina_g: 24, carbohidratos_g: 0, grasa_g: 11, porcion: '100 g', beneficio: 'Omega-3 y proteína', origen_andino: false },
+    { nombre: 'Huevo en polvo', categoria: 'despensa', kcal: 155, proteina_g: 13, carbohidratos_g: 1, grasa_g: 11, porcion: '2 cdas', beneficio: 'Proteína completa', origen_andino: false },
+    { nombre: 'Fruta liofilizada', categoria: 'despensa', kcal: 90, proteina_g: 1, carbohidratos_g: 22, grasa_g: 0, porcion: '30 g', beneficio: 'Vitaminas y antioxidantes', origen_andino: false },
+    { nombre: 'Avena', categoria: 'despensa', kcal: 150, proteina_g: 5, carbohidratos_g: 27, grasa_g: 3, porcion: '40 g', beneficio: 'Fibra y energía sostenida', origen_andino: false },
+    { nombre: 'Leche en polvo', categoria: 'despensa', kcal: 120, proteina_g: 8, carbohidratos_g: 12, grasa_g: 3, porcion: '30 g', beneficio: 'Calcio y proteína', origen_andino: false },
   ]
   for (const a of alimentos) {
     const [alimento] = await Alimento.findOrCreate({ where: { nombre: a.nombre }, defaults: a })

@@ -5,6 +5,7 @@
  * @module features/gestion/componentes/VistaFundamento
  */
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { BookOpen, Radiation, DoorClosed, Globe, Weight, Home, ShieldCheck } from 'lucide-react'
 import { Esqueleto, EstadoVacio, Tarjeta } from '../../../presentacion/sistema/indice.js'
@@ -44,6 +45,8 @@ const PASOS = [
 export function VistaFundamento() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['catalogo'], queryFn: listarCatalogo })
   const indicadores = Array.isArray(data) ? data : []
+  const [indicadorActivo, setIndicadorActivo] = useState(null)
+  const activo = indicadores.find((i) => i.id === indicadorActivo) ?? indicadores[0]
 
   return (
     <div className="space-y-6">
@@ -91,27 +94,42 @@ export function VistaFundamento() {
         </ul>
       </Tarjeta>
 
-      {/* Guía de indicadores */}
+      {/* Guía de indicadores (tabs) */}
       <div>
         <h2 className="mb-3 font-semibold text-tinta">Guía de indicadores</h2>
         {isLoading && <div className="space-y-2"><Esqueleto className="h-24 w-full" /><Esqueleto className="h-24 w-full" /></div>}
         {!isLoading && isError && <EstadoVacio icono={<BookOpen size={22} />} titulo="No se pudo cargar la guía" descripcion="Revisa la conexión." />}
         {!isLoading && !isError && (
           <div className="space-y-3">
-            {indicadores.map((i) => (
-              <Tarjeta key={i.id} relleno="compacto" className="space-y-1">
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Indicadores">
+              {indicadores.map((i) => (
+                <button
+                  key={i.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activo?.id === i.id}
+                  onClick={() => setIndicadorActivo(i.id)}
+                  className={`rounded-insignia border px-3 py-1.5 text-sm ${activo?.id === i.id ? 'border-primario bg-primario/15 font-medium text-primario' : 'border-borde bg-superficie text-tinta-suave hover:text-tinta'}`}
+                >
+                  {i.nombre}
+                </button>
+              ))}
+            </div>
+
+            {activo && (
+              <Tarjeta relleno="compacto" className="space-y-2">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div className="font-medium text-tinta">{i.nombre}</div>
-                  <div className="font-mono text-xs text-tinta-suave">{i.rango_referencia ? `Referencia: ${i.rango_referencia} ${i.unidad ?? ''}` : ''}</div>
+                  <div className="font-semibold text-tinta">{activo.nombre}</div>
+                  <div className="font-mono text-xs text-tinta-suave">{activo.rango_referencia ? `Referencia: ${activo.rango_referencia} ${activo.unidad ?? ''}` : ''}</div>
                 </div>
-                {i.como_medir && <p className="text-sm text-tinta"><span className="font-medium">Cómo medir:</span> {i.como_medir}</p>}
-                {i.por_que && <p className="text-sm text-tinta"><span className="font-medium">Por qué:</span> {i.por_que}</p>}
-                {i.como_afecta && <p className="text-sm text-tinta"><span className="font-medium">Cómo lo afecta el espacio:</span> {i.como_afecta}</p>}
-                {i.cuando_escalar && <p className="text-sm text-tinta"><span className="font-medium">Cuándo avisar:</span> {i.cuando_escalar}</p>}
-                {i.acciones_preventivas && <p className="text-sm text-tinta"><span className="font-medium">Prevención:</span> {i.acciones_preventivas}</p>}
-                {i.fuente && <p className="text-xs text-tinta-suave">Fuente: {i.fuente}</p>}
+                {activo.como_medir && <p className="text-sm text-tinta"><span className="font-medium">Cómo medir:</span> {activo.como_medir}</p>}
+                {activo.por_que && <p className="text-sm text-tinta"><span className="font-medium">Por qué se mide:</span> {activo.por_que}</p>}
+                {activo.como_afecta && <p className="text-sm text-tinta"><span className="font-medium">Cómo lo afecta el espacio:</span> {activo.como_afecta}</p>}
+                {activo.cuando_escalar && <p className="text-sm text-tinta"><span className="font-medium">Cuándo avisar:</span> {activo.cuando_escalar}</p>}
+                {activo.acciones_preventivas && <p className="text-sm text-tinta"><span className="font-medium">Prevención:</span> {activo.acciones_preventivas}</p>}
+                {activo.fuente && <p className="text-xs text-tinta-suave">Fuente: {activo.fuente}</p>}
               </Tarjeta>
-            ))}
+            )}
           </div>
         )}
       </div>

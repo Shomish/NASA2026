@@ -20,7 +20,6 @@ const RUTAS = [
   '/app/alertas',
   '/app/calendario',
   '/app/chat-ia',
-  '/app/presentacion',
   '/app/configuracion',
   '/app/ayuda',
 ]

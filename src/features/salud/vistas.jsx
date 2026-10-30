@@ -8,6 +8,8 @@ import { useMemo } from 'react'
 import { ConectorLLM } from '../../infraestructura/indice.js'
 import { calcularPuntajeSalud, generarRecomendacionNutricional } from '../../aplicacion/indice.js'
 import { useSaludStore, usePersona, useRegistrosPersona, useSignos } from './almacen.js'
+import { useContextoTripulante } from '../gestion/useContextoTripulante.js'
+import { useResumen } from '../gestion/consultas.js'
 import VistaMonitor from '../../presentacion/componentes/VistaMonitor.jsx'
 import VistaTripulacion from '../../presentacion/componentes/VistaTripulacion.jsx'
 import FormularioSignosVitales from '../../presentacion/componentes/FormularioSignosVitales.jsx'
@@ -123,19 +125,23 @@ export function VistaCalendarioRuta() {
   return <Calendario registros={registros} />
 }
 
-/** Vista Médico de IA (ruta /app/chat-ia). */
+/** Vista Médico de IA (ruta /app/chat-ia). Usa el tripulante activo real. */
 export function VistaChatRuta() {
-  const persona = usePersona()
-  const registros = useRegistrosPersona()
-  const signos = useSignos()
-  const suenos = registros.filter((r) => r.tipo === 'sueno')
-  const mentales = registros.filter((r) => r.tipo === 'mental')
-  const ultimoSueno = suenos[suenos.length - 1] ?? null
-  const ultimoMental = mentales[mentales.length - 1] ?? null
-  const contexto = useMemo(
-    () => ({ persona, signos, sueno: ultimoSueno, mental: ultimoMental }),
-    [persona, signos, ultimoSueno, ultimoMental],
-  )
+  const { tripulanteActivo } = useContextoTripulante()
+  const { data } = useResumen(tripulanteActivo?.id)
+  const contexto = useMemo(() => ({
+    persona: tripulanteActivo ? {
+      nombre: tripulanteActivo.nombre,
+      rol: tripulanteActivo.cargo,
+      edad: tripulanteActivo.edad,
+      pesoKg: tripulanteActivo.peso_kg,
+      alturaCm: tripulanteActivo.altura_cm,
+      alergias: tripulanteActivo.alergias,
+    } : null,
+    signos: data?.signos ? { saturacion_oxigeno: data.signos.spo2, frecuencia_cardiaca: data.signos.frecuencia_cardiaca } : {},
+    sueno: data?.sueno,
+    mental: data?.conductual,
+  }), [tripulanteActivo, data])
   return <ChatbotIA contexto={contexto} conectorLLM={conectorLLM} />
 }
 

@@ -90,17 +90,17 @@ test('capturas del núcleo 2A (tripulantes, registros, usuarios)', async ({ brow
       await pagina.click('button[type="submit"]')
       await expect(pagina).toHaveURL(/\/app/)
 
-      for (const [ruta, nombre, fullPage] of [
-        ['/app/tripulacion', 'tripulantes', true],
-        ['/app/registros', 'registros', true],
-        ['/app/usuarios', 'usuarios', true],
-        ['/app/auditoria', 'auditoria', false],
-        ['/app/cuerpo', 'cuerpo', true],
-        ['/app/fundamento', 'fundamento', true],
+      for (const [ruta, nombre] of [
+        ['/app/tripulacion', 'tripulantes'],
+        ['/app/registros', 'registros'],
+        ['/app/usuarios', 'usuarios'],
+        ['/app/auditoria', 'auditoria'],
+        ['/app/cuerpo', 'cuerpo'],
+        ['/app/fundamento', 'fundamento'],
       ]) {
         await pagina.goto(ruta)
         await pagina.waitForTimeout(800)
-        await capturar(pagina, nombre, tema, vp.nombre, fullPage)
+        await capturar(pagina, nombre, tema, vp.nombre, false)
       }
 
       await contexto.close()
