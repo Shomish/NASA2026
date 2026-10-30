@@ -23,7 +23,7 @@ import {
 import { esquemaRegistroForm, detalleDesdeFormulario, TIPOS_REGISTRO, PREGUNTAS_PHQ9 } from '../esquemas.js'
 import { useContextoTripulante } from '../useContextoTripulante.js'
 import { encolar } from '../outbox.js'
-import { aCsv, descargarCsv } from '../exportacion.js'
+import { aCsv, descargarCsv, exportarPdf, exportarExcel } from '../exportacion.js'
 import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaEstado } from './InsigniaEstado.jsx'
 
@@ -300,16 +300,25 @@ export function VistaRegistros() {
 
   const cambiarPagina = (n) => setPagina((p) => Math.min(Math.max(1, p + n), totalPaginas))
 
-  const exportarCsvRegistros = () => {
-    const fecha = new Date().toLocaleDateString('es-PE').split('/').join('-')
-    const filas = registros.map((r) => ({
+  const filasExportar = () =>
+    registros.map((r) => ({
       codigo: r.codigo,
       tipo: r.tipo,
       estado: r.estado,
       tripulante: nombreTripulante(r.tripulante_id),
       fecha: new Date(r.fecha_registro).toLocaleString('es-PE', { hour12: false }),
     }))
-    descargarCsv(aCsv(filas, ['codigo', 'tipo', 'estado', 'tripulante', 'fecha']), `registros-${fecha}.csv`)
+  const COLUMNAS_EXPORTAR = ['codigo', 'tipo', 'estado', 'tripulante', 'fecha']
+  const fechaArchivo = () => new Date().toLocaleDateString('es-PE').split('/').join('-')
+
+  const exportarCsvRegistros = () => {
+    descargarCsv(aCsv(filasExportar(), COLUMNAS_EXPORTAR), `registros-${fechaArchivo()}.csv`)
+  }
+  const exportarPdfRegistros = () => {
+    exportarPdf(filasExportar(), COLUMNAS_EXPORTAR, `Registros de salud · ${new Date().toLocaleDateString('es-PE')}`, `registros-${fechaArchivo()}.pdf`)
+  }
+  const exportarExcelRegistros = () => {
+    exportarExcel(filasExportar(), COLUMNAS_EXPORTAR, `registros-${fechaArchivo()}.xlsx`)
   }
 
   return (
@@ -319,12 +328,18 @@ export function VistaRegistros() {
           <h1 className="font-serif text-2xl font-bold text-tinta">Registros</h1>
           <p className="text-sm text-tinta-suave">Solicitudes de salud: pendiente → validado → cerrado.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Boton variante="secundario" onClick={exportarCsvRegistros} disabled={registros.length === 0}>
-            <Download size={16} /> Exportar CSV
+        <div className="flex flex-wrap items-center gap-2">
+          <Boton variante="secundario" tamaño="sm" onClick={exportarCsvRegistros} disabled={registros.length === 0}>
+            <Download size={14} /> <span className="hidden sm:inline">CSV</span>
+          </Boton>
+          <Boton variante="secundario" tamaño="sm" onClick={exportarPdfRegistros} disabled={registros.length === 0}>
+            <Download size={14} /> <span className="hidden sm:inline">PDF</span>
+          </Boton>
+          <Boton variante="secundario" tamaño="sm" onClick={exportarExcelRegistros} disabled={registros.length === 0}>
+            <Download size={14} /> <span className="hidden sm:inline">Excel</span>
           </Boton>
           <Boton variante="primario" onClick={() => setFormAbierto(true)} data-testid="nuevo-registro">
-            <FilePlus2 size={16} /> Nuevo registro
+            <FilePlus2 size={16} /> <span className="hidden sm:inline">Nuevo registro</span>
           </Boton>
         </div>
       </div>

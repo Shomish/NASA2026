@@ -43,3 +43,56 @@ export function descargarCsv(contenido, nombreArchivo) {
   document.body.removeChild(enlace)
   URL.revokeObjectURL(url)
 }
+
+/**
+ * Exporta a PDF (jsPDF + autotable, carga diferida fuera del bundle inicial).
+ * @param {object[]} filas - Filas de datos.
+ * @param {string[]} columnas - Claves de columna.
+ * @param {string} titulo - Título del documento.
+ * @param {string} nombreArchivo - Nombre del archivo.
+ * @returns {Promise<void>} Promesa.
+ */
+export async function exportarPdf(filas, columnas, titulo, nombreArchivo) {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ])
+  const doc = new jsPDF()
+  doc.setFontSize(16)
+  doc.text(titulo, 14, 16)
+  doc.setFontSize(9)
+  doc.text('Aviso de datos sensibles. Prototipo educativo, no un dispositivo médico.', 14, 22)
+  autoTable(doc, {
+    head: [columnas.map((c) => protegerCelda(c))],
+    body: filas.map((f) => columnas.map((c) => protegerCelda(f[c]))),
+    startY: 26,
+  })
+  doc.save(nombreArchivo)
+}
+
+/**
+ * Exporta a Excel (exceljs, carga diferida fuera del bundle inicial).
+ * @param {object[]} filas - Filas de datos.
+ * @param {string[]} columnas - Claves de columna.
+ * @param {string} nombreArchivo - Nombre del archivo.
+ * @returns {Promise<void>} Promesa.
+ */
+export async function exportarExcel(filas, columnas, nombreArchivo) {
+  const ExcelJS = await import('exceljs')
+  const libro = new ExcelJS.Workbook()
+  const hoja = libro.addWorksheet('Registros')
+  hoja.columns = columnas.map((c) => ({ header: c, key: c, width: 24 }))
+  for (const f of filas) {
+    hoja.addRow(Object.fromEntries(columnas.map((c) => [c, protegerCelda(f[c])])))
+  }
+  const buffer = await libro.xlsx.writeBuffer()
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = URL.createObjectURL(blob)
+  const enlace = document.createElement('a')
+  enlace.href = url
+  enlace.download = nombreArchivo
+  document.body.appendChild(enlace)
+  enlace.click()
+  document.body.removeChild(enlace)
+  URL.revokeObjectURL(url)
+}

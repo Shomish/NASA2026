@@ -139,6 +139,11 @@ export function listarCatalogo() {
   return peticion('/catalogo')
 }
 
+/** Entornos de misión. */
+export function listarEntornos() {
+  return peticion('/entornos')
+}
+
 /* ============ Auditoría ============ */
 
 /** Lista la auditoría (solo administrador). */

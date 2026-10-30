@@ -42,6 +42,11 @@ test('capturas de login, registro y shell', async ({ browser }) => {
       }, tema)
       const pagina = await contexto.newPage()
 
+      // Captura de la landing.
+      await pagina.goto('/')
+      await pagina.waitForTimeout(800)
+      await capturar(pagina, 'landing', tema, vp.nombre)
+
       // Captura del login.
       await pagina.goto('/login')
       await pagina.waitForTimeout(2500)
@@ -90,6 +95,8 @@ test('capturas del núcleo 2A (tripulantes, registros, usuarios)', async ({ brow
         ['/app/registros', 'registros', true],
         ['/app/usuarios', 'usuarios', true],
         ['/app/auditoria', 'auditoria', false],
+        ['/app/cuerpo', 'cuerpo', true],
+        ['/app/fundamento', 'fundamento', true],
       ]) {
         await pagina.goto(ruta)
         await pagina.waitForTimeout(800)

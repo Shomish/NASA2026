@@ -22,6 +22,7 @@ export const esquemaTripulante = z.object({
   dia_mision: numeroOpcional,
   mision: z.string().max(120).optional().default(''),
   objetivo: z.string().max(255).optional().default(''),
+  entorno_id: numeroOpcional,
   alergias: z.string().optional().default('').transform((v) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : [])),
 })
 

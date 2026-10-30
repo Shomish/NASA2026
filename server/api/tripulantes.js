@@ -25,6 +25,7 @@ const esquemaTripulante = z.object({
   mision: z.string().max(120).optional(),
   objetivo: z.string().max(255).optional(),
   alergias: z.array(z.string()).optional(),
+  entorno_id: z.number().int().positive().optional(),
   activo: z.boolean().optional(),
 })
 

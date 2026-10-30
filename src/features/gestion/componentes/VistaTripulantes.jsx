@@ -7,10 +7,12 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import { Pencil, Plus, Trash2, Users } from 'lucide-react'
 import { Boton, Entrada, Esqueleto, EstadoVacio, Modal, Tarjeta } from '../../../presentacion/sistema/indice.js'
 import { useAlmacenSesion } from '../../auth/almacenSesion.js'
 import { useTripulantes, useCrearTripulante, useEditarTripulante, useEliminarTripulante } from '../consultas.js'
+import { listarEntornos } from '../api.js'
 import { esquemaTripulante } from '../esquemas.js'
 import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaActivo } from './InsigniaEstado.jsx'
@@ -38,6 +40,8 @@ function FormularioTripulante({ tripulante, alCerrar }) {
   const crear = useCrearTripulante()
   const editar = useEditarTripulante()
   const esEdicion = Boolean(tripulante)
+  const { data: entornosData } = useQuery({ queryKey: ['entornos'], queryFn: listarEntornos })
+  const entornos = Array.isArray(entornosData) ? entornosData : []
 
   const {
     register,
@@ -70,6 +74,13 @@ function FormularioTripulante({ tripulante, alCerrar }) {
             {errors[campo.nombre] && <p className="mt-1 text-xs text-critico">{errors[campo.nombre].message}</p>}
           </div>
         ))}
+        <div>
+          <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="tp-entorno_id">Entorno de misión</label>
+          <select id="tp-entorno_id" className="h-10 w-full rounded-boton border border-borde bg-superficie-elevada px-3 text-sm text-tinta" {...register('entorno_id')}>
+            <option value="">Sin entorno</option>
+            {entornos.map((e) => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+          </select>
+        </div>
         <div className="flex justify-end gap-2 pt-2">
           <Boton type="button" variante="secundario" onClick={alCerrar} disabled={enviando}>
             Cancelar

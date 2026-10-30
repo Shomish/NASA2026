@@ -7,6 +7,13 @@
 import { Link } from 'react-router-dom'
 import { Activity, ArrowRight, Brain, HeartPulse, Leaf, Moon, PersonStanding, Radiation, ShieldCheck, Sun } from 'lucide-react'
 import { useTema } from '../sistema/tema.jsx'
+import { useIdioma, IDIOMAS } from '../../shared/idioma.js'
+
+/** Traducciones de la landing (infraestructura i18n mínima). */
+const TEXTOS = {
+  es: { titulo: 'Tu salud, evaluada por ti,', subtitulo: 'incluso sin conexión.', descripcion: 'Una herramienta visual para que los astronautas evalúen su propia salud durante misiones largas: entiende los cinco peligros del vuelo espacial, registra tus indicadores y recibe guía para cuidarte.', entrar: 'Entrar al sistema', crear: 'Crear cuenta', queHace: 'Qué hace AYNI HEALTH', peligros: 'Los cinco peligros del vuelo espacial', aviso: 'Prototipo educativo, no un dispositivo médico.' },
+  en: { titulo: 'Assess your own health,', subtitulo: 'even offline.', descripcion: 'A visual tool for astronauts to assess their own health during long missions: understand the five hazards of spaceflight, log your indicators and get guidance to stay healthy.', entrar: 'Enter the system', crear: 'Create account', queHace: 'What AYNI HEALTH does', peligros: 'The five hazards of human spaceflight', aviso: 'Educational prototype, not a medical device.' },
+}
 
 /** Características destacadas. */
 const CARACTERISTICAS = [
@@ -22,6 +29,9 @@ const CARACTERISTICAS = [
  */
 export function VistaLanding() {
   const { modoEfectivo, alternarModo } = useTema()
+  const idioma = useIdioma((s) => s.idioma)
+  const fijarIdioma = useIdioma((s) => s.fijarIdioma)
+  const texto = TEXTOS[idioma] ?? TEXTOS.es
 
   return (
     <div className="min-h-dvh bg-fondo text-tinta">
@@ -40,32 +50,29 @@ export function VistaLanding() {
           </div>
 
           <h1 className="max-w-3xl font-serif text-4xl font-bold leading-tight text-white lg:text-6xl">
-            Tu salud, evaluada por ti,{' '}
-            <span className="bg-gradient-to-r from-andino-dorado to-acento bg-clip-text text-transparent">incluso sin conexión.</span>
+            {texto.titulo}{' '}
+            <span className="bg-gradient-to-r from-andino-dorado to-acento bg-clip-text text-transparent">{texto.subtitulo}</span>
           </h1>
-          <p className="max-w-xl text-white/85">
-            Una herramienta visual para que los astronautas evalúen su propia salud durante misiones largas:
-            entiende los cinco peligros del vuelo espacial, registra tus indicadores y recibe guía para cuidarte.
-          </p>
+          <p className="max-w-xl text-white/85">{texto.descripcion}</p>
 
           <div className="flex flex-wrap gap-3">
             <Link to="/login" className="inline-flex items-center gap-2 rounded-boton bg-white px-5 py-3 text-sm font-semibold text-teja-fuerte shadow-glow hover:opacity-90">
-              Entrar al sistema <ArrowRight size={16} />
+              {texto.entrar} <ArrowRight size={16} />
             </Link>
             <Link to="/registro" className="inline-flex items-center gap-2 rounded-boton border border-white/40 px-5 py-3 text-sm font-medium text-white hover:bg-white/10">
-              Crear cuenta
+              {texto.crear}
             </Link>
           </div>
 
           <div className="mt-4 flex items-center gap-2 text-xs text-white/70">
-            <ShieldCheck size={14} className="text-andino-dorado" /> Prototipo educativo, no un dispositivo médico.
+            <ShieldCheck size={14} className="text-andino-dorado" /> {texto.aviso}
           </div>
         </div>
       </div>
 
       {/* Características */}
       <div className="mx-auto max-w-5xl px-6 py-12">
-        <h2 className="mb-6 font-serif text-2xl font-bold text-tinta">Qué hace AYNI HEALTH</h2>
+        <h2 className="mb-6 font-serif text-2xl font-bold text-tinta">{texto.queHace}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {CARACTERISTICAS.map((c) => (
             <div key={c.titulo} className="rounded-tarjeta border border-borde bg-superficie p-5">
@@ -91,9 +98,19 @@ export function VistaLanding() {
 
         <div className="mt-10 flex items-center justify-between">
           <div className="font-mono text-xs text-tinta-suave">© 2026 AYNI HEALTH · NASA Space Apps Challenge · v1.0</div>
-          <button type="button" onClick={alternarModo} className="rounded-boton border border-borde p-2 text-tinta-suave hover:text-tinta" aria-label="Alternar modo">
-            {modoEfectivo === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm text-tinta"
+              value={idioma}
+              onChange={(e) => fijarIdioma(e.target.value)}
+              aria-label="Idioma"
+            >
+              {IDIOMAS.map((i) => <option key={i} value={i}>{i === 'es' ? 'Español' : 'English'}</option>)}
+            </select>
+            <button type="button" onClick={alternarModo} className="rounded-boton border border-borde p-2 text-tinta-suave hover:text-tinta" aria-label="Alternar modo">
+              {modoEfectivo === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
         </div>
       </div>
     </div>
