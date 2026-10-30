@@ -19,8 +19,10 @@ async function arrancar() {
   // 1. MySQL (motor principal). Falla rápido si no responde en el puerto configurado.
   await verificarConexion()
   await sequelize.sync()
-  // Migraciones ligeras (columnas y ENUMs que sync no altera en tablas existentes).
-  await aplicarMigraciones()
+  // Migraciones ligeras solo en desarrollo; en producción se aplican con db:migrate.
+  if (config.NODE_ENV !== 'production') {
+    await aplicarMigraciones()
+  }
   logger.info({ host: config.DB_HOST, port: config.DB_PORT, base: config.DB_NAME }, 'MySQL conectado y esquema sincronizado')
 
   // 2. Siembra de datos iniciales.

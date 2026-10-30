@@ -17,6 +17,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:setup": "node scripts/db-setup.mjs",
+    "db:migrate": "node scripts/db-migrate.mjs",
     "db:reset": "node scripts/db-reset.mjs",
     "db:importar": "node scripts/db-importar.mjs",
     "verificar:presupuesto": "node scripts/verificar-presupuesto.mjs",

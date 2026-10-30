@@ -7,6 +7,7 @@
 
 import { GeminiChatProvider } from './proveedores.js'
 import { umbralCriticoSpo2, umbralCriticoPhq9 } from '../configuracion/umbrales.js'
+import { sanitizarSalida } from './privacidad.js'
 
 /**
  * Prompt de sistema (español, Perú).
@@ -59,17 +60,17 @@ export function detectarEscalamiento(contexto = {}) {
  * @param {string} parametros.mensaje - Mensaje del usuario.
  * @param {object} parametros.contexto - Contexto crudo.
  * @param {import('./proveedores.js').ChatProvider} [parametros.proveedor] - Proveedor.
- * @returns {Promise<{respuesta: string, escalamiento: string | null}>} Respuesta.
+ * @returns {Promise<{respuesta: string, escalamiento: string | null, usoNube: boolean}>} Respuesta.
  */
 export async function generarRespuestaChat({ mensaje, contexto, proveedor }) {
   const escalamiento = detectarEscalamiento(contexto)
   const contextoSanitizado = seudonimizarContexto(contexto)
   const provider = proveedor ?? new GeminiChatProvider(process.env.GEMINI_API_KEY ?? '')
-  const respuesta =
-    (await provider.generar({ promptSistema: PROMPT_SISTEMA, mensaje, contexto: contextoSanitizado })) ??
-    'Lo siento, el asistente de IA no está disponible ahora. Consulta el historial de salud o contacta al oficial médico.'
+  const respuestaCruda = await provider.generar({ promptSistema: PROMPT_SISTEMA, mensaje, contexto: contextoSanitizado })
+  // Solo cuenta como "uso de nube" si el proveedor Gemini devolvió respuesta real.
+  const usoNube = provider instanceof GeminiChatProvider && Boolean(respuestaCruda)
+  const texto = respuestaCruda ?? 'Lo siento, el asistente de IA no está disponible ahora. Consulta el historial de salud o contacta al oficial médico.'
 
-  // Añade el aviso de escalamiento si corresponde.
-  const textoFinal = escalamiento ? `${respuesta}\n\n${escalamiento}` : respuesta
-  return { respuesta: textoFinal, escalamiento }
+  const textoFinal = escalamiento ? `${texto}\n\n${escalamiento}` : texto
+  return { respuesta: sanitizarSalida(textoFinal), escalamiento, usoNube }
 }

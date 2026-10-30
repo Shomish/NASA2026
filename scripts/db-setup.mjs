@@ -10,7 +10,6 @@ import { config } from '../server/config.js'
 import { sequelize } from '../server/db/conexion.js'
 import { sembrar } from '../server/db/seed.js'
 import { aplicarMigraciones } from '../server/db/migraciones.js'
-
 async function crearBases() {
   const conexion = await mysql.createConnection({
     host: config.DB_HOST,

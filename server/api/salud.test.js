@@ -6,6 +6,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import request from 'supertest'
+import { Op } from 'sequelize'
 import { prepararApp, cerrarBase, EMAIL_ADMIN, CONTRASENA_ADMIN } from '../test/preparar.js'
 import { modelos } from '../db/modelos.js'
 
@@ -74,6 +75,16 @@ describe('alertas', () => {
       .send({ tripulante_id: 1, tipo: 'salud_mental', detalle: { respuestas: [0, 0, 0, 0, 0, 0, 0, 0, 1], puntaje: 1, item9_positivo: true } })
     const alertas = await modelos.Alerta.findAll({ where: { tripulante_id: 1, severidad: 'critica' } })
     expect(alertas.some((a) => a.mensaje.includes('PHQ-9'))).toBe(true)
+  })
+
+  it('no genera alertas duplicadas para la misma condición', async () => {
+    const condicion = { tripulante_id: 1, mensaje: { [Op.like]: '%saturacion_oxigeno%' } }
+    const antes = await modelos.Alerta.count({ where: condicion })
+    // Dos registros con la misma SpO₂ crítica.
+    await request(app).post('/api/v1/registros').set('Authorization', `Bearer ${tokenAdmin}`).send({ tripulante_id: 1, tipo: 'signos_vitales', detalle: { spo2: 84 } })
+    await request(app).post('/api/v1/registros').set('Authorization', `Bearer ${tokenAdmin}`).send({ tripulante_id: 1, tipo: 'signos_vitales', detalle: { spo2: 84 } })
+    const despues = await modelos.Alerta.count({ where: condicion })
+    expect(despues - antes).toBe(1)
   })
 
   it('lista alertas y permite marcar leída y resolver', async () => {
@@ -148,5 +159,16 @@ describe('sincronización offline', () => {
 
     const registros = await modelos.Registro.count({ where: { tipo: 'signos_vitales' } })
     expect(registros).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('avanzar día (demo)', () => {
+  it('avanza el día de misión en modo demo', async () => {
+    const ana = await modelos.Tripulante.findOne({ where: { nombre: 'Ana Quispe' } })
+    const diaAntes = ana.dia_mision
+    const res = await request(app).post('/api/v1/demo/avanzar-dia').set('Authorization', `Bearer ${tokenAdmin}`)
+    expect(res.status).toBe(200)
+    const despues = await modelos.Tripulante.findByPk(ana.id)
+    expect(despues.dia_mision).toBe(diaAntes + 1)
   })
 })

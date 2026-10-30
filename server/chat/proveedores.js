@@ -62,3 +62,23 @@ export class GeminiChatProvider extends ChatProvider {
     }
   }
 }
+
+/**
+ * Motor local de respaldo (sin red). No llama a ningún proveedor externo.
+ */
+export class ProveedorLocal extends ChatProvider {
+  /**
+   * @param {object} parametros - Parámetros.
+   * @returns {Promise<string>} Respuesta local.
+   */
+  async generar({ mensaje }) {
+    const texto = String(mensaje ?? '').toLowerCase()
+    if (texto.includes('sueño') || texto.includes('dormir')) {
+      return 'Sin conexión a la nube, te respondo en modo local: prioriza 7-9 horas de sueño, evita cafeína antes de dormir y mantén una rutina estable. Si el cansancio persiste, avisa al oficial médico.'
+    }
+    if (texto.includes('comer') || texto.includes('nutrición') || texto.includes('aliment')) {
+      return 'Modo local: mantén una alimentación variada con superalimentos andinos (quinua, maca, muña) y una hidratación adecuada. Consulta la guía de nutrición para más detalle.'
+    }
+    return 'Estoy en modo local (sin conexión a la nube). Revisa tu historial de salud y, ante cualquier síntoma grave, contacta de inmediato al oficial médico.'
+  }
+}

@@ -19,7 +19,7 @@ export function generarId() {
  * Versión del esquema de la base de datos IndexedDB.
  * Incrementar al cambiar la estructura de los stores para disparar `onupgradeneeded`.
  */
-const VERSION_ESQUEMA = 2
+const VERSION_ESQUEMA = 3
 
 /**
  * Almacenamiento local con IndexedDB (CRUD completo).
@@ -69,6 +69,12 @@ export class AdaptadorAlmacenamiento {
     // v1 → v2: a partir de ahora los tripulantes se rehidratan a entidades al leer
     // (los objetos planos de IndexedDB ya no se usan directamente). No hay cambio
     // estructural, por lo que no se requiere migración de datos.
+    // v2 → v3: cola outbox para escrituras sin conexión.
+    if (versionAnterior < 3) {
+      if (!base.objectStoreNames.contains('outbox')) {
+        base.createObjectStore('outbox', { keyPath: 'id' })
+      }
+    }
   }
 
   /**

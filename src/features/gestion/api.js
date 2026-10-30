@@ -124,6 +124,11 @@ export function avanzarDiaDemo() {
   return peticion('/demo/avanzar-dia', { metodo: 'POST' })
 }
 
+/** Envía una operación de la cola outbox (idempotente). */
+export function sincronizar(cuerpo) {
+  return peticion('/sync', { metodo: 'POST', cuerpo })
+}
+
 /* ============ Auditoría ============ */
 
 /** Lista la auditoría (solo administrador). */

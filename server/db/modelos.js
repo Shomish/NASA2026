@@ -148,7 +148,7 @@ export const RegistroAmbiente = sequelize.define('RegistroAmbiente', {
 
 export const Alerta = sequelize.define('Alerta', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
-  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   registro_origen_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   severidad: { type: DataTypes.ENUM('info', 'atencion', 'critica'), allowNull: false, defaultValue: 'info' },
   mensaje: { type: DataTypes.STRING(255), allowNull: false },
@@ -216,7 +216,7 @@ export const CacheImagen = sequelize.define('CacheImagen', {
 export const ConversacionIA = sequelize.define('ConversacionIA', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
   usuario_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
-  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   titulo: { type: DataTypes.STRING(160), allowNull: true },
   proveedor: { type: DataTypes.STRING(40), allowNull: true },
   modo: { type: DataTypes.ENUM('local', 'nube'), allowNull: false, defaultValue: 'local' },
@@ -282,7 +282,7 @@ export const OperacionSync = sequelize.define('OperacionSync', {
 export const ConsentimientoIA = sequelize.define('ConsentimientoIA', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
   usuario_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
-  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+  tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   acepta_nube: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   version_texto: { type: DataTypes.STRING(20), allowNull: true },
   fecha_aceptacion: { type: DataTypes.DATE, allowNull: false },
@@ -316,6 +316,11 @@ export const RateLimit = sequelize.define('RateLimit', {
   total: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   vence_en: { type: DataTypes.DATE, allowNull: false },
 }, { tableName: 'rate_limits', timestamps: false, indexes: [{ fields: ['vence_en'] }] })
+
+export const Migracion = sequelize.define('Migracion', {
+  nombre: { type: DataTypes.STRING(120), primaryKey: true },
+  fecha_aplicacion: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+}, { tableName: 'migraciones', timestamps: false })
 
 /* ==================== RETO (catálogo, acciones, rutinas, logros, entornos) ==================== */
 
@@ -426,6 +431,6 @@ export const modelos = {
   NotaDiario, RegistroGlucosa, RegistroAnimo, RegistroEjercicio, RegistroSintomasInmunes,
   RegistroEstadoConductual, RegistroAmbiente, Alerta, Alimento, Contramedida, PlanNutricional,
   PlanAlimento, CacheImagen, ConversacionIA, MensajeIA, UmbralClinico, SesionRefresh, Auditoria,
-  OperacionSync, ConsentimientoIA, UsoIA, ConfiguracionIA, RateLimit, CatalogoIndicador,
+  OperacionSync, ConsentimientoIA, UsoIA, ConfiguracionIA, RateLimit, Migracion, CatalogoIndicador,
   AccionSalud, EntornoMision, RutinaMedicion, CumplimientoRutina, LogroTripulante,
 }

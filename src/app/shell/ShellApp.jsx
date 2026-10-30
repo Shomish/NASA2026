@@ -51,6 +51,9 @@ const BarraContextoTripulante = lazy(() =>
 const BadgeAlertas = lazy(() =>
   import('../../features/gestion/componentes/BadgeAlertas.jsx').then((m) => ({ default: m.BadgeAlertas })),
 )
+const IndicadorSincronizacion = lazy(() =>
+  import('../../features/gestion/componentes/IndicadorSincronizacion.jsx').then((m) => ({ default: m.IndicadorSincronizacion })),
+)
 
 /** Rutas de módulos de datos (muestran la barra de contexto de tripulante). */
 const RUTAS_DE_DATOS = [
@@ -245,6 +248,11 @@ export function ShellApp() {
             <div className="hidden text-right font-mono text-xs text-tinta-suave md:block">
               <div>{reloj.hora}</div>
               <div>{reloj.fecha}</div>
+            </div>
+            <div className="hidden sm:block">
+              <Suspense fallback={null}>
+                <IndicadorSincronizacion />
+              </Suspense>
             </div>
             <button
               type="button"

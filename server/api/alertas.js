@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express'
+import { Op } from 'sequelize'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { autorizar } from '../middlewares/autorizacion.js'
 import { modelos } from '../db/modelos.js'
@@ -56,7 +57,13 @@ export async function generarAlertas(registro, detalle) {
     }
   }
 
-  for (const a of alertas) await Alerta.create(a)
+  for (const a of alertas) {
+    // Evita duplicados: si ya existe una alerta activa con el mismo mensaje y tripulante.
+    const duplicada = await Alerta.findOne({
+      where: { tripulante_id: a.tripulante_id, mensaje: a.mensaje, estado: { [Op.in]: ['nueva', 'leida'] } },
+    })
+    if (!duplicada) await Alerta.create(a)
+  }
 }
 
 // GET /api/v1/alertas (el tripulante ve solo las suyas; médico/admin todas).
