@@ -66,6 +66,29 @@ export function useAlertasNoLeidas() {
   return Array.isArray(data) ? data.length : 0
 }
 
+/** Resumen de salud del tripulante activo. */
+export function useResumen(tripulanteId) {
+  return useQuery({
+    queryKey: ['resumen', tripulanteId],
+    queryFn: () => api.obtenerResumen(tripulanteId),
+    enabled: tripulanteId != null,
+  })
+}
+
+/** Avanza el día de misión (demo). */
+export function useAvanzarDia() {
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: api.avanzarDiaDemo,
+    onSuccess: () => {
+      toast.success('Día de misión avanzado.')
+      cliente.invalidateQueries({ queryKey: ['resumen'] })
+      cliente.invalidateQueries({ queryKey: CLAVES.tripulantes })
+    },
+    onError: (e) => toast.error(e.message ?? 'No se pudo avanzar el día.'),
+  })
+}
+
 /** Mutación genérica con invalidación y toast. */
 function useMutacion({ fn, clave, exito, errorMensaje = 'No se pudo completar la operación.' }) {
   const cliente = useQueryClient()

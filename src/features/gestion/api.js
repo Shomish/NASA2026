@@ -129,6 +129,11 @@ export function sincronizar(cuerpo) {
   return peticion('/sync', { metodo: 'POST', cuerpo })
 }
 
+/** Resumen de salud de un tripulante (dashboard/monitor). */
+export function obtenerResumen(tripulanteId) {
+  return peticion(`/resumen${tripulanteId ? `?tripulante_id=${tripulanteId}` : ''}`)
+}
+
 /* ============ Auditoría ============ */
 
 /** Lista la auditoría (solo administrador). */

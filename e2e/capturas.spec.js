@@ -89,6 +89,7 @@ test('capturas del núcleo 2A (tripulantes, registros, usuarios)', async ({ brow
         ['/app/tripulacion', 'tripulantes'],
         ['/app/registros', 'registros'],
         ['/app/usuarios', 'usuarios'],
+        ['/app/auditoria', 'auditoria'],
       ]) {
         await pagina.goto(ruta)
         await pagina.waitForTimeout(800)

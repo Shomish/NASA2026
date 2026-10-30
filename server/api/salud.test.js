@@ -172,3 +172,18 @@ describe('avanzar día (demo)', () => {
     expect(despues.dia_mision).toBe(diaAntes + 1)
   })
 })
+
+describe('resumen de salud', () => {
+  it('devuelve el resumen del tripulante con tendencias y alertas', async () => {
+    const res = await request(app).get('/api/v1/resumen?tripulante_id=1').set('Authorization', `Bearer ${tokenAdmin}`)
+    expect(res.status).toBe(200)
+    expect(res.body.tripulante.nombre).toBe('Ana Quispe')
+    expect(res.body.tripulante.entorno).toBe('Análogo terrestre Cusco')
+    expect(Array.isArray(res.body.tendencias.sueno)).toBe(true)
+  })
+
+  it('un tripulante solo puede ver su propio resumen (403 para otro)', async () => {
+    const res = await request(app).get('/api/v1/resumen?tripulante_id=2').set('Authorization', `Bearer ${tokenTripulante}`)
+    expect(res.status).toBe(403)
+  })
+})
