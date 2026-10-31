@@ -14,7 +14,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.js', 'src/**/*.test.jsx', 'server/**/*.test.js', 'shared/**/*.test.js'],
     globals: false,
-    env: { NODE_ENV: 'test' },
+    env: { NODE_ENV: 'test', GEMINI_API_KEY: '' },
     testTimeout: 15000,
     // Los tests de servidor comparten la base MySQL: ejecutar archivos en serie.
     fileParallelism: false,
