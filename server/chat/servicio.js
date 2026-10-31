@@ -5,7 +5,7 @@
  * @module server/chat/servicio
  */
 
-import { GeminiChatProvider } from './proveedores.js'
+import { GeminiChatProvider, ProveedorLocal } from './proveedores.js'
 import { umbralCriticoSpo2, umbralCriticoPhq9 } from '../configuracion/umbrales.js'
 import { sanitizarSalida } from './privacidad.js'
 
@@ -65,10 +65,10 @@ export function detectarEscalamiento(contexto = {}) {
 export async function generarRespuestaChat({ mensaje, contexto, proveedor }) {
   const escalamiento = detectarEscalamiento(contexto)
   const contextoSanitizado = seudonimizarContexto(contexto)
-  const provider = proveedor ?? new GeminiChatProvider(process.env.GEMINI_API_KEY ?? '')
+  const provider = proveedor ?? new GeminiChatProvider(process.env.GEMINI_API_KEY ?? '', process.env.GEMINI_MODEL || 'gemini-flash-latest')
   const respuestaCruda = await provider.generar({ promptSistema: PROMPT_SISTEMA, mensaje, contexto: contextoSanitizado })
-  // Solo cuenta como "uso de nube" si el proveedor Gemini devolvió respuesta real.
-  const usoNube = provider instanceof GeminiChatProvider && Boolean(respuestaCruda)
+  // Cuenta como "uso de nube" si el proveedor no es el local y devolvió respuesta real.
+  const usoNube = !(provider instanceof ProveedorLocal) && Boolean(respuestaCruda)
   const texto = respuestaCruda ?? 'Lo siento, el asistente de IA no está disponible ahora. Consulta el historial de salud o contacta al oficial médico.'
 
   const textoFinal = escalamiento ? `${texto}\n\n${escalamiento}` : texto

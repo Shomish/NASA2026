@@ -29,10 +29,12 @@ export class ChatProvider {
 export class GeminiChatProvider extends ChatProvider {
   /**
    * @param {string} claveApi - Clave de la API de Gemini.
+   * @param {string} [modelo] - Nombre del modelo (por defecto gemini-flash-latest).
    */
-  constructor(claveApi) {
+  constructor(claveApi, modelo = 'gemini-flash-latest') {
     super()
     this.claveApi = claveApi
+    this.modelo = modelo
   }
 
   /**
@@ -44,7 +46,7 @@ export class GeminiChatProvider extends ChatProvider {
     if (!this.claveApi) return null
     try {
       const respuesta = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.claveApi}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${this.modelo}:generateContent?key=${this.claveApi}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -57,6 +59,54 @@ export class GeminiChatProvider extends ChatProvider {
       )
       const datos = await respuesta.json()
       return datos?.candidates?.[0]?.content?.parts?.[0]?.text ?? null
+    } catch {
+      return null
+    }
+  }
+}
+
+/**
+ * Proveedor compatible con la API de OpenAI (OpenRouter, Groq, etc.).
+ * Permite configurar cualquier IA gratuita o de pago con formato OpenAI.
+ */
+export class OpenAICompatibleProvider extends ChatProvider {
+  /**
+   * @param {string} claveApi - Clave de API.
+   * @param {string} modelo - Modelo.
+   * @param {string} [urlBase] - URL base (por defecto https://api.openai.com/v1).
+   */
+  constructor(claveApi, modelo = 'gpt-4o-mini', urlBase = 'https://api.openai.com/v1') {
+    super()
+    this.claveApi = claveApi
+    this.modelo = modelo
+    this.urlBase = urlBase.replace(/\/$/, '')
+  }
+
+  /**
+   * @param {object} parametros - Parámetros.
+   * @returns {Promise<string | null>} Respuesta o null.
+   */
+  async generar({ promptSistema, mensaje, contexto }) {
+    if (!this.claveApi) return null
+    try {
+      const respuesta = await fetch(`${this.urlBase}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.claveApi}`,
+        },
+        body: JSON.stringify({
+          model: this.modelo,
+          messages: [
+            { role: 'system', content: promptSistema },
+            { role: 'user', content: `Contexto del tripulante:\n${contexto}\n\nPregunta: ${mensaje}` },
+          ],
+          temperature: 0.4,
+        }),
+      })
+      const datos = await respuesta.json()
+      const msg = datos?.choices?.[0]?.message
+      return msg?.content ?? msg?.reasoning ?? null
     } catch {
       return null
     }

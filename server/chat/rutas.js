@@ -10,18 +10,20 @@ import { z } from 'zod'
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { autenticacion } from '../middlewares/autenticacion.js'
 import { generarRespuestaChat } from './servicio.js'
-import { GeminiChatProvider, ProveedorLocal } from './proveedores.js'
+import { GeminiChatProvider, OpenAICompatibleProvider, ProveedorLocal } from './proveedores.js'
 import { consentimientoVigente, fijarConsentimiento, dentroDeLimites, registrarUso, sanitizarEntrada } from './privacidad.js'
 import { modelos } from '../db/modelos.js'
 import { tripulanteDelUsuario, auditar } from '../api/utilidades.js'
 import { AlmacenRateLimitMySQL } from '../auth/almacenRateLimit.js'
+import { obtenerConfigIA } from '../configuracion/ia.js'
 
 const { ConversacionIA, MensajeIA, Alerta, ConsentimientoIA } = modelos
 const rutas = Router()
 
 /** Estado del proveedor de IA (para que el front sepa si hay LLM en la nube). */
-rutas.get('/estado', (_req, res) => {
-  res.json({ disponible: Boolean(process.env.GEMINI_API_KEY) })
+rutas.get('/estado', async (_req, res) => {
+  const config = await obtenerConfigIA()
+  res.json({ disponible: config.activo })
 })
 
 /** Esquema del mensaje de chat (límite de tamaño). */
@@ -54,11 +56,16 @@ async function chat(req, res) {
 
   const tripulante = await tripulanteDelUsuario(req)
 
-  // Sin consentimiento vigente o fuera de límites, no se llama a la nube.
+  // Sin consentimiento vigente, sin IA activa o fuera de límites, no se llama a la nube.
+  const configIA = await obtenerConfigIA()
   const consentimiento = tripulante ? await consentimientoVigente(req.usuario.id, tripulante.id) : false
   const dentroLimite = await dentroDeLimites(req.usuario.id)
-  const usarNube = consentimiento && dentroLimite
-  const proveedor = usarNube ? new GeminiChatProvider(process.env.GEMINI_API_KEY ?? '') : new ProveedorLocal()
+  const usarNube = configIA.activo && consentimiento && dentroLimite
+  const proveedor = usarNube
+    ? configIA.proveedor === 'openai'
+      ? new OpenAICompatibleProvider(configIA.claveApi, configIA.modelo, configIA.urlBase)
+      : new GeminiChatProvider(configIA.claveApi, configIA.modelo)
+    : new ProveedorLocal()
 
   const [conversacion] = await ConversacionIA.findOrCreate({
     where: { usuario_id: req.usuario.id, tripulante_id: tripulante?.id ?? null, estado: 'activa' },

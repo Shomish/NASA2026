@@ -4,7 +4,7 @@
  * @module server/chat/servicio.test
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { seudonimizarContexto, detectarEscalamiento, generarRespuestaChat } from './servicio.js'
 import { actualizarUmbrales, restablecerUmbrales } from '../configuracion/umbrales.js'
 
@@ -48,6 +48,11 @@ describe('detectarEscalamiento', () => {
 })
 
 describe('generarRespuestaChat (sin proveedor)', () => {
+  // Hermético: sin clave de API, el proveedor Gemini devuelve null y se usa el respaldo.
+  beforeEach(() => {
+    process.env.GEMINI_API_KEY = ''
+  })
+
   it('devuelve una respuesta de respaldo si no hay proveedor', async () => {
     const resultado = await generarRespuestaChat({ mensaje: '¿cómo estoy?', contexto: {} })
     expect(resultado.respuesta).toBeTruthy()
