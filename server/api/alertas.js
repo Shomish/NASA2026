@@ -12,7 +12,7 @@ import { modelos } from '../db/modelos.js'
 import { esMedicoOAdmin, tripulanteDelUsuario } from './utilidades.js'
 import { item9Phq9Positivo } from '../../shared/evaluaciones.js'
 
-const { Alerta, UmbralClinico } = modelos
+const { Alerta, UmbralClinico, Tripulante } = modelos
 const rutas = Router()
 
 /** Mapeo campo de detalle → parámetro de umbral. */
@@ -76,8 +76,11 @@ rutas.get('/', autenticacion, async (req, res) => {
     if (!tripulante) return res.json([])
     where.tripulante_id = tripulante.id
   }
-  const alertas = await Alerta.findAll({ where, order: [['id', 'DESC']] })
-  res.json(alertas)
+  const alertas = await Alerta.findAll({ where, order: [['id', 'DESC']], include: [{ model: Tripulante, as: 'Tripulante', attributes: ['id', 'nombre'] }] })
+  res.json(alertas.map((a) => {
+    const plano = a.get({ plain: true })
+    return { ...plano, tripulante_nombre: plano.Tripulante?.nombre ?? null, Tripulante: undefined }
+  }))
 })
 
 // PUT /api/v1/alertas/:id/leer (médico/admin o el tripulante dueño).

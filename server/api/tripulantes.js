@@ -71,4 +71,13 @@ rutas.delete('/:id', autenticacion, autorizar('administrador'), async (req, res)
   res.status(204).end()
 })
 
+// POST /api/v1/tripulantes/:id/reactivar (solo administrador)
+rutas.post('/:id/reactivar', autenticacion, autorizar('administrador'), async (req, res) => {
+  const tripulante = await Tripulante.findByPk(req.params.id)
+  if (!tripulante) return res.status(404).json({ codigo: 'NO_ENCONTRADO', mensaje: 'Tripulante no encontrado.' })
+  await tripulante.update({ activo: true })
+  await auditar({ usuarioId: req.usuario.id, accion: 'reactivar', entidad: 'tripulante', entidadId: tripulante.id, req })
+  res.json(tripulante)
+})
+
 export default rutas

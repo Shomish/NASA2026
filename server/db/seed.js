@@ -148,13 +148,14 @@ export async function sembrar(nodeEnv = config.NODE_ENV) {
     await UmbralClinico.findOrCreate({ where: { parametro: u.parametro }, defaults: u })
   }
 
-  // Configuración de IA (modo nube desactivado hasta consentimiento).
+  // Configuración de IA (modo nube desactivado hasta consentimiento; se activa desde Configuración).
   await ConfiguracionIA.findOrCreate({
     where: { proveedor: 'gemini' },
     defaults: {
       proveedor: 'gemini',
-      modelo: process.env.GEMINI_MODEL ?? 'gemini-1.5-flash',
-      activo: false,
+      modelo: process.env.GEMINI_MODEL ?? 'gemini-flash-latest',
+      clave_api: process.env.GEMINI_API_KEY ?? null,
+      activo: Boolean(process.env.GEMINI_API_KEY),
       limite_diario_por_usuario: 50,
       limite_mensual_global: 10000,
       version_prompt_sistema: 'v1',

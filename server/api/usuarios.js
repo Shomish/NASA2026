@@ -88,4 +88,13 @@ rutas.put('/:id/desactivar', autenticacion, autorizar('administrador'), async (r
   res.status(204).end()
 })
 
+// PUT /api/v1/usuarios/:id/reactivar
+rutas.put('/:id/reactivar', autenticacion, autorizar('administrador'), async (req, res) => {
+  const usuario = await Usuario.findByPk(req.params.id)
+  if (!usuario) return res.status(404).json({ codigo: 'NO_ENCONTRADO', mensaje: 'Usuario no encontrado.' })
+  await usuario.update({ activo: true })
+  await auditar({ usuarioId: req.usuario.id, accion: 'reactivar', entidad: 'usuario', entidadId: usuario.id, req })
+  res.json({ id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol, activo: usuario.activo })
+})
+
 export default rutas

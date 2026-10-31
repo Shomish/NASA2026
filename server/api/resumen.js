@@ -70,7 +70,7 @@ rutas.get('/', autenticacion, async (req, res) => {
     ultimo(RegistroEstadoConductual, ids),
   ])
 
-  const alertas = await Alerta.findAll({ where: { tripulante_id: tripulante.id }, order: [['id', 'DESC']], limit: 10 })
+  const alertas = await Alerta.findAll({ where: { tripulante_id: tripulante.id }, order: [['id', 'DESC']] })
 
   const tendencias = {
     frecuenciaCardiaca: await tendencia(SignoVital, registros, 'frecuencia_cardiaca'),
@@ -101,7 +101,7 @@ rutas.get('/', autenticacion, async (req, res) => {
     alertas: {
       total: alertas.length,
       nuevas: alertas.filter((a) => a.estado === 'nueva').length,
-      criticas: alertas.filter((a) => a.severidad === 'critica').length,
+      criticas: alertas.filter((a) => a.severidad === 'critica' && a.estado !== 'resuelta').length,
       recientes: plano(alertas.slice(0, 5)),
     },
     tendencias,
