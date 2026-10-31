@@ -26,6 +26,7 @@ import { esquemaLogin } from './index.js'
 import { apiLogin } from './api.js'
 import { useAlmacenSesion } from './almacenSesion.js'
 import { useTema } from '../../presentacion/sistema/tema.jsx'
+import { useIdioma, IDIOMAS, useTraduccion } from '../../shared/idioma.js'
 
 // Partículas con carga diferida (no forman parte del bundle inicial de /login).
 const ParticulasEstelares = lazy(() => import('./ParticulasEstelares.jsx'))
@@ -39,6 +40,9 @@ export function VistaLogin() {
   const ubicacion = useLocation()
   const iniciar = useAlmacenSesion((s) => s.iniciar)
   const { temas, paleta, fijarPaleta, modoEfectivo, alternarModo } = useTema()
+  const idioma = useIdioma((s) => s.idioma)
+  const fijarIdioma = useIdioma((s) => s.fijarIdioma)
+  const t = useTraduccion()
 
   const [mostrarContrasena, setMostrarContrasena] = useState(false)
   const [capsLock, setCapsLock] = useState(false)
@@ -104,12 +108,11 @@ export function VistaLogin() {
         {/* Contenido central */}
         <div className="relative z-10 my-8 space-y-5">
           <h1 className="font-serif text-3xl font-bold leading-tight text-white lg:text-5xl">
-            Cuida la salud de tu tripulación,{' '}
-            <span className="bg-gradient-to-r from-andino-dorado to-acento bg-clip-text text-transparent">incluso sin conexión.</span>
+            {t('login.hero.titulo1')}{' '}
+            <span className="bg-gradient-to-r from-andino-dorado to-acento bg-clip-text text-transparent">{t('login.hero.titulo2')}</span>
           </h1>
           <p className="max-w-md text-white/80">
-            Signos vitales, nutrición andina, sueño, salud mental y un médico de IA que funciona sin
-            depender de control de misión.
+            {t('login.hero.descripcion')}
           </p>
 
           {/* Anillo Inti con dato real */}
@@ -125,18 +128,18 @@ export function VistaLogin() {
               </div>
             </div>
             <div className="font-mono text-xs text-white/80">
-              <div>Ana Quispe · Comandante</div>
-              <div>Día 120 · SpO₂ 97%</div>
+              <div>{t('login.hero.comandante')}</div>
+              <div>{t('login.hero.dia')}</div>
             </div>
           </div>
 
           {/* 4 mini-cards de vidrio esmerilado */}
           <div className="hidden grid-cols-2 gap-2 md:grid">
             {[
-              { icono: <HeartPulse size={16} />, texto: 'Monitoreo vital autónomo' },
-              { icono: <Leaf size={16} />, texto: 'Nutrición con superalimentos andinos' },
-              { icono: <Brain size={16} />, texto: 'Sueño, salud mental y radiación' },
-              { icono: <Sparkles size={16} />, texto: 'Médico de IA offline' },
+              { icono: <HeartPulse size={16} />, texto: t('login.c1') },
+              { icono: <Leaf size={16} />, texto: t('login.c2') },
+              { icono: <Brain size={16} />, texto: t('login.c3') },
+              { icono: <Sparkles size={16} />, texto: t('login.c4') },
             ].map((c) => (
               <div key={c.texto} className="flex items-center gap-2 rounded-tarjeta border border-white/20 bg-white/10 p-3 text-xs text-white backdrop-blur-sm">
                 <span className="text-andino-dorado">{c.icono}</span>
@@ -157,33 +160,41 @@ export function VistaLogin() {
         <div className="w-full max-w-md space-y-6">
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 rounded-insignia border border-borde bg-superficie-alta px-2.5 py-1 text-xs text-tinta-suave">
-              <ShieldCheck size={14} className="text-exito" /> Conexión segura
+              <ShieldCheck size={14} className="text-exito" /> {t('login.seguro')}
             </span>
             <div className="flex items-center gap-1">
+              <select
+                className="rounded-boton border border-borde bg-superficie px-2 py-1 text-xs text-tinta"
+                value={idioma}
+                onChange={(e) => fijarIdioma(e.target.value)}
+                aria-label={t('shell.idioma')}
+              >
+                {IDIOMAS.map((i) => <option key={i} value={i}>{i.toUpperCase()}</option>)}
+              </select>
               <select
                 className="rounded-boton border border-borde bg-superficie px-2 py-1 text-xs text-tinta"
                 value={paleta}
                 onChange={(e) => fijarPaleta(e.target.value)}
                 aria-label="Seleccionar paleta"
               >
-                {temas.map((t) => (
-                  <option key={t.id} value={t.id}>{t.nombre}</option>
+                {temas.map((tm) => (
+                  <option key={tm.id} value={tm.id}>{tm.nombre}</option>
                 ))}
               </select>
-              <button type="button" onClick={alternarModo} className="flex h-8 w-8 items-center justify-center rounded-boton border border-borde text-tinta-suave hover:text-tinta" aria-label="Alternar modo">
+              <button type="button" onClick={alternarModo} className="flex h-8 w-8 items-center justify-center rounded-boton border border-borde text-tinta-suave hover:text-tinta" aria-label={t('shell.alternarModo')}>
                 {modoEfectivo === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
               </button>
             </div>
           </div>
 
           <div className="space-y-1">
-            <h2 className="font-serif text-2xl font-bold text-tinta">Bienvenido de nuevo</h2>
-            <p className="text-sm text-tinta-suave">Ingresa tus credenciales para acceder al sistema.</p>
+            <h2 className="font-serif text-2xl font-bold text-tinta">{t('login.bienvenida')}</h2>
+            <p className="text-sm text-tinta-suave">{t('login.instruccion')}</p>
           </div>
 
           <form onSubmit={handleSubmit(alEnviar)} className="space-y-4" noValidate>
             <div>
-              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="email">Email</label>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="email">{t('login.email')}</label>
               <div className="relative">
                 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-tinta-suave" />
                 <input
@@ -198,7 +209,7 @@ export function VistaLogin() {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="contrasena">Contraseña</label>
+              <label className="mb-1 block text-sm font-medium text-tinta" htmlFor="contrasena">{t('login.contrasena')}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-tinta-suave" />
                 <input
@@ -220,14 +231,14 @@ export function VistaLogin() {
                 </button>
               </div>
               {errors.contrasena && <p className="mt-1 text-xs text-critico">{errors.contrasena.message}</p>}
-              {capsLock && <p className="mt-1 text-xs text-advertencia-fuerte">Bloq Mayús activado</p>}
+              {capsLock && <p className="mt-1 text-xs text-advertencia-fuerte">{t('login.bloqMayus')}</p>}
             </div>
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 text-tinta-suave">
-                <input type="checkbox" className="h-4 w-4 rounded border-borde" /> Recordar usuario
+                <input type="checkbox" className="h-4 w-4 rounded border-borde" /> {t('login.recordar')}
               </label>
-              <a href="#" className="text-primario hover:underline">¿Olvidaste tu contraseña?</a>
+              <a href="#" className="text-primario hover:underline">{t('login.olvidaste')}</a>
             </div>
 
             {error && (
@@ -244,22 +255,22 @@ export function VistaLogin() {
               {isSubmitting ? (
                 <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
               ) : (
-                <>Ingresar al sistema →</>
+                <>{t('login.ingresar')} →</>
               )}
             </button>
           </form>
 
           <p className="text-center text-sm text-tinta-suave">
-            ¿No tienes cuenta?{' '}
-            <Link to="/registro" className="font-medium text-primario hover:underline">Crear una cuenta</Link>
+            {t('login.sinCuenta')}{' '}
+            <Link to="/registro" className="font-medium text-primario hover:underline">{t('login.crearCuenta')}</Link>
           </p>
 
           {modoDemo && (
             <div className="rounded-tarjeta border border-andino-dorado/40 bg-andino-dorado/10 p-3 text-sm">
-              <div className="font-medium text-tinta">Acceso de demostración</div>
+              <div className="font-medium text-tinta">{t('login.demo.titulo')}</div>
               <div className="mt-1 font-mono text-xs text-tinta-suave">admin@ayni.health / admin123</div>
               <button type="button" onClick={autocompletarDemo} className="mt-2 text-xs font-medium text-primario hover:underline">
-                Autocompletar credenciales
+                {t('login.demo.autocompletar')}
               </button>
             </div>
           )}

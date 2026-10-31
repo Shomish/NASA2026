@@ -67,6 +67,7 @@ export function VistaAuditoria() {
                   <th className="px-4 py-2 font-medium">Acción</th>
                   <th className="px-4 py-2 font-medium">Entidad</th>
                   <th className="px-4 py-2 font-medium">Usuario</th>
+                  <th className="px-4 py-2 font-medium">IP</th>
                   <th className="px-4 py-2 font-medium">Fecha</th>
                 </tr>
               </thead>
@@ -76,6 +77,7 @@ export function VistaAuditoria() {
                     <td className="px-4 py-2 font-mono text-xs text-tinta">{a.accion}</td>
                     <td className="px-4 py-2 text-tinta">{a.entidad}{a.entidad_id ? ` #${a.entidad_id}` : ''}</td>
                     <td className="px-4 py-2 text-tinta-suave">{a.usuario_id ?? '—'}</td>
+                    <td className="px-4 py-2 font-mono text-xs text-tinta-suave">{a.ip ?? '—'}</td>
                     <td className="px-4 py-2 text-tinta-suave">{a.creado_en ? new Date(a.creado_en).toLocaleString('es-PE', { hour12: false }) : ''}</td>
                   </tr>
                 ))}

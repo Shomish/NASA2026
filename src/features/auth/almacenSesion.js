@@ -25,6 +25,8 @@ export const useAlmacenSesion = create((set) => ({
   usuario: null,
   iniciar: (token, usuario) => {
     fijarTokenAcceso(token)
+    // El recorrido de bienvenida debe mostrarse en cada inicio de sesión.
+    try { localStorage.removeItem('ayni-tour-visto') } catch { /* sin almacenamiento */ }
     set({ accessToken: token, usuario })
   },
   cerrar: () => {

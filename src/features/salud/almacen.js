@@ -9,17 +9,36 @@ import { create } from 'zustand'
 import { tripulacionInicial } from '../../datos/mockDatos.js'
 import { AdaptadorAlmacenamiento, AdaptadorApi, generarId } from '../../infraestructura/indice.js'
 import { evaluarSignoVital, sanitizarTripulante } from '../../dominio/indice.js'
+import { reproducirAlertaSonora } from '../../shared/alertaSonido.js'
 
-/** Historial inicial de demostración. */
+/** Historial inicial de demostración (varios días por tripulante). */
 function historialInicial() {
   const ahora = Date.now()
   const dia = 86400000
   return [
-    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'frecuencia_cardiaca', valor: 72, instante: new Date(ahora - 2 * dia).toISOString() },
-    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'saturacion_oxigeno', valor: 97, instante: new Date(ahora - 2 * dia).toISOString() },
-    { id: generarId(), personaId: 'ana-quispe', tipo: 'sueno', horas: 8, calidad: 8, interrupciones: 1, instante: new Date(ahora - 1 * dia).toISOString() },
-    { id: generarId(), personaId: 'ana-quispe', tipo: 'mental', cuestionario: 'phq9', puntaje: 4, instante: new Date(ahora - 1 * dia).toISOString() },
+    // Ana Quispe (comandante): pérdida ósea + estrés.
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'frecuencia_cardiaca', valor: 72, instante: new Date(ahora - 3 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'saturacion_oxigeno', valor: 97, instante: new Date(ahora - 3 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'sistolica', valor: 122, instante: new Date(ahora - 3 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'diastolica', valor: 78, instante: new Date(ahora - 3 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'temperatura', valor: 36.6, instante: new Date(ahora - 3 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'sueno', horas: 7.5, calidad: 7, interrupciones: 2, instante: new Date(ahora - 2 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'mental', cuestionario: 'phq9', puntaje: 6, instante: new Date(ahora - 2 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'frecuencia_cardiaca', valor: 74, instante: new Date(ahora - 2 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'saturacion_oxigeno', valor: 96, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'sueno', horas: 6.5, calidad: 6, interrupciones: 3, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'mental', cuestionario: 'gad7', puntaje: 7, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'ana-quispe', tipo: 'signo', signoTipo: 'temperatura', valor: 37.1, instante: new Date(ahora - 1 * dia).toISOString() },
+    // Diego Mamani (ingeniero): atrofia muscular.
     { id: generarId(), personaId: 'diego-mamani', tipo: 'signo', signoTipo: 'saturacion_oxigeno', valor: 96, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'diego-mamani', tipo: 'signo', signoTipo: 'frecuencia_cardiaca', valor: 88, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'diego-mamani', tipo: 'sueno', horas: 6.8, calidad: 6, interrupciones: 2, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'diego-mamani', tipo: 'mental', cuestionario: 'phq9', puntaje: 4, instante: new Date(ahora - 1 * dia).toISOString() },
+    // Lucía Condori (médico): anemia + hipoxia.
+    { id: generarId(), personaId: 'lucia-condori', tipo: 'signo', signoTipo: 'saturacion_oxigeno', valor: 92, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'lucia-condori', tipo: 'signo', signoTipo: 'frecuencia_cardiaca', valor: 92, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'lucia-condori', tipo: 'sueno', horas: 6.0, calidad: 5, interrupciones: 4, instante: new Date(ahora - 1 * dia).toISOString() },
+    { id: generarId(), personaId: 'lucia-condori', tipo: 'mental', cuestionario: 'gad7', puntaje: 9, instante: new Date(ahora - 1 * dia).toISOString() },
   ]
 }
 
@@ -104,6 +123,8 @@ export const useSaludStore = create((set, get) => ({
         const alerta = { id: generarId(), personaId, tipo: 'alerta', severidad: 'critico', mensaje: `Signo vital crítico: ${registro.signoTipo} = ${registro.valor}`, leida: false, instante: new Date().toISOString() }
         set((s) => ({ historial: [...s.historial, alerta] }))
         almacenamiento.guardar('historial', alerta).catch(() => {})
+        // Datos atípicos: reproduce la alerta sonora (tono + locución es/en).
+        reproducirAlertaSonora()
       }
       const signos = calcularSignos(get().historial, personaId)
       api.guardarRegistro({ ...signos, [registro.signoTipo]: registro.valor }).catch(() => {})

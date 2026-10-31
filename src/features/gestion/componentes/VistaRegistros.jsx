@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, ClipboardList, FilePlus2, Lock, RotateCcw, Trash2, Download } from 'lucide-react'
 import { Boton, Entrada, Esqueleto, EstadoVacio, Modal, Tarjeta, toast } from '../../../presentacion/sistema/indice.js'
 import { useAlmacenSesion } from '../../auth/almacenSesion.js'
@@ -20,10 +21,11 @@ import {
   useEliminarRegistro,
   useRestaurarRegistro,
 } from '../consultas.js'
+import { listarAlertas } from '../api.js'
 import { esquemaRegistroForm, detalleDesdeFormulario, TIPOS_REGISTRO, PREGUNTAS_PHQ9 } from '../esquemas.js'
 import { useContextoTripulante } from '../useContextoTripulante.js'
 import { encolar } from '../outbox.js'
-import { aCsv, descargarCsv, exportarPdf, exportarExcel } from '../exportacion.js'
+import { aCsv, descargarCsv, exportarExcel } from '../exportacion.js'
 import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaEstado } from './InsigniaEstado.jsx'
 
@@ -290,6 +292,9 @@ export function VistaRegistros() {
   const eliminar = useEliminarRegistro()
   const restaurar = useRestaurarRegistro()
 
+  const { data: alertasData } = useQuery({ queryKey: ['alertas'], queryFn: listarAlertas })
+  const alertas = Array.isArray(alertasData) ? alertasData : []
+
   const [formAbierto, setFormAbierto] = useState(false)
   const [ultimoCreado, setUltimoCreado] = useState(null)
   const [aEliminar, setAEliminar] = useState(null)
@@ -297,28 +302,91 @@ export function VistaRegistros() {
   const registros = data?.datos ?? []
   const total = data?.total ?? 0
   const totalPaginas = Math.max(1, Math.ceil(total / (data?.por_pagina ?? 10)))
+  const hayCerrados = registros.some((r) => r.estado === 'cerrado')
 
   const cambiarPagina = (n) => setPagina((p) => Math.min(Math.max(1, p + n), totalPaginas))
 
   const filasExportar = () =>
-    registros.map((r) => ({
+    registros
+      .filter((r) => r.estado === 'cerrado')
+      .map((r) => ({
+        codigo: r.codigo,
+        tipo: r.tipo,
+        estado: r.estado,
+        tripulante: nombreTripulante(r.tripulante_id),
+        fecha: new Date(r.fecha_registro).toLocaleString('es-PE', { hour12: false }),
+      }))
+  const COLUMNAS_EXPORTAR = ['codigo', 'tipo', 'estado', 'tripulante', 'fecha']
+  const fechaArchivo = () => new Date().toLocaleDateString('es-PE').split('/').join('-')
+
+  const exportarCsvRegistros = () => {
+    descargarCsv(aCsv(filasExportar(), COLUMNAS_EXPORTAR), `registros-cerrados-${fechaArchivo()}.csv`)
+  }
+  const exportarExcelRegistros = () => {
+    exportarExcel(filasExportar(), COLUMNAS_EXPORTAR, `registros-cerrados-${fechaArchivo()}.xlsx`)
+  }
+
+  /** PDF de registros cerrados, agrupado por tripulante con resumen del estado. */
+  const exportarPdfRegistros = async () => {
+    const cerrados = registros.filter((r) => r.estado === 'cerrado')
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ])
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('Registros cerrados de salud', 14, 16)
+    doc.setFontSize(9)
+    doc.text(`Fecha: ${new Date().toLocaleString('es-PE', { hour12: false })}`, 14, 22)
+
+    // Agrupa por tripulante.
+    const porTripulante = new Map()
+    for (const r of cerrados) {
+      const id = r.tripulante_id
+      if (!porTripulante.has(id)) porTripulante.set(id, [])
+      porTripulante.get(id).push(r)
+    }
+
+    let y = 28
+    for (const [id, regs] of porTripulante) {
+      const nombre = nombreTripulante(id)
+      const criticas = alertas.filter((a) => a.tripulante_id === id && a.severidad === 'critica' && a.estado !== 'resuelta').length
+      const estado = criticas > 0 ? 'Requiere atención (alertas críticas)' : 'Estado estable'
+      doc.setFontSize(12)
+      doc.setTextColor(40, 40, 40)
+      doc.text(`${nombre}`, 14, y)
+      y += 5
+      doc.setFontSize(9)
+      doc.setTextColor(criticas > 0 ? 180 : 40, criticas > 0 ? 20 : 120, criticas > 0 ? 20 : 40)
+      doc.text(`Resumen del día: ${estado} · ${regs.length} registro(s) cerrado(s)`, 14, y)
+      doc.setTextColor(40, 40, 40)
+      y += 4
+
+      autoTable(doc, {
+        startY: y,
+        head: [['Código', 'Tipo', 'Fecha']],
+        body: regs.map((r) => [r.codigo, r.tipo, new Date(r.fecha_registro).toLocaleString('es-PE', { hour12: false })]),
+        margin: { left: 14, right: 14 },
+        styles: { fontSize: 8 },
+      })
+      // @ts-ignore - lastAutoTable
+      y = doc.lastAutoTable.finalY + 8
+    }
+
+    doc.save(`registros-cerrados-${fechaArchivo()}.pdf`)
+  }
+
+  /** Exporta un único registro cerrado (listo para documentar/archivar). */
+  const exportarUnRegistro = (r) => {
+    const fila = [{
       codigo: r.codigo,
       tipo: r.tipo,
       estado: r.estado,
       tripulante: nombreTripulante(r.tripulante_id),
       fecha: new Date(r.fecha_registro).toLocaleString('es-PE', { hour12: false }),
-    }))
-  const COLUMNAS_EXPORTAR = ['codigo', 'tipo', 'estado', 'tripulante', 'fecha']
-  const fechaArchivo = () => new Date().toLocaleDateString('es-PE').split('/').join('-')
-
-  const exportarCsvRegistros = () => {
-    descargarCsv(aCsv(filasExportar(), COLUMNAS_EXPORTAR), `registros-${fechaArchivo()}.csv`)
-  }
-  const exportarPdfRegistros = () => {
-    exportarPdf(filasExportar(), COLUMNAS_EXPORTAR, `Registros de salud · ${new Date().toLocaleDateString('es-PE')}`, `registros-${fechaArchivo()}.pdf`)
-  }
-  const exportarExcelRegistros = () => {
-    exportarExcel(filasExportar(), COLUMNAS_EXPORTAR, `registros-${fechaArchivo()}.xlsx`)
+    }]
+    const nombre = `registro-${r.codigo}-${fechaArchivo()}.csv`
+    descargarCsv(aCsv(fila, COLUMNAS_EXPORTAR), nombre)
   }
 
   return (
@@ -329,13 +397,13 @@ export function VistaRegistros() {
           <p className="text-sm text-tinta-suave">Solicitudes de salud: pendiente → validado → cerrado.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Boton variante="secundario" tamaño="sm" onClick={exportarCsvRegistros} disabled={registros.length === 0}>
+          <Boton variante="secundario" tamaño="sm" onClick={exportarCsvRegistros} disabled={!hayCerrados}>
             <Download size={14} /> <span className="hidden sm:inline">CSV</span>
           </Boton>
-          <Boton variante="secundario" tamaño="sm" onClick={exportarPdfRegistros} disabled={registros.length === 0}>
+          <Boton variante="secundario" tamaño="sm" onClick={exportarPdfRegistros} disabled={!hayCerrados}>
             <Download size={14} /> <span className="hidden sm:inline">PDF</span>
           </Boton>
-          <Boton variante="secundario" tamaño="sm" onClick={exportarExcelRegistros} disabled={registros.length === 0}>
+          <Boton variante="secundario" tamaño="sm" onClick={exportarExcelRegistros} disabled={!hayCerrados}>
             <Download size={14} /> <span className="hidden sm:inline">Excel</span>
           </Boton>
           <Boton variante="primario" onClick={() => setFormAbierto(true)} data-testid="nuevo-registro">
@@ -440,6 +508,11 @@ export function VistaRegistros() {
                       {esMedicoOAdmin && r.estado === 'validado' && (
                         <Boton variante="secundario" tamaño="sm" onClick={() => cerrar.mutate(r.id)}>
                           <Lock size={14} /> Cerrar
+                        </Boton>
+                      )}
+                      {r.estado === 'cerrado' && (
+                        <Boton variante="secundario" tamaño="sm" onClick={() => exportarUnRegistro(r)}>
+                          <Download size={14} /> Exportar
                         </Boton>
                       )}
                       <Boton variante="peligro" tamaño="sm" onClick={() => setAEliminar(r)}>

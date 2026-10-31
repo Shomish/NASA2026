@@ -7,12 +7,13 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, ShieldAlert, UserCog } from 'lucide-react'
+import { Plus, RotateCcw, ShieldAlert, UserCog } from 'lucide-react'
 import { Boton, Entrada, Esqueleto, EstadoVacio, Modal } from '../../../presentacion/sistema/indice.js'
-import { useUsuarios, useCrearUsuario, useCambiarRolUsuario, useDesactivarUsuario } from '../consultas.js'
+import { useUsuarios, useCrearUsuario, useCambiarRolUsuario, useDesactivarUsuario, useReactivarUsuario } from '../consultas.js'
 import { esquemaUsuario } from '../esquemas.js'
 import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaRol, InsigniaActivo } from './InsigniaEstado.jsx'
+import { useTraduccion } from '../../../shared/idioma.js'
 
 /** Opciones de rol. */
 const ROLES = ['administrador', 'medico', 'tripulante']
@@ -76,6 +77,8 @@ export function VistaUsuarios() {
   const { data, isLoading, isError } = useUsuarios()
   const cambiarRol = useCambiarRolUsuario()
   const desactivar = useDesactivarUsuario()
+  const reactivar = useReactivarUsuario()
+  const t = useTraduccion()
 
   const [formAbierto, setFormAbierto] = useState(false)
   const [cambioRol, setCambioRol] = useState(null)
@@ -141,9 +144,15 @@ export function VistaUsuarios() {
                       >
                         {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                       </select>
-                      <Boton variante="peligro" tamaño="sm" onClick={() => setADesactivar(u)} disabled={u.activo === false}>
-                        Desactivar
-                      </Boton>
+                      {u.activo === false ? (
+                        <Boton variante="exito" tamaño="sm" onClick={() => reactivar.mutate(u.id)}>
+                          <RotateCcw size={14} /> {t('comun.activar')}
+                        </Boton>
+                      ) : (
+                        <Boton variante="peligro" tamaño="sm" onClick={() => setADesactivar(u)}>
+                          Desactivar
+                        </Boton>
+                      )}
                     </div>
                   </td>
                 </tr>

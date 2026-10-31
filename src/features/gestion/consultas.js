@@ -66,6 +66,16 @@ export function useAlertasNoLeidas() {
   return Array.isArray(data) ? data.length : 0
 }
 
+/** Marca una alerta como leída y refresca el panel/badge. */
+export function useLeerAlerta() {
+  return useMutacion({ fn: api.leerAlerta, clave: ['alertas'], exito: 'Alerta marcada como leída.' })
+}
+
+/** Resuelve una alerta (médico/administrador) y refresca el panel/badge. */
+export function useResolverAlerta() {
+  return useMutacion({ fn: api.resolverAlerta, clave: ['alertas'], exito: 'Alerta resuelta.' })
+}
+
 /** Resumen de salud del tripulante activo. */
 export function useResumen(tripulanteId) {
   return useQuery({
@@ -84,18 +94,20 @@ export function useAvanzarDia() {
       toast.success('Día de misión avanzado.')
       cliente.invalidateQueries({ queryKey: ['resumen'] })
       cliente.invalidateQueries({ queryKey: CLAVES.tripulantes })
+      cliente.invalidateQueries({ queryKey: ['alertas'] })
     },
     onError: (e) => toast.error(e.message ?? 'No se pudo avanzar el día.'),
   })
 }
 
 /** Mutación genérica con invalidación y toast. */
-function useMutacion({ fn, clave, exito, errorMensaje = 'No se pudo completar la operación.' }) {
+function useMutacion({ fn, clave, clavesAdicionales = [], exito, errorMensaje = 'No se pudo completar la operación.' }) {
   const cliente = useQueryClient()
   return useMutation({
     mutationFn: fn,
     onSuccess: () => {
       if (clave) cliente.invalidateQueries({ queryKey: clave })
+      for (const k of clavesAdicionales) cliente.invalidateQueries({ queryKey: k })
       if (exito) toast.success(exito)
     },
     onError: (error) => {
@@ -113,6 +125,9 @@ export function useEditarTripulante() {
 export function useEliminarTripulante() {
   return useMutacion({ fn: api.eliminarTripulante, clave: CLAVES.tripulantes, exito: 'Tripulante desactivado.' })
 }
+export function useReactivarTripulante() {
+  return useMutacion({ fn: api.reactivarTripulante, clave: CLAVES.tripulantes, exito: 'Tripulante reactivado.' })
+}
 
 export function useCrearUsuario() {
   return useMutacion({ fn: api.crearUsuario, clave: CLAVES.usuarios, exito: 'Usuario creado.' })
@@ -123,9 +138,12 @@ export function useCambiarRolUsuario() {
 export function useDesactivarUsuario() {
   return useMutacion({ fn: api.desactivarUsuario, clave: CLAVES.usuarios, exito: 'Usuario desactivado.' })
 }
+export function useReactivarUsuario() {
+  return useMutacion({ fn: api.reactivarUsuario, clave: CLAVES.usuarios, exito: 'Usuario reactivado.' })
+}
 
 export function useCrearRegistro() {
-  return useMutacion({ fn: api.crearRegistro, clave: CLAVES.registros({}), exito: 'Registro creado.' })
+  return useMutacion({ fn: api.crearRegistro, clave: CLAVES.registros({}), clavesAdicionales: [['alertas'], ['resumen']], exito: 'Registro creado.' })
 }
 export function useValidarRegistro() {
   return useMutacion({ fn: api.validarRegistro, clave: CLAVES.registros({}), exito: 'Registro validado.' })
@@ -134,8 +152,8 @@ export function useCerrarRegistro() {
   return useMutacion({ fn: api.cerrarRegistro, clave: CLAVES.registros({}), exito: 'Registro cerrado.' })
 }
 export function useEliminarRegistro() {
-  return useMutacion({ fn: api.eliminarRegistro, clave: CLAVES.registros({}), exito: 'Registro eliminado.' })
+  return useMutacion({ fn: api.eliminarRegistro, clave: CLAVES.registros({}), clavesAdicionales: [['alertas'], ['resumen']], exito: 'Registro eliminado.' })
 }
 export function useRestaurarRegistro() {
-  return useMutacion({ fn: api.restaurarRegistro, clave: CLAVES.registros({}), exito: 'Registro restaurado.' })
+  return useMutacion({ fn: api.restaurarRegistro, clave: CLAVES.registros({}), clavesAdicionales: [['resumen']], exito: 'Registro restaurado.' })
 }

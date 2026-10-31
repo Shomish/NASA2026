@@ -60,6 +60,11 @@ export function eliminarTripulante(id) {
   return peticion(`/tripulantes/${id}`, { metodo: 'DELETE' })
 }
 
+/** Reactiva un tripulante desactivado (solo administrador). */
+export function reactivarTripulante(id) {
+  return peticion(`/tripulantes/${id}/reactivar`, { metodo: 'POST' })
+}
+
 /* ============ Registros ============ */
 
 /**
@@ -115,6 +120,11 @@ export function listarAlertas(estado) {
 /** Marca una alerta como leída. */
 export function leerAlerta(id) {
   return peticion(`/alertas/${id}/leer`, { metodo: 'PUT' })
+}
+
+/** Marca una alerta como resuelta (médico/administrador). */
+export function resolverAlerta(id) {
+  return peticion(`/alertas/${id}/resolver`, { metodo: 'PUT' })
 }
 
 /* ============ Demo ============ */
@@ -176,4 +186,21 @@ export function cambiarRolUsuario(id, rol) {
 /** Desactiva un usuario (solo administrador). */
 export function desactivarUsuario(id) {
   return peticion(`/usuarios/${id}/desactivar`, { metodo: 'PUT' })
+}
+
+/** Reactiva un usuario desactivado (solo administrador). */
+export function reactivarUsuario(id) {
+  return peticion(`/usuarios/${id}/reactivar`, { metodo: 'PUT' })
+}
+
+/* ============ Configuración (IA / umbrales) ============ */
+
+/** Obtiene la configuración de IA (Gemini). */
+export function obtenerConfigIA() {
+  return peticion('/configuracion/ia')
+}
+
+/** Actualiza la configuración de IA (Gemini). */
+export function actualizarConfigIA(datos) {
+  return peticion('/configuracion/ia', { metodo: 'PUT', cuerpo: datos })
 }

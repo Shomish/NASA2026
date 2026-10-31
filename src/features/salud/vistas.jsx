@@ -27,9 +27,29 @@ export function VistaMonitorRuta() {
   const agregarRegistro = useSaludStore((s) => s.agregarRegistro)
   const eliminarRegistro = useSaludStore((s) => s.eliminarRegistro)
   const marcarAlertaLeida = useSaludStore((s) => s.marcarAlertaLeida)
-  const persona = usePersona()
+  const { tripulanteActivo } = useContextoTripulante()
+  const personaMock = usePersona()
   const registros = useRegistrosPersona()
   const signos = useSignos()
+
+  // Persona efectiva: el tripulante activo real del servidor (contexto global);
+  // si no hay, se conserva el de demostración.
+  const persona = tripulanteActivo
+    ? {
+        id: String(tripulanteActivo.id),
+        nombre: tripulanteActivo.nombre,
+        rol: tripulanteActivo.cargo,
+        edad: tripulanteActivo.edad ?? null,
+        pesoKg: Number(tripulanteActivo.peso_kg ?? 0),
+        alturaCm: Number(tripulanteActivo.altura_cm ?? 0),
+        diaMision: tripulanteActivo.dia_mision ?? 0,
+        mision: tripulanteActivo.mision ?? '—',
+        condiciones: [],
+        alergias: tripulanteActivo.alergias ?? [],
+        objetivoSalud: tripulanteActivo.objetivo ?? '',
+      }
+    : personaMock
+
   return (
     <VistaMonitor
       persona={persona}

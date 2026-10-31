@@ -8,14 +8,15 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Pencil, Plus, Trash2, Users } from 'lucide-react'
+import { Pencil, Plus, Trash2, Users, RotateCcw } from 'lucide-react'
 import { Boton, Entrada, Esqueleto, EstadoVacio, Modal, Tarjeta } from '../../../presentacion/sistema/indice.js'
 import { useAlmacenSesion } from '../../auth/almacenSesion.js'
-import { useTripulantes, useCrearTripulante, useEditarTripulante, useEliminarTripulante } from '../consultas.js'
+import { useTripulantes, useCrearTripulante, useEditarTripulante, useEliminarTripulante, useReactivarTripulante } from '../consultas.js'
 import { listarEntornos } from '../api.js'
 import { esquemaTripulante } from '../esquemas.js'
 import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaActivo } from './InsigniaEstado.jsx'
+import { useTraduccion } from '../../../shared/idioma.js'
 
 /** Campos del formulario de tripulante. */
 const CAMPOS = [
@@ -112,14 +113,15 @@ function FormularioTripulante({ tripulante, alCerrar }) {
 export function VistaTripulantes() {
   const usuario = useAlmacenSesion((s) => s.usuario)
   const esAdmin = usuario?.rol === 'administrador'
+  const t = useTraduccion()
   const { data, isLoading, isError } = useTripulantes()
   const eliminar = useEliminarTripulante()
+  const reactivar = useReactivarTripulante()
+  const tripulantes = Array.isArray(data) ? data : []
 
   const [formAbierto, setFormAbierto] = useState(false)
   const [enEdicion, setEnEdicion] = useState(null)
   const [aEliminar, setAEliminar] = useState(null)
-
-  const tripulantes = Array.isArray(data) ? data : []
 
   return (
     <div className="space-y-4">
@@ -153,28 +155,34 @@ export function VistaTripulantes() {
 
       {!isLoading && !isError && tripulantes.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {tripulantes.map((t) => (
-            <Tarjeta key={t.id} relleno="compacto" className="space-y-2">
+          {tripulantes.map((tp) => (
+            <Tarjeta key={tp.id} relleno="compacto" className="space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="font-semibold text-tinta">{t.nombre}</div>
-                  <div className="text-sm text-tinta-suave">{t.cargo || 'Sin cargo'}</div>
+                  <div className="font-semibold text-tinta">{tp.nombre}</div>
+                  <div className="text-sm text-tinta-suave">{tp.cargo || 'Sin cargo'}</div>
                 </div>
-                <InsigniaActivo activo={t.activo !== false} />
+                <InsigniaActivo activo={tp.activo !== false} />
               </div>
-              {(t.mision || t.dia_mision) && (
+              {(tp.mision || tp.dia_mision) && (
                 <div className="text-xs text-tinta-suave">
-                  {t.mision}{t.dia_mision ? ` · Día ${t.dia_mision}` : ''}
+                  {tp.mision}{tp.dia_mision ? ` · Día ${tp.dia_mision}` : ''}
                 </div>
               )}
               {esAdmin && (
                 <div className="flex gap-2 pt-1">
-                  <Boton variante="secundario" tamaño="sm" onClick={() => { setEnEdicion(t); setFormAbierto(true) }}>
+                  <Boton variante="secundario" tamaño="sm" onClick={() => { setEnEdicion(tp); setFormAbierto(true) }}>
                     <Pencil size={14} /> Editar
                   </Boton>
-                  <Boton variante="peligro" tamaño="sm" onClick={() => setAEliminar(t)}>
-                    <Trash2 size={14} /> Eliminar
-                  </Boton>
+                  {tp.activo !== false ? (
+                    <Boton variante="peligro" tamaño="sm" onClick={() => setAEliminar(tp)}>
+                      <Trash2 size={14} /> Eliminar
+                    </Boton>
+                  ) : (
+                    <Boton variante="exito" tamaño="sm" onClick={() => reactivar.mutate(tp.id)}>
+                      <RotateCcw size={14} /> {t('comun.activar')}
+                    </Boton>
+                  )}
                 </div>
               )}
             </Tarjeta>
