@@ -214,4 +214,46 @@ export class ConectorLLM {
       return null
     }
   }
+
+  /**
+   * Consulta si el usuario ya dio consentimiento para usar la nube.
+   * @returns {Promise<boolean>} Verdadero si acepta enviar datos a la nube.
+   */
+  async consentimiento() {
+    try {
+      const token = obtenerTokenAcceso()
+      const respuesta = await fetch(`${this.base}/chat/consentimiento`, {
+        headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      })
+      if (!respuesta.ok) return false
+      const datos = await respuesta.json()
+      return Boolean(datos?.acepta_nube)
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * Establece (o revoca) el consentimiento de uso de la nube.
+   * @param {boolean} acepta - Si acepta enviar datos a la nube.
+   * @returns {Promise<boolean>} Estado resultante del consentimiento.
+   */
+  async fijarConsentimiento(acepta) {
+    try {
+      const token = obtenerTokenAcceso()
+      const respuesta = await fetch(`${this.base}/chat/consentimiento`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ acepta_nube: acepta }),
+      })
+      if (!respuesta.ok) return false
+      const datos = await respuesta.json()
+      return Boolean(datos?.acepta_nube)
+    } catch {
+      return false
+    }
+  }
 }

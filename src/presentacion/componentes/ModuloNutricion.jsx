@@ -1,25 +1,16 @@
 /**
  * @fileoverview Componente ModuloNutricion
  * Nutrición inteligente personalizada: plan por perfil + despensa + contramedidas.
+ * Permite agregar manualmente alimentos a la despensa y contramedidas andinas.
  * @module presentacion/componentes/ModuloNutricion
  */
 
 import { useState } from 'react'
-import { Utensils, Leaf, Sparkles, ImageOff } from 'lucide-react'
+import { Utensils, Leaf, Sparkles, Plus, Trash2 } from 'lucide-react'
 import { Tarjeta, EncabezadoPanel } from './UtilidadesUi.jsx'
 import { despensaGlobal, contramedidasAndinas } from '../../datos/mockDatos.js'
 import { generarRecomendacionNutricional } from '../../aplicacion/indice.js'
 import { calcularIMC } from '../../dominio/indice.js'
-
-/** Colores de placeholder por contramedida. */
-const COLOR_PLACEHOLDER = {
-  violet: 'from-primario to-violet-900',
-  emerald: 'from-emerald-600 to-emerald-900',
-  teal: 'from-teal-600 to-teal-900',
-  orange: 'from-orange-600 to-orange-900',
-  rose: 'from-rose-600 to-rose-900',
-  amber: 'from-amber-600 to-amber-900',
-}
 
 /**
  * Módulo de nutrición inteligente.
@@ -30,7 +21,14 @@ const COLOR_PLACEHOLDER = {
  */
 export default function ModuloNutricion({ persona, signos }) {
   const [pestana, setPestana] = useState('plan')
+  const [despensa, setDespensa] = useState(despensaGlobal)
+  const [contramedidas, setContramedidas] = useState(contramedidasAndinas)
   const recomendacion = persona ? generarRecomendacionNutricional(persona, signos) : null
+
+  const agregarDespensa = (item) => setDespensa((prev) => [...prev, { id: `custom-${Date.now()}`, etiquetas: [], ...item }])
+  const agregarContramedida = (item) => setContramedidas((prev) => [...prev, { id: `custom-${Date.now()}`, color: 'emerald', ...item }])
+  const quitarDespensa = (id) => setDespensa((prev) => prev.filter((i) => i.id !== id))
+  const quitarContramedida = (id) => setContramedidas((prev) => prev.filter((i) => i.id !== id))
 
   return (
     <Tarjeta clase="p-5 space-y-4">
@@ -49,14 +47,14 @@ export default function ModuloNutricion({ persona, signos }) {
       </div>
 
       {pestana === 'plan' && <PlanPersonalizado persona={persona} recomendacion={recomendacion} />}
-      {pestana === 'despensa' && <DespensaGlobal />}
-      {pestana === 'andinas' && <ContramedidasAndinas recomendacion={recomendacion} />}
+      {pestana === 'despensa' && <DespensaGlobal items={despensa} alAgregar={agregarDespensa} alQuitar={quitarDespensa} />}
+      {pestana === 'andinas' && <ContramedidasAndinas items={contramedidas} recomendacion={recomendacion} alAgregar={agregarContramedida} alQuitar={quitarContramedida} />}
     </Tarjeta>
   )
 }
 
 /**
- * Plan personalizado según perfil.
+ * Plan personalizado según perfil (auto-generado).
  */
 function PlanPersonalizado({ persona, recomendacion }) {
   if (!persona) return <p className="text-sm text-tinta-suave">Selecciona un tripulante para generar el plan.</p>
@@ -76,7 +74,7 @@ function PlanPersonalizado({ persona, recomendacion }) {
 
       {recomendacion?.contramedidas?.length > 0 && (
         <div>
-          <div className="text-xs font-mono text-tinta-suave mb-2">Contramedidas recomendadas</div>
+          <div className="text-xs font-mono text-tinta-suave mb-2">Contramedidas recomendadas (auto-generadas según perfil y signos)</div>
           <div className="grid grid-cols-2 gap-2">
             {recomendacion.contramedidas.map((c) => (
               <div key={c.id} className="p-3 rounded-lg bg-superficie-alta/60 border border-borde">
@@ -106,63 +104,134 @@ function PlanPersonalizado({ persona, recomendacion }) {
 }
 
 /**
- * Despensa global.
+ * Despensa global con alta manual.
  */
-function DespensaGlobal() {
+function DespensaGlobal({ items, alAgregar, alQuitar }) {
+  const [forma, setForma] = useState(false)
+  const [nuevo, setNuevo] = useState({ nombre: '', calorias: '', proteinas: '', carbohidratos: '', grasas: '', stock: '' })
+
+  const guardar = () => {
+    if (!nuevo.nombre.trim()) return
+    alAgregar({
+      nombre: nuevo.nombre.trim(),
+      calorias: Number(nuevo.calorias) || 0,
+      proteinas: Number(nuevo.proteinas) || 0,
+      carbohidratos: Number(nuevo.carbohidratos) || 0,
+      grasas: Number(nuevo.grasas) || 0,
+      stock: Number(nuevo.stock) || 0,
+    })
+    setNuevo({ nombre: '', calorias: '', proteinas: '', carbohidratos: '', grasas: '', stock: '' })
+    setForma(false)
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {despensaGlobal.map((item) => (
-        <div key={item.id} className="p-3 rounded-xl border border-borde bg-superficie/60 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-tinta text-sm">{item.nombre}</span>
-            <span className="font-mono text-xs text-tinta-suave">stock {item.stock}</span>
-          </div>
-          <div className="flex items-center gap-4 font-mono text-xs">
-            <span className="text-tinta">{item.calorias} kcal</span>
-            <span className="text-exito">P {item.proteinas}g</span>
-            <span className="text-advertencia">C {item.carbohidratos}g</span>
-            <span className="text-primario">G {item.grasas}g</span>
+    <div className="space-y-3">
+      <button type="button" onClick={() => setForma((v) => !v)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primario text-white text-sm">
+        <Plus size={14} /> Agregar alimento
+      </button>
+
+      {forma && (
+        <div className="grid grid-cols-2 gap-2 rounded-xl border border-borde bg-superficie-alta p-3 sm:grid-cols-6">
+          <input className="col-span-2 rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
+          <input className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="kcal" value={nuevo.calorias} onChange={(e) => setNuevo({ ...nuevo, calorias: e.target.value })} />
+          <input className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="P g" value={nuevo.proteinas} onChange={(e) => setNuevo({ ...nuevo, proteinas: e.target.value })} />
+          <input className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="C g" value={nuevo.carbohidratos} onChange={(e) => setNuevo({ ...nuevo, carbohidratos: e.target.value })} />
+          <input className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="G g" value={nuevo.grasas} onChange={(e) => setNuevo({ ...nuevo, grasas: e.target.value })} />
+          <div className="col-span-2 flex items-center gap-2 sm:col-span-6">
+            <input className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="stock" value={nuevo.stock} onChange={(e) => setNuevo({ ...nuevo, stock: e.target.value })} />
+            <button type="button" onClick={guardar} className="px-3 py-1.5 rounded-lg bg-exito text-white text-sm">Guardar</button>
           </div>
         </div>
-      ))}
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {items.map((item) => (
+          <div key={item.id} className="p-3 rounded-xl border border-borde bg-superficie/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-tinta text-sm">{item.nombre}</span>
+              <span className="flex items-center gap-2 font-mono text-xs text-tinta-suave">
+                stock {item.stock}
+                <button type="button" onClick={() => alQuitar(item.id)} className="text-critico" aria-label="Eliminar"><Trash2 size={13} /></button>
+              </span>
+            </div>
+            <div className="flex items-center gap-4 font-mono text-xs">
+              <span className="text-tinta">{item.calorias} kcal</span>
+              <span className="text-exito">P {item.proteinas}g</span>
+              <span className="text-advertencia">C {item.carbohidratos}g</span>
+              <span className="text-primario">G {item.grasas}g</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
 /**
- * Contramedidas andinas con resaltado de las recomendadas.
+ * Contramedidas andinas (sin imágenes) con alta manual y resaltado de recomendadas.
  */
-function ContramedidasAndinas({ recomendacion }) {
+function ContramedidasAndinas({ items, recomendacion, alAgregar, alQuitar }) {
+  const [forma, setForma] = useState(false)
+  const [nuevo, setNuevo] = useState({ nombre: '', beneficio: '', dosis: '', detalle: '', riesgo: '' })
   const idsRecomendados = new Set((recomendacion?.contramedidas ?? []).map((c) => c.id))
 
+  const guardar = () => {
+    if (!nuevo.nombre.trim()) return
+    alAgregar({
+      nombre: nuevo.nombre.trim(),
+      nombreCientifico: '',
+      beneficio: nuevo.beneficio.trim() || 'Refuerzo general',
+      dosis: nuevo.dosis.trim() || '—',
+      detalle: nuevo.detalle.trim() || '',
+      riesgo: nuevo.riesgo.trim() || 'general',
+    })
+    setNuevo({ nombre: '', beneficio: '', dosis: '', detalle: '', riesgo: '' })
+    setForma(false)
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      {contramedidasAndinas.map((item) => {
-        const gradiente = COLOR_PLACEHOLDER[item.color] ?? 'from-neutral-700 to-neutral-900'
-        const recomendada = idsRecomendados.has(item.id)
-        return (
-          <div key={item.id} className={`rounded-xl border overflow-hidden flex flex-col ${recomendada ? 'border-primario/50 ring-1 ring-primario/20' : 'border-borde'}`}>
-            <div className={`h-24 bg-gradient-to-br ${gradiente} flex items-center justify-center relative`}>
-              <ImageOff size={24} className="text-white/50" />
-              <span className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/50 text-[10px] font-mono text-white/80">img: {item.imagen}</span>
-              {recomendada && (
-                <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-primario text-[9px] font-mono text-white">Recomendada</span>
-              )}
-            </div>
-            <div className="p-3 space-y-1.5 flex-1">
-              <div>
-                <div className="font-semibold text-tinta text-sm">{item.nombre}</div>
-                <div className="font-mono text-[10px] italic text-tinta-suave">{item.nombreCientifico}</div>
+    <div className="space-y-3">
+      <button type="button" onClick={() => setForma((v) => !v)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primario text-white text-sm">
+        <Plus size={14} /> Agregar contramedida
+      </button>
+
+      {forma && (
+        <div className="grid grid-cols-2 gap-2 rounded-xl border border-borde bg-superficie-alta p-3">
+          <input className="col-span-2 rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="Nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
+          <input className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="Beneficio" value={nuevo.beneficio} onChange={(e) => setNuevo({ ...nuevo, beneficio: e.target.value })} />
+          <input className="rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="Dosis" value={nuevo.dosis} onChange={(e) => setNuevo({ ...nuevo, dosis: e.target.value })} />
+          <input className="col-span-2 rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="Detalle" value={nuevo.detalle} onChange={(e) => setNuevo({ ...nuevo, detalle: e.target.value })} />
+          <div className="col-span-2 flex items-center gap-2">
+            <input className="flex-1 rounded-boton border border-borde bg-superficie px-2 py-1.5 text-sm" placeholder="Riesgo asociado (ej: anemia)" value={nuevo.riesgo} onChange={(e) => setNuevo({ ...nuevo, riesgo: e.target.value })} />
+            <button type="button" onClick={guardar} className="px-3 py-1.5 rounded-lg bg-exito text-white text-sm">Guardar</button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {items.map((item) => {
+          const recomendada = idsRecomendados.has(item.id)
+          return (
+            <div key={item.id} className={`rounded-xl border p-3 space-y-1.5 flex flex-col ${recomendada ? 'border-primario/50 ring-1 ring-primario/20' : 'border-borde'}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="font-semibold text-tinta text-sm">{item.nombre}</div>
+                  <div className="font-mono text-[10px] italic text-tinta-suave">{item.nombreCientifico || 'Superalimento andino'}</div>
+                </div>
+                {recomendada && (
+                  <span className="px-1.5 py-0.5 rounded bg-primario text-[9px] font-mono text-white">Recomendada</span>
+                )}
               </div>
               <p className="text-xs text-tinta">{item.detalle}</p>
               <div className="pt-2 border-t border-borde space-y-1 font-mono text-[10px]">
                 <div className="text-exito">Mitiga: {item.beneficio}</div>
                 <div className="text-tinta-suave">Dosis: {item.dosis}</div>
               </div>
+              <button type="button" onClick={() => alQuitar(item.id)} className="mt-auto self-end text-critico" aria-label="Eliminar"><Trash2 size={13} /></button>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }

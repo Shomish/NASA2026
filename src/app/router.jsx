@@ -19,7 +19,6 @@ const VistaSaludIntegralRuta = cargarVista('VistaSaludIntegralRuta')
 const VistaNutricionRuta = cargarVista('VistaNutricionRuta')
 const VistaHistorialRuta = cargarVista('VistaHistorialRuta')
 const VistaDiarioRuta = cargarVista('VistaDiarioRuta')
-const VistaAlertasRuta = cargarVista('VistaAlertasRuta')
 const VistaCalendarioRuta = cargarVista('VistaCalendarioRuta')
 const VistaChatRuta = cargarVista('VistaChatRuta')
 
@@ -37,6 +36,7 @@ const VistaUsuarios = lazy(() => import('../features/gestion/indice.js').then((m
 const VistaAuditoria = lazy(() => import('../features/gestion/componentes/VistaAuditoria.jsx').then((m) => ({ default: m.VistaAuditoria })))
 const VistaFundamento = lazy(() => import('../features/gestion/componentes/VistaFundamento.jsx').then((m) => ({ default: m.VistaFundamento })))
 const VistaCuerpo = lazy(() => import('../features/gestion/componentes/VistaCuerpo.jsx').then((m) => ({ default: m.VistaCuerpo })))
+const VistaAlertas = lazy(() => import('../features/gestion/componentes/VistaAlertas.jsx').then((m) => ({ default: m.VistaAlertas })))
 
 /**
  * Enrutador principal.
@@ -62,7 +62,7 @@ export function Router() {
         <Route path="nutricion" element={<Suspense fallback={<SplashCarga />}><VistaNutricionRuta /></Suspense>} />
         <Route path="historial" element={<Suspense fallback={<SplashCarga />}><VistaHistorialRuta /></Suspense>} />
         <Route path="diario" element={<Suspense fallback={<SplashCarga />}><VistaDiarioRuta /></Suspense>} />
-        <Route path="alertas" element={<Suspense fallback={<SplashCarga />}><VistaAlertasRuta /></Suspense>} />
+        <Route path="alertas" element={<Suspense fallback={<SplashCarga />}><VistaAlertas /></Suspense>} />
         <Route path="calendario" element={<Suspense fallback={<SplashCarga />}><VistaCalendarioRuta /></Suspense>} />
         <Route path="chat-ia" element={<Suspense fallback={<SplashCarga />}><VistaChatRuta /></Suspense>} />
         <Route path="configuracion" element={<Suspense fallback={<SplashCarga />}><VistaConfiguracion /></Suspense>} />

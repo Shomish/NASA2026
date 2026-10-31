@@ -102,6 +102,12 @@ export const contramedidasAndinas = [
   { id: 'muna', nombre: 'Muña', nombreCientifico: 'Minthostachys mollis', color: 'teal', imagen: 'muna', beneficio: 'Alivio digestivo', riesgo: 'digestivo', dosis: 'Infusión 5 g ×2', detalle: 'Hierba digestiva y respiratoria de los Andes.' },
   { id: 'sacha_inchi', nombre: 'Sacha Inchi', nombreCientifico: 'Plukenetia volubilis', color: 'orange', imagen: 'sacha-inchi', beneficio: 'Omega-3 antiinflamatorio', riesgo: 'inflamacion', dosis: '10-15 ml/día', detalle: 'Fuente vegetal con el mayor contenido de omega-3.' },
   { id: 'coca', nombre: 'Hoja de coca', nombreCientifico: 'Erythroxylum coca', color: 'amber', imagen: 'coca', beneficio: 'Adaptación a la hipoxia', riesgo: 'hipoxia', dosis: 'Uso tradicional', detalle: 'Práctica andina de adaptación a la altitud.' },
+  { id: 'tarwi', nombre: 'Tarwi', nombreCientifico: 'Lupinus mutabilis', color: 'violet', imagen: 'tarwi', beneficio: 'Proteína y recuperación muscular', riesgo: 'atrofia_muscular', dosis: '60-100 g/día', detalle: 'Leguminosa andina con hasta 40% de proteína.' },
+  { id: 'canihua', nombre: 'Cañihua', nombreCientifico: 'Chenopodium pallidicaule', color: 'rose', imagen: 'canihua', beneficio: 'Hierro y energía sostenida', riesgo: 'anemia', dosis: '50-80 g/día', detalle: 'Grano rico en hierro, superior a la quinua en proteína.' },
+  { id: 'camu_camu', nombre: 'Camu Camu', nombreCientifico: 'Myrciaria dubia', color: 'orange', imagen: 'camu-camu', beneficio: 'Vitamina C e inmunidad', riesgo: 'inflamacion', dosis: '5 g/día', detalle: 'Fruto amazónico con altísimo contenido de vitamina C.' },
+  { id: 'yacon', nombre: 'Yacón', nombreCientifico: 'Smallanthus sonchifolius', color: 'teal', imagen: 'yacon', beneficio: 'Prebiótico y salud intestinal', riesgo: 'digestivo', dosis: '50 g/día', detalle: 'Raíz con fructooligosacáridos que nutren la microbiota.' },
+  { id: 'tocosh', nombre: 'Tocosh', nombreCientifico: 'Solanum tuberosum (fermentado)', color: 'emerald', imagen: 'tocosh', beneficio: 'Antibiótico natural digestivo', riesgo: 'digestivo', dosis: '1-2 cdas/día', detalle: 'Papa fermentada con propiedades probióticas y antibacterianas.' },
+  { id: 'cushuro', nombre: 'Cushuro', nombreCientifico: 'Nostoc sphaericum', color: 'emerald', imagen: 'cushuro', beneficio: 'Hierro y proteína vegetal', riesgo: 'anemia', dosis: '30 g/día', detalle: 'Alga andina rica en hierro y proteína, resistente a la altitud.' },
 ]
 
 /**

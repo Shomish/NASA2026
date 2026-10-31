@@ -9,6 +9,8 @@ import { Bot, Send, User } from 'lucide-react'
 import { Tarjeta } from './UtilidadesUi.jsx'
 import { responderChatbot } from '../../aplicacion/indice.js'
 import { calcularIMC } from '../../dominio/indice.js'
+import { useTraduccion } from '../../shared/idioma.js'
+import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
 
 /**
  * Chatbot de IA interactivo.
@@ -18,15 +20,20 @@ import { calcularIMC } from '../../dominio/indice.js'
  * @returns {import('react').JSX.Element} Chatbot.
  */
 export default function ChatbotIA({ contexto, conectorLLM }) {
+  const t = useTraduccion()
+  const usuario = useAlmacenSesion((s) => s.usuario)
+  // Nombre a usar: el tripulante activo o, en su defecto, quien inició sesión.
+  const nombreMostrado = contexto.persona?.nombre ?? usuario?.nombre ?? 'tripulante'
   const [mensajes, setMensajes] = useState([
     {
       rol: 'bot',
-      texto: `Hola ${contexto.persona?.nombre ?? 'tripulante'}. Soy tu médico de IA. Pregúntame por tu salud, nutrición, sueño o riesgos.`,
+      texto: t('chat.saludo', { nombre: nombreMostrado }),
     },
   ])
   const [entrada, setEntrada] = useState('')
   const [escribiendo, setEscribiendo] = useState(false)
   const [enLinea, setEnLinea] = useState(false)
+  const [nubeDisponible, setNubeDisponible] = useState(false)
   const finRef = useRef(null)
 
   useEffect(() => {
@@ -37,12 +44,31 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
   useEffect(() => {
     let activo = true
     conectorLLM?.disponible().then((disponible) => {
-      if (activo) setEnLinea(disponible)
+      if (activo) {
+        setNubeDisponible(disponible)
+        // Si no hay nube disponible, arranca en modo local (offline) de forma explícita.
+        if (!disponible) setEnLinea(false)
+      }
     })
     return () => {
       activo = false
     }
   }, [conectorLLM])
+
+  /**
+   * Alterna entre el motor en la nube (Gemini) y el motor local.
+   * Al activar la nube se registra el consentimiento; al desactivarla se revoca.
+   */
+  const alternarMotor = async () => {
+    if (!enLinea) {
+      if (!nubeDisponible) return
+      const aceptado = await conectorLLM?.fijarConsentimiento(true)
+      if (aceptado) setEnLinea(true)
+    } else {
+      await conectorLLM?.fijarConsentimiento(false)
+      setEnLinea(false)
+    }
+  }
 
   /**
    * Construye el contexto textual para el LLM.
@@ -81,7 +107,11 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
       respuesta = await conectorLLM.consultar(texto, construirContexto())
     }
     if (!respuesta) {
-      respuesta = responderChatbot(texto, contexto)
+      // Contexto efectivo: si no hay tripulante, usa el nombre de quien inició sesión.
+      const contextoEfectivo = contexto.persona
+        ? contexto
+        : { ...contexto, persona: { nombre: nombreMostrado } }
+      respuesta = responderChatbot(texto, contextoEfectivo)
     }
 
     setEscribiendo(false)
@@ -95,18 +125,20 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
           <Bot size={18} />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-tinta leading-tight">Médico de IA</h3>
+          <h3 className="font-semibold text-tinta leading-tight">{t('chat.titulo')}</h3>
           <p className="text-xs font-mono text-tinta-suave">
-            {contexto.persona?.nombre ? `Trabajando con ${contexto.persona.nombre}` : 'Sin tripulante'} · {enLinea ? 'Motor en la nube · en línea' : 'Motor local · offline'}
+            {nombreMostrado !== 'tripulante' ? `${t('chat.trabajando')} ${nombreMostrado}` : t('chat.sinTripulante')} · {enLinea ? t('chat.motorNube') : t('chat.motorLocal')}
           </p>
         </div>
         <button
           type="button"
-          onClick={() => setEnLinea((v) => !v)}
-          className="rounded-boton border border-borde px-2.5 py-1.5 text-xs text-tinta-suave hover:text-tinta"
+          onClick={alternarMotor}
+          disabled={!enLinea && !nubeDisponible}
+          title={nubeDisponible ? undefined : t('chat.nubeNoConfigurada')}
+          className="rounded-boton border border-borde px-2.5 py-1.5 text-xs text-tinta-suave hover:text-tinta disabled:opacity-50"
           aria-label="Cambiar motor"
         >
-          {enLinea ? 'Usar motor local' : 'Usar nube'}
+          {enLinea ? t('chat.usarLocal') : nubeDisponible ? t('chat.usarNube') : t('chat.nubeNoConfigurada')}
         </button>
       </div>
 
@@ -123,7 +155,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
               <div className="flex items-center gap-2 mb-1">
                 {m.rol === 'bot' ? <Bot size={12} className="text-primario" /> : <User size={12} />}
                 <span className="font-mono text-[10px] uppercase tracking-wider opacity-70">
-                  {m.rol === 'bot' ? 'IA' : 'Tú'}
+                  {m.rol === 'bot' ? 'IA' : t('chat.tu')}
                 </span>
               </div>
               {m.texto}
@@ -133,7 +165,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
         {escribiendo && (
           <div className="flex items-center gap-2 text-tinta-suave text-xs font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            Analizando...
+            {t('chat.analizando')}
           </div>
         )}
         <div ref={finRef} />
@@ -142,7 +174,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
       <div className="flex gap-2 mt-3">
         <input
           className="flex-1 bg-superficie-alta border border-borde rounded-xl px-3 py-2.5 text-sm text-tinta outline-none focus:border-primario"
-          placeholder="Pregunta: ¿cómo está mi salud?"
+          placeholder={t('chat.placeholder')}
           value={entrada}
           onChange={(e) => setEntrada(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && enviar()}

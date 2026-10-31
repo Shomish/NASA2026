@@ -5,6 +5,7 @@
 
 import { evaluarSignoVital, CATALOGO_CONDICIONES, calcularIMC } from '../dominio/indice.js'
 import { contramedidasAndinas, despensaGlobal } from '../datos/mockDatos.js'
+import { idiomaActual } from '../shared/idioma.js'
 
 /**
  * Calcula el puntaje compuesto de salud (0-100).
@@ -48,6 +49,20 @@ export function generarRecomendacionNutricional(persona, signos = {}) {
     const catalogo = CATALOGO_CONDICIONES.find((c) => c.id === condicion)
     catalogo?.recomendado.forEach((id) => idsRecomendados.add(id))
   }
+
+  // 2. Auto-generación adicional según signos vitales actuales (datos atípicos).
+  if (signos?.saturacion_oxigeno != null && Number(signos.saturacion_oxigeno) < 95) {
+    idsRecomendados.add('coca')
+    idsRecomendados.add('cushuro')
+  }
+  if (signos?.frecuencia_cardiaca != null && Number(signos.frecuencia_cardiaca) > 100) {
+    idsRecomendados.add('muna')
+    idsRecomendados.add('maca')
+  }
+  if (signos?.temperatura != null && Number(signos.temperatura) > 37.5) {
+    idsRecomendados.add('camu_camu')
+  }
+
   // Filtrar por alergias (contramedidas con el mismo id de alérgeno).
   const alergias = new Set((persona.alergias ?? []).map((a) => a.toLowerCase()))
   const contramedidas = contramedidasAndinas
@@ -80,6 +95,7 @@ export function generarRecomendacionNutricional(persona, signos = {}) {
 
 /**
  * Motor del chatbot (local): genera respuestas contextuales según la persona y sus datos.
+ * Funciona sin conexión y respeta el idioma actual (es/en) de la interfaz.
  * @param {string} texto - Mensaje del usuario.
  * @param {object} contexto - Contexto (persona, signos, historial).
  * @returns {string} Respuesta del asistente.
@@ -92,81 +108,184 @@ export function responderChatbot(texto, contexto) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
   const nombre = persona?.nombre ?? 'tripulante'
+  const idioma = idiomaActual() === 'en' ? 'en' : 'es'
+  const en = idioma === 'en'
 
-  if (!persona) return 'No hay una persona seleccionada. Ve a Tripulación y elige un astronauta.'
+  if (!persona) {
+    return en
+      ? 'There is no selected crew member. Go to Crew and choose an astronaut.'
+      : 'No hay una persona seleccionada. Ve a Tripulación y elige un astronauta.'
+  }
+
+  // Saludo / ayuda.
+  if (/(hola|buenas|hello|hi|help|ayuda|que puedes|what can)/.test(t)) {
+    return en
+      ? `Hello ${nombre}, I'm your AI doctor. I can help with nutrition, sleep, mental health and risks. Ask me things like "how is my health?" or "what should I eat?".`
+      : `Hola ${nombre}, soy tu médico de IA. Puedo ayudarte con nutrición, sueño, salud mental y riesgos. Pregúntame cosas como "¿cómo está mi salud?" o "¿qué debo comer?".`
+  }
+
+  // Análisis completo (signos + sueño + salud mental + nutrición).
+  if (/(analiz|resumen|completo|general|todo|evaluacion|overall|full|summary|assessment)/.test(t)) {
+    const resultado = calcularPuntajeSalud(signos)
+    const nivel = en
+      ? { optimo: 'optimal', atencion: 'needs attention', critico: 'critical' }[resultado.nivel]
+      : { optimo: 'óptimo', atencion: 'requiere atención', critico: 'crítico' }[resultado.nivel]
+    const parteSueno = sueno
+      ? (en ? ` Sleep: ${sueno.horas}h, quality ${sueno.calidad}/10.` : ` Sueño: ${sueno.horas}h, calidad ${sueno.calidad}/10.`)
+      : (en ? ' No sleep data yet.' : ' Aún sin datos de sueño.')
+    const parteMental = mental
+      ? (en ? ` Mental health: ${mental.cuestionario?.toUpperCase?.() ?? 'PHQ-9'} ${mental.puntaje} pts.` : ` Salud mental: ${mental.cuestionario?.toUpperCase?.() ?? 'PHQ-9'} ${mental.puntaje} pts.`)
+      : (en ? ' No mental health data yet.' : ' Aún sin evaluación de salud mental.')
+    const parteNutricion = nutricion?.contramedidas?.length
+      ? (en ? ` Nutrition: ${nutricion.contramedidas.map((c) => c.nombre).join(', ')}.` : ` Nutrición: ${nutricion.contramedidas.map((c) => c.nombre).join(', ')}.`)
+      : (en ? ' No personalized nutrition plan yet.' : ' Aún sin plan nutricional personalizado.')
+    return en
+      ? `${nombre}, here is your full analysis: Health score ${resultado.puntaje}/100 (${nivel}).${parteSueno}${parteMental}${parteNutricion}`
+      : `${nombre}, aquí va tu análisis completo: Puntaje de salud ${resultado.puntaje}/100 (${nivel}).${parteSueno}${parteMental}${parteNutricion}`
+  }
 
   // Intenciones específicas primero (orden de prioridad).
-  if (/(comer|nutri|dieta|aliment|recomienda|superalimento|andino|plan)/.test(t)) {
-    return generarResumenNutricion(persona, nutricion)
+  if (/(comer|nutri|dieta|aliment|recomienda|superalimento|andino|plan|food|diet|eat|meal)/.test(t)) {
+    return generarResumenNutricion(persona, nutricion, en)
   }
-  if (/(sueno|dormir|dormi|descanso|insomnio|circadiano)/.test(t)) {
-    return sueno
-      ? `Registro de sueño: ${sueno.horas}h con calidad ${sueno.calidad}/10 y ${sueno.interrupciones} despertares. ${sueno.horas >= 6.5 ? 'Dentro del rango recomendado.' : 'Por debajo de lo recomendado; sugiero regular el ciclo circadiano y una infusión de muña antes de dormir.'}`
+  if (/(sueno|dormir|dormi|descanso|insomnio|circadiano|sleep|rest)/.test(t)) {
+    if (sueno) {
+      const dentro = sueno.horas >= 6.5
+      return en
+        ? `Sleep record: ${sueno.horas}h with quality ${sueno.calidad}/10 and ${sueno.interrupciones} awakenings. ${dentro ? 'Within the recommended range.' : 'Below the recommendation; I suggest regulating your circadian cycle and a muña infusion before bed.'}`
+        : `Registro de sueño: ${sueno.horas}h con calidad ${sueno.calidad}/10 y ${sueno.interrupciones} despertares. ${dentro ? 'Dentro del rango recomendado.' : 'Por debajo de lo recomendado; sugiero regular el ciclo circadiano y una infusión de muña antes de dormir.'}`
+    }
+    return en
+      ? `${nombre}, you have not logged any sleep yet. Record your rest hours so I can evaluate them.`
       : `${nombre}, aún no registras sueño. Registra tus horas de descanso para que pueda evaluarlas.`
   }
-  if (/(mental|animo|estres|ansiedad|depresion|phq|gad)/.test(t)) {
-    return mental
-      ? `Tu última evaluación ${mental.cuestionario === 'phq9' ? 'PHQ-9' : 'GAD-7'} fue ${mental.puntaje} puntos. ${mental.puntaje >= 10 ? 'Recomiendo apoyo psicológico de tripulación (ayni).' : 'Dentro de rangos manejables.'}`
+  if (/(mental|animo|estres|ansiedad|depresion|phq|gad|mood|stress|anxiety|depression)/.test(t)) {
+    if (mental) {
+      const alto = (mental.puntaje ?? 0) >= 10
+      return en
+        ? `Your last ${mental.cuestionario === 'phq9' ? 'PHQ-9' : 'GAD-7'} assessment was ${mental.puntaje} points. ${alto ? 'I recommend crew psychological support (ayni).' : 'Within manageable ranges.'}`
+        : `Tu última evaluación ${mental.cuestionario === 'phq9' ? 'PHQ-9' : 'GAD-7'} fue ${mental.puntaje} puntos. ${alto ? 'Recomiendo apoyo psicológico de tripulación (ayni).' : 'Dentro de rangos manejables.'}`
+    }
+    return en
+      ? `${nombre}, there is no recent mental health assessment. I recommend completing the PHQ-9 or GAD-7.`
       : `${nombre}, no hay evaluación de salud mental reciente. Te recomiendo completar el PHQ-9 o GAD-7.`
   }
-  if (/(riesgo|peligro|alerta|anomalo|problema|critico)/.test(t)) {
-    return generarResumenRiesgos(persona, signos)
+  if (/(riesgo|peligro|alerta|anomalo|problema|critico|risk|danger|alert|abnormal|problem)/.test(t)) {
+    return generarResumenRiesgos(persona, signos, en)
   }
-  if (/(quien|perfil|edad|peso|datos|informacion|soy)/.test(t)) {
-    return `${nombre} (${persona.rol}), ${persona.edad} años, ${persona.pesoKg} kg, IMC ${calcularIMC(persona.pesoKg, persona.alturaCm)}. Misión: ${persona.mision}, día ${persona.diaMision}. Objetivo: ${persona.objetivoSalud || 'sin objetivo definido'}.`
+  if (/(quien|perfil|edad|peso|datos|informacion|soy|who|profile|age|weight|data|info)/.test(t)) {
+    return en
+      ? `${nombre} (${persona.rol}), ${persona.edad} years old, ${persona.pesoKg} kg, BMI ${calcularIMC(persona.pesoKg, persona.alturaCm)}. Mission: ${persona.mision}, day ${persona.diaMision}. Goal: ${persona.objetivoSalud || 'no goal defined'}.`
+      : `${nombre} (${persona.rol}), ${persona.edad} años, ${persona.pesoKg} kg, IMC ${calcularIMC(persona.pesoKg, persona.alturaCm)}. Misión: ${persona.mision}, día ${persona.diaMision}. Objetivo: ${persona.objetivoSalud || 'sin objetivo definido'}.`
+  }
+  if (/(agua|hidrat|water|hydrat)/.test(t)) {
+    return en
+      ? `${nombre}, stay hydrated with 2.5–3 L of water per day, more during high-activity days. Dehydration worsens radiation and fatigue effects.`
+      : `${nombre}, mantente hidratado con 2.5–3 L de agua al día, más en días de alta actividad. La deshidratación agrava los efectos de la radiación y la fatiga.`
+  }
+  if (/(ejercicio|entren|exercise|train|workout)/.test(t)) {
+    return en
+      ? `${nombre}, keep ~30 min of daily exercise (resistance + cardio). It protects muscle and bone mass in microgravity.`
+      : `${nombre}, mantén ~30 min de ejercicio diario (resistencia + cardio). Protege la masa muscular y ósea en microgravedad.`
   }
 
   // Respuesta por defecto: resumen de salud.
-  return generarResumenSalud(persona, signos)
+  return generarResumenSalud(persona, signos, en)
+}
+
+/** Nombres legibles de los signos para el análisis offline. */
+const NOMBRES_SIGNO = {
+  sistolica: { es: 'presión sistólica', en: 'systolic pressure' },
+  diastolica: { es: 'presión diastólica', en: 'diastolic pressure' },
+  saturacion_oxigeno: { es: 'saturación de O₂', en: 'O₂ saturation' },
+  masa_corporal: { es: 'masa corporal', en: 'body mass' },
+  temperatura: { es: 'temperatura', en: 'temperature' },
 }
 
 /**
- * Genera un resumen de salud contextual.
+ * Genera un resumen de salud contextual con desglose por indicador.
  * @param {object} persona - Astronauta.
  * @param {object} signos - Signos vitales.
+ * @param {boolean} [en] - Si responde en inglés.
  * @returns {string} Resumen.
  */
-function generarResumenSalud(persona, signos) {
+function generarResumenSalud(persona, signos, en = false) {
   const resultado = calcularPuntajeSalud(signos)
-  const nivelTexto = { optimo: 'óptimo', atencion: 'requiere atención', critico: 'crítico' }[resultado.nivel]
+  const nivelTexto = en
+    ? { optimo: 'optimal', atencion: 'needs attention', critico: 'critical' }[resultado.nivel]
+    : { optimo: 'óptimo', atencion: 'requiere atención', critico: 'crítico' }[resultado.nivel]
   const anomalos = Object.entries(resultado.desglose).filter(([, estado]) => estado !== 'optimo')
-  const detalleAnomalos = anomalos.length
-    ? ` Detecté ${anomalos.length} indicador(es) fuera de rango.`
-    : ' Todos los indicadores vitales dentro de rango nominal.'
 
-  return `Hola ${persona.nombre}. Tu puntaje de salud es ${resultado.puntaje}/100 (${nivelTexto}).${detalleAnomalos} ${persona.condiciones?.length ? `Considerando tus condiciones (${persona.condiciones.join(', ')}), mantén el protocolo de contramedidas.` : ''}`
+  // Desglose por indicador.
+  const lineas = Object.entries(resultado.desglose).map(([tipo, estado]) => {
+    const nombre = en ? NOMBRES_SIGNO[tipo]?.en ?? tipo : NOMBRES_SIGNO[tipo]?.es ?? tipo
+    const valor = signos?.[tipo]
+    const estadoTexto = en
+      ? { optimo: 'ok', atencion: 'watch', critico: 'critical' }[estado]
+      : { optimo: 'óptimo', atencion: 'atención', critico: 'crítico' }[estado]
+    return `${nombre} ${valor} (${estadoTexto})`
+  })
+
+  const detalleAnomalos = anomalos.length
+    ? en
+      ? ` ${anomalos.length} out-of-range indicator(s).`
+      : ` ${anomalos.length} indicador(es) fuera de rango.`
+    : en
+      ? ' All vital indicators within nominal range.'
+      : ' Todos los indicadores vitales dentro de rango nominal.'
+
+  const condicion = persona.condiciones?.length
+    ? en
+      ? ` Considering your conditions (${persona.condiciones.join(', ')}), keep the countermeasure protocol.`
+      : ` Considerando tus condiciones (${persona.condiciones.join(', ')}), mantén el protocolo de contramedidas.`
+    : ''
+
+  const prefijo = en ? 'Hello' : 'Hola'
+  const desglose = en ? 'Indicators:' : 'Indicadores:'
+
+  return `${prefijo} ${persona.nombre}. ${en ? 'Your health score' : 'Tu puntaje de salud'} ${resultado.puntaje}/100 (${nivelTexto}).${detalleAnomalos}\n${desglose} ${lineas.join(' · ')}${condicion}`
 }
 
 /**
  * Genera un resumen nutricional.
  * @param {object} persona - Astronauta.
  * @param {object} nutricion - Recomendación nutricional.
+ * @param {boolean} [en] - Si responde en inglés.
  * @returns {string} Resumen.
  */
-function generarResumenNutricion(persona, nutricion) {
+function generarResumenNutricion(persona, nutricion, en = false) {
   if (!nutricion || nutricion.contramedidas.length === 0) {
-    return `${persona.nombre}, aún no genero tu plan nutricional personalizado. Asegúrate de tener un perfil con condiciones definidas.`
+    return en
+      ? `${persona.nombre}, I haven't generated your personalized nutrition plan yet. Make sure your profile has defined conditions.`
+      : `${persona.nombre}, aún no genero tu plan nutricional personalizado. Asegúrate de tener un perfil con condiciones definidas.`
   }
-  return `${persona.nombre}, según tu perfil recomiendo: ${nutricion.contramedidas.map((c) => `${c.nombre} (${c.beneficio})`).join(', ')}. Dosis sugeridas: ${nutricion.contramedidas.map((c) => `${c.nombre} ${c.dosis}`).join('; ')}.`
+  return en
+    ? `${persona.nombre}, based on your profile I recommend: ${nutricion.contramedidas.map((c) => `${c.nombre} (${c.beneficio})`).join(', ')}. Suggested doses: ${nutricion.contramedidas.map((c) => `${c.nombre} ${c.dosis}`).join('; ')}.`
+    : `${persona.nombre}, según tu perfil recomiendo: ${nutricion.contramedidas.map((c) => `${c.nombre} (${c.beneficio})`).join(', ')}. Dosis sugeridas: ${nutricion.contramedidas.map((c) => `${c.nombre} ${c.dosis}`).join('; ')}.`
 }
 
 /**
  * Genera un resumen de riesgos.
  * @param {object} persona - Astronauta.
  * @param {object} signos - Signos vitales.
+ * @param {boolean} [en] - Si responde en inglés.
  * @returns {string} Resumen.
  */
-function generarResumenRiesgos(persona, signos) {
+function generarResumenRiesgos(persona, signos, en = false) {
   const criticos = Object.entries(signos ?? {})
     .filter(([tipo, valor]) => evaluarSignoVital(tipo, valor) === 'critico')
     .map(([tipo]) => tipo)
   const condiciones = persona.condiciones ?? []
 
   if (criticos.length === 0 && condiciones.length === 0) {
-    return `${persona.nombre}, no detecto riesgos críticos en tus signos vitales ni condiciones de alto riesgo. Continúa el monitoreo.`
+    return en
+      ? `${persona.nombre}, I don't detect critical risks in your vital signs or high-risk conditions. Continue monitoring.`
+      : `${persona.nombre}, no detecto riesgos críticos en tus signos vitales ni condiciones de alto riesgo. Continúa el monitoreo.`
   }
   const partes = []
-  if (criticos.length) partes.push(`indicadores críticos: ${criticos.join(', ')}`)
-  if (condiciones.length) partes.push(`condiciones de riesgo: ${condiciones.join(', ')}`)
-  return `${persona.nombre}, atención a los siguientes riesgos: ${partes.join(' y ')}. Recomiendo aplicar las contramedidas correspondientes.`
+  if (criticos.length) partes.push(en ? `critical indicators: ${criticos.join(', ')}` : `indicadores críticos: ${criticos.join(', ')}`)
+  if (condiciones.length) partes.push(en ? `risk conditions: ${condiciones.join(', ')}` : `condiciones de riesgo: ${condiciones.join(', ')}`)
+  return en
+    ? `${persona.nombre}, attention to the following risks: ${partes.join(' and ')}. I recommend applying the corresponding countermeasures.`
+    : `${persona.nombre}, atención a los siguientes riesgos: ${partes.join(' y ')}. Recomiendo aplicar las contramedidas correspondientes.`
 }

@@ -6,6 +6,7 @@
 
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { cn } from './cn.js'
 
@@ -76,13 +77,16 @@ export function Modal({ abierto, alCerrar, titulo, tituloId = 'modal-titulo', ch
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onKeyDown={manejarEscape}>
       <div className="absolute inset-0" onClick={alCerrar} aria-hidden="true" />
-      <div
+      <motion.div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={tituloId}
         tabIndex={-1}
         onKeyDown={atraparFoco}
+        initial={{ opacity: 0, y: 12, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         className={cn(
           'relative flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-tarjeta border border-borde bg-superficie shadow-consola outline-none',
           className,
@@ -104,7 +108,7 @@ export function Modal({ abierto, alCerrar, titulo, tituloId = 'modal-titulo', ch
           </div>
         )}
         <div className="overflow-y-auto p-5">{children}</div>
-      </div>
+      </motion.div>
     </div>,
     document.body,
   )

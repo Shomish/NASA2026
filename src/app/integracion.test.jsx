@@ -50,7 +50,10 @@ vi.mock('recharts', () => {
   }
 })
 
-vi.mock('framer-motion', () => ({ motion: new Proxy({}, { get: () => () => null }) }))
+vi.mock('framer-motion', () => ({
+  motion: new Proxy({}, { get: () => () => null }),
+  AnimatePresence: ({ children }) => children,
+}))
 
 /** Rutas del menú lateral (todas las que puede ver un administrador). */
 const RUTAS = [

@@ -88,7 +88,7 @@ export function PanelHistorial({ registros = [], alEliminar }) {
                     </td>
                     <td className="py-2 pr-3 text-tinta">{describirRegistro(r)}</td>
                     <td className="py-2 text-right">
-                      <button type="button" onClick={() => alEliminar(r.id)} className="text-critico hover:text-critico"><Trash2 size={14} /></button>
+                      <button type="button" onClick={() => { if (window.confirm('¿Eliminar este registro?')) alEliminar(r.id) }} className="text-critico hover:text-critico"><Trash2 size={14} /></button>
                     </td>
                   </tr>
                 )
@@ -133,7 +133,7 @@ export function PanelNotas({ notas = [], alAgregar, alEliminar }) {
             <li key={n.id} className="p-3 rounded-lg bg-superficie-alta/60">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-tinta text-sm">{n.titulo}</span>
-                <button type="button" onClick={() => alEliminar(n.id)} className="text-critico"><Trash2 size={13} /></button>
+                <button type="button" onClick={() => { if (window.confirm('¿Eliminar esta nota?')) alEliminar(n.id) }} className="text-critico"><Trash2 size={13} /></button>
               </div>
               {n.contenido && <p className="mt-1 text-xs text-tinta-suave">{n.contenido}</p>}
             </li>
@@ -168,7 +168,7 @@ export function PanelAlertas({ alertas = [], alMarcarLeida, alEliminar }) {
                 <p className="flex-1 text-sm text-tinta">{a.mensaje}</p>
                 <div className="flex gap-1">
                   {!a.leida && <button type="button" onClick={() => alMarcarLeida(a.id)} className="text-xs text-tinta-suave hover:text-tinta">leída</button>}
-                  <button type="button" onClick={() => alEliminar(a.id)} className="text-critico"><Trash2 size={13} /></button>
+                  <button type="button" onClick={() => { if (window.confirm('¿Eliminar esta alerta?')) alEliminar(a.id) }} className="text-critico"><Trash2 size={13} /></button>
                 </div>
               </div>
             </li>

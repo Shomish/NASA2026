@@ -14,6 +14,7 @@ import ChatbotIA from './ChatbotIA.jsx'
 import { PanelHistorial, PanelNotas, PanelAlertas, Calendario } from './Registro.jsx'
 import { calcularPuntajeSalud, generarRecomendacionNutricional } from '../../aplicacion/indice.js'
 import { calcularIMC } from '../../dominio/indice.js'
+import { useTraduccion } from '../../shared/idioma.js'
 
 /**
  * Dashboard del monitor.
@@ -33,13 +34,12 @@ export default function VistaMonitor({
   persona,
   signos,
   registros,
-  tripulacion,
-  alSeleccionar,
   alAgregar,
   alEliminar,
   alMarcarAlertaLeida,
   conectorLLM,
 }) {
+  const t = useTraduccion()
   const resultado = useMemo(() => calcularPuntajeSalud(signos), [signos])
   const recomendacion = useMemo(() => generarRecomendacionNutricional(persona, signos), [persona, signos])
 
@@ -53,7 +53,7 @@ export default function VistaMonitor({
   if (!persona) {
     return (
       <div className="text-center py-20 text-tinta-suave">
-        No hay tripulantes. Ve a <strong className="text-tinta">Tripulación</strong> y agrega uno.
+        {t('monitor.sinTripulantes')} <strong className="text-tinta">{t('monitor.agrega')}</strong> {t('monitor.agregaUno')}
       </div>
     )
   }
@@ -62,31 +62,11 @@ export default function VistaMonitor({
 
   return (
     <div className="space-y-4">
-      {/* Barra de contexto + selector */}
+      {/* Barra de contexto (el nombre y el selector viven en la barra superior global) */}
       <div className="flex flex-wrap items-center gap-4 px-4 py-3 rounded-2xl border border-borde bg-superficie/60">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primario to-primario-fuerte flex items-center justify-center font-semibold text-white">
-            {persona.nombre.split(' ').map((p) => p[0]).join('').slice(0, 2)}
-          </div>
-          <div>
-            <div className="font-medium text-tinta">{persona.nombre}</div>
-            <div className="text-xs font-mono text-tinta-suave">{persona.rol} · {persona.mision}</div>
-          </div>
-        </div>
-
-        <select
-          className="bg-superficie-alta border border-borde rounded-lg px-3 py-2 text-sm text-tinta"
-          value={persona.id}
-          onChange={(e) => alSeleccionar(e.target.value)}
-        >
-          {tripulacion.map((p) => (
-            <option key={p.id} value={p.id}>{p.nombre}</option>
-          ))}
-        </select>
-
         <div className="ml-auto flex items-center gap-2 font-mono text-xs text-tinta-suave">
           <CalendarDays size={14} className="text-primario" />
-          Día de misión {persona.diaMision} · IMC {calcularIMC(persona.pesoKg, persona.alturaCm)}
+          {t('monitor.diaMision')} {persona.diaMision} · {t('monitor.imc')} {calcularIMC(persona.pesoKg, persona.alturaCm)}
         </div>
       </div>
 

@@ -131,10 +131,10 @@ export function evaluarSignoVital(tipo, valor) {
  */
 export const CATALOGO_CONDICIONES = [
   { id: 'perdida_osea', etiqueta: 'Pérdida ósea', recomendado: ['maca', 'quinua'] },
-  { id: 'atrofia_muscular', etiqueta: 'Atrofia muscular', recomendado: ['quinua', 'kiwicha'] },
-  { id: 'anemia', etiqueta: 'Anemia espacial', recomendado: ['kiwicha'] },
-  { id: 'inflamacion', etiqueta: 'Inflamación', recomendado: ['sacha_inchi'] },
-  { id: 'digestivo', etiqueta: 'Problemas digestivos', recomendado: ['muna'] },
+  { id: 'atrofia_muscular', etiqueta: 'Atrofia muscular', recomendado: ['quinua', 'kiwicha', 'tarwi'] },
+  { id: 'anemia', etiqueta: 'Anemia espacial', recomendado: ['kiwicha', 'canihua', 'cushuro'] },
+  { id: 'inflamacion', etiqueta: 'Inflamación', recomendado: ['sacha_inchi', 'camu_camu'] },
+  { id: 'digestivo', etiqueta: 'Problemas digestivos', recomendado: ['muna', 'yacon', 'tocosh'] },
   { id: 'estres', etiqueta: 'Estrés psicológico', recomendado: ['maca', 'muna'] },
-  { id: 'hipoxia', etiqueta: 'Hipoxia / fatiga de altitud', recomendado: ['coca'] },
+  { id: 'hipoxia', etiqueta: 'Hipoxia / fatiga de altitud', recomendado: ['coca', 'cushuro'] },
 ]
