@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { Brain, HeartPulse, Wind, Bone, Dumbbell, ShieldPlus } from 'lucide-react'
 import { Tarjeta } from '../../../presentacion/sistema/indice.js'
+import ModeloRobot from '../../../presentacion/componentes/ModeloRobot.jsx'
 
 /** Regiones del cuerpo con su indicador y cómo se calcula el estado. */
 const REGIONES = [
@@ -64,37 +65,21 @@ export function MapaCorporal({ resumen }) {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      {/* Figura */}
-      <div className="flex items-center justify-center">
-        <svg viewBox="0 0 180 260" className="h-80 w-auto" role="img" aria-label="Mapa corporal del tripulante">
-          {/* Silueta */}
-          <circle cx="90" cy="34" r="22" fill="none" stroke="currentColor" strokeWidth="6" className="text-tinta-suave" />
-          <line x1="90" y1="56" x2="90" y2="200" stroke="currentColor" strokeWidth="6" className="text-tinta-suave" />
-          <line x1="90" y1="78" x2="48" y2="140" stroke="currentColor" strokeWidth="6" className="text-tinta-suave" />
-          <line x1="90" y1="78" x2="132" y2="140" stroke="currentColor" strokeWidth="6" className="text-tinta-suave" />
-          <line x1="90" y1="200" x2="62" y2="250" stroke="currentColor" strokeWidth="6" className="text-tinta-suave" />
-          <line x1="90" y1="200" x2="118" y2="250" stroke="currentColor" strokeWidth="6" className="text-tinta-suave" />
-
-          {/* Regiones clicables */}
-          {REGIONES.map((r) => (
-            <circle
-              key={r.id}
-              cx={r.x}
-              cy={r.y}
-              r={r.r}
-              fill={COLOR_ESTADO[estadoRegion(r.id, resumen)]}
-              fillOpacity={0.55}
-              stroke={seleccionada === r.id ? 'rgb(var(--tinta))' : 'transparent'}
-              strokeWidth={2}
-              className="cursor-pointer transition-opacity hover:opacity-80"
-              role="button"
-              tabIndex={0}
-              aria-label={`${r.etiqueta}. Estado: ${estadoRegion(r.id, resumen)}`}
-              onClick={() => setSeleccionada(r.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSeleccionada(r.id) } }}
-            />
-          ))}
-        </svg>
+      {/* Avatar 3D */}
+      <div className="space-y-2">
+        <ModeloRobot className="h-[420px] w-full rounded-tarjeta border border-borde bg-superficie-alta/40" />
+        <div className="flex flex-wrap items-center justify-between gap-1 px-1 text-[9px] text-tinta-suave">
+          <span>Modelo 3D: Cute Home Robot — Yandrack (Sketchfab), CC-BY-4.0.</span>
+          <a
+            href="https://sketchfab.com/3d-models/cute-home-robot-7b75f204eb3e42b6babd883773e0789d"
+            target="_blank"
+            rel="noreferrer"
+            className="text-primario hover:underline"
+          >
+            Ver fuente
+          </a>
+        </div>
+        <p className="px-1 text-[10px] text-tinta-suave">Selecciona un sistema en la lista para ver su estado.</p>
       </div>
 
       {/* Detalle de la región */}

@@ -323,7 +323,18 @@ MIT. See [LICENSE](./LICENSE).
 
 ---
 
-## 14. Disclaimer
+## 14. 3D model attribution
+
+The "My body" view uses the **Cute Home Robot** model by **Yandrack** (Sketchfab),
+licensed under **CC-BY-4.0**. Source:
+https://sketchfab.com/3d-models/cute-home-robot-7b75f204eb3e42b6babd883773e0789d
+
+The model is distributed under its own CC-BY-4.0 license and is attributed in the
+interface. The rest of the source code remains under the MIT license.
+
+---
+
+## 15. Disclaimer
 
 AYNI HEALTH is an educational prototype. It is not a certified medical device, does not diagnose,
 and does not replace the flight surgeon, mission control, or emergency procedures. Always follow
