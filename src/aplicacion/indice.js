@@ -6,6 +6,7 @@
 import { evaluarSignoVital, CATALOGO_CONDICIONES, calcularIMC } from '../dominio/indice.js'
 import { contramedidasAndinas, despensaGlobal } from '../datos/mockDatos.js'
 import { idiomaActual } from '../shared/idioma.js'
+import { PROTOCOLO_EMERGENCIA, detectarEmergencia } from '../../shared/emergencia.js'
 
 /**
  * Calcula el puntaje compuesto de salud (0-100).
@@ -13,7 +14,7 @@ import { idiomaActual } from '../shared/idioma.js'
  * @returns {{puntaje: number, nivel: 'optimo'|'atencion'|'critico', desglose: object}} Resultado.
  */
 export function calcularPuntajeSalud(signos) {
-  const tipos = ['sistolica', 'diastolica', 'saturacion_oxigeno', 'masa_corporal', 'temperatura']
+  const tipos = ['sistolica', 'diastolica', 'saturacion_oxigeno', 'frecuencia_cardiaca', 'temperatura']
   const desglose = {}
   let suma = 0
   let contador = 0
@@ -107,6 +108,9 @@ export function responderChatbot(texto, contexto) {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+  const emergencia = detectarEmergencia(texto, signos)
+  if (emergencia.emergencia) return PROTOCOLO_EMERGENCIA
+
   const nombre = persona?.nombre ?? 'tripulante'
   const idioma = idiomaActual() === 'en' ? 'en' : 'es'
   const en = idioma === 'en'

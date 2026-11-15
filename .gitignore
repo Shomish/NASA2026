@@ -18,3 +18,8 @@ data/*.db-*
 test-results/
 playwright-report/
 
+# Documentos y datasets locales (no se suben)
+docs.zip
+docs/informe/
+data/externos/
+data/convertidos/

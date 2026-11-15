@@ -11,6 +11,9 @@ import { responderChatbot } from '../../aplicacion/indice.js'
 import { calcularIMC } from '../../dominio/indice.js'
 import { useTraduccion } from '../../shared/idioma.js'
 import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
+import { PROTOCOLO_EMERGENCIA, detectarEmergencia } from '../../../shared/emergencia.js'
+import { crearAlertaEmergencia } from '../../features/gestion/api.js'
+import { encolar } from '../../features/gestion/outbox.js'
 
 /**
  * Chatbot de IA interactivo.
@@ -75,21 +78,33 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
    */
   const construirContexto = () => {
     const { persona, signos } = contexto
-    return JSON.stringify(
-      {
-        nombre: persona?.nombre,
-        rol: persona?.rol,
-        edad: persona?.edad,
-        pesoKg: persona?.pesoKg,
-        imc: persona ? calcularIMC(persona.pesoKg, persona.alturaCm) : null,
-        condiciones: persona?.condiciones,
-        alergias: persona?.alergias,
-        objetivoSalud: persona?.objetivoSalud,
-        signosVitales: signos,
-      },
-      null,
-      2,
-    )
+    return {
+      nombre: persona?.nombre,
+      rol: persona?.rol,
+      edad: persona?.edad,
+      pesoKg: persona?.pesoKg,
+      imc: persona ? calcularIMC(persona.pesoKg, persona.alturaCm) : null,
+      condiciones: persona?.condiciones,
+      alergias: persona?.alergias,
+      objetivoSalud: persona?.objetivoSalud,
+      signosVitales: signos,
+    }
+  }
+
+  /**
+   * Registra una alerta de emergencia: API si hay conexión, outbox si no.
+   * @param {{motivos: string[]}} emergencia - Resultado de la detección.
+   */
+  const registrarEmergencia = async (emergencia) => {
+    const tripulanteId = Number(contexto.persona?.id)
+    if (!Number.isFinite(tripulanteId)) return
+    const mensaje = `Posible emergencia en el chat: ${emergencia.motivos.join(', ')}`.slice(0, 255)
+    try {
+      if (typeof navigator === 'undefined' || !navigator.onLine) throw new Error('sin conexión')
+      await crearAlertaEmergencia({ tripulante_id: tripulanteId, mensaje })
+    } catch {
+      await encolar('crear_alerta', { tripulante_id: tripulanteId, mensaje })
+    }
   }
 
   /**
@@ -101,6 +116,21 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
     setMensajes((m) => [...m, { rol: 'usuario', texto }])
     setEntrada('')
     setEscribiendo(true)
+
+    const emergencia = detectarEmergencia(texto, contexto.signos ?? {})
+    if (emergencia.emergencia) {
+      let respuesta = PROTOCOLO_EMERGENCIA
+      if (enLinea) {
+        const respuestaServidor = await conectorLLM.consultar(texto, construirContexto())
+        if (respuestaServidor) respuesta = respuestaServidor
+        else await registrarEmergencia(emergencia)
+      } else {
+        await registrarEmergencia(emergencia)
+      }
+      setEscribiendo(false)
+      setMensajes((m) => [...m, { rol: 'bot', texto: respuesta }])
+      return
+    }
 
     let respuesta = null
     if (enLinea) {

@@ -27,12 +27,22 @@ function iniciales(nombre) {
 }
 
 /**
+ * Indica si un tripulante proviene de un conjunto de datos de referencia.
+ * @param {object} tripulante - Tripulante.
+ * @returns {boolean} Verdadero si es dato real de referencia.
+ */
+function esReferencia(tripulante) {
+  return Boolean(tripulante?.origen && tripulante.origen !== 'simulado')
+}
+
+/**
  * Barra de contexto de tripulante.
  * @returns {import('react').JSX.Element | null} Barra o null.
  */
 export function BarraContextoTripulante() {
   const { esTripulante, tripulantes, tripulanteActivo, sinPerfil, cambiar } = useContextoTripulante()
   const [selectorAbierto, setSelectorAbierto] = useState(false)
+  const [verReferencia, setVerReferencia] = useState(false)
 
   if (sinPerfil) {
     return (
@@ -57,7 +67,14 @@ export function BarraContextoTripulante() {
           {iniciales(tripulanteActivo.nombre)}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-tinta" data-testid="contexto-nombre">{tripulanteActivo.nombre}</div>
+          <div className="flex items-center gap-2">
+            <div className="truncate text-sm font-semibold text-tinta" data-testid="contexto-nombre">{tripulanteActivo.nombre}</div>
+            {esReferencia(tripulanteActivo) && (
+              <span className="shrink-0 rounded-insignia border border-exito/40 bg-exito/10 px-1.5 py-0.5 text-[9px] font-mono text-exito">
+                Datos reales
+              </span>
+            )}
+          </div>
           <div className="truncate text-xs text-tinta-suave">
             {tripulanteActivo.cargo || 'Tripulante'}
             {tripulanteActivo.EntornoMision?.nombre ? ` · ${tripulanteActivo.EntornoMision.nombre}` : ''}
@@ -75,7 +92,11 @@ export function BarraContextoTripulante() {
       {selectorAbierto && (
         <Modal abierto alCerrar={() => setSelectorAbierto(false)} titulo="Cambiar tripulante" tituloId="cambiar-tripulante-titulo">
           <div className="space-y-2">
-            {tripulantes.map((t) => {
+            <label className="flex items-center gap-2 text-xs text-tinta-suave">
+              <input type="checkbox" checked={verReferencia} onChange={(e) => setVerReferencia(e.target.checked)} />
+              Ver datos de referencia ({tripulantes.filter(esReferencia).length})
+            </label>
+            {tripulantes.filter((t) => verReferencia || !esReferencia(t) || String(t.id) === String(tripulanteActivo.id)).map((t) => {
               const activo = String(t.id) === String(tripulanteActivo.id)
               return (
                 <Tarjeta key={t.id} relleno="compacto" className={activo ? 'border-primario' : ''}>

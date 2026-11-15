@@ -127,6 +127,11 @@ export function resolverAlerta(id) {
   return peticion(`/alertas/${id}/resolver`, { metodo: 'PUT' })
 }
 
+/** Crea una alerta crítica de emergencia desde el chat local/offline. */
+export function crearAlertaEmergencia(datos) {
+  return peticion('/alertas', { metodo: 'POST', cuerpo: datos })
+}
+
 /* ============ Demo ============ */
 
 /** Avanza un día de misión (solo modo demo). */
@@ -152,6 +157,11 @@ export function listarCatalogo() {
 /** Entornos de misión. */
 export function listarEntornos() {
   return peticion('/entornos')
+}
+
+/** Clima espacial de NASA DONKI (FLR/SEP de los últimos 7 días). */
+export function obtenerClimaEspacial() {
+  return peticion('/donki')
 }
 
 /* ============ Auditoría ============ */

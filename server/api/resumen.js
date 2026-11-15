@@ -90,6 +90,7 @@ rutas.get('/', autenticacion, async (req, res) => {
       nombre: tripulante.nombre,
       cargo: tripulante.cargo,
       dia_mision: tripulante.dia_mision,
+      origen: tripulante.origen ?? 'simulado',
       entorno: tripulante.EntornoMision?.nombre ?? null,
     },
     signos: plano(signos),

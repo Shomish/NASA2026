@@ -58,12 +58,21 @@ describe('generarRespuestaChat (sin proveedor)', () => {
     expect(resultado.respuesta).toBeTruthy()
   })
 
-  it('añade aviso de escalamiento ante síntomas graves', async () => {
+  it('activa el protocolo de emergencia ante SpO₂ crítica', async () => {
     const resultado = await generarRespuestaChat({
       mensaje: 'me siento mal',
       contexto: { signosVitales: { saturacion_oxigeno: 85 } },
     })
-    expect(resultado.escalamiento).toContain('saturación de O₂')
-    expect(resultado.respuesta).toContain('Escalamiento')
+    expect(resultado.escalamiento).toContain('Posible emergencia')
+    expect(resultado.respuesta).toContain('No te automediques')
+  })
+
+  it('detecta síntomas graves escritos en el mensaje', async () => {
+    const resultado = await generarRespuestaChat({
+      mensaje: 'Tengo dolor en el pecho y me falta el aire',
+      contexto: {},
+    })
+    expect(resultado.escalamiento).toContain('dolor en el pecho')
+    expect(resultado.respuesta).toContain('Posible emergencia')
   })
 })

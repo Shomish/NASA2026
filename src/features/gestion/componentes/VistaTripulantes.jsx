@@ -18,6 +18,15 @@ import { ConfirmarModal } from './ConfirmarModal.jsx'
 import { InsigniaActivo } from './InsigniaEstado.jsx'
 import { useTraduccion } from '../../../shared/idioma.js'
 
+/**
+ * Indica si un tripulante proviene de un conjunto de datos de referencia.
+ * @param {object} tripulante - Tripulante.
+ * @returns {boolean} Verdadero si es dato real de referencia.
+ */
+function esReferencia(tripulante) {
+  return Boolean(tripulante?.origen && tripulante.origen !== 'simulado')
+}
+
 /** Campos del formulario de tripulante. */
 const CAMPOS = [
   { nombre: 'nombre', etiqueta: 'Nombre completo', tipo: 'text', requerido: true },
@@ -118,6 +127,8 @@ export function VistaTripulantes() {
   const eliminar = useEliminarTripulante()
   const reactivar = useReactivarTripulante()
   const tripulantes = Array.isArray(data) ? data : []
+  const [verReferencia, setVerReferencia] = useState(false)
+  const visibles = tripulantes.filter((tp) => verReferencia || !esReferencia(tp))
 
   const [formAbierto, setFormAbierto] = useState(false)
   const [enEdicion, setEnEdicion] = useState(null)
@@ -130,11 +141,17 @@ export function VistaTripulantes() {
           <h1 className="font-serif text-2xl font-bold text-tinta">Tripulantes</h1>
           <p className="text-sm text-tinta-suave">Gestión de la tripulación de la misión.</p>
         </div>
-        {esAdmin && (
-          <Boton variante="primario" onClick={() => { setEnEdicion(null); setFormAbierto(true) }} data-testid="nuevo-tripulante">
-            <Plus size={16} /> Nuevo
-          </Boton>
-        )}
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <label className="flex items-center gap-2 text-xs text-tinta-suave">
+            <input type="checkbox" checked={verReferencia} onChange={(e) => setVerReferencia(e.target.checked)} />
+            Ver datos de referencia ({tripulantes.filter(esReferencia).length})
+          </label>
+          {esAdmin && (
+            <Boton variante="primario" onClick={() => { setEnEdicion(null); setFormAbierto(true) }} data-testid="nuevo-tripulante">
+              <Plus size={16} /> Nuevo
+            </Boton>
+          )}
+        </div>
       </div>
 
       {isLoading && (
@@ -153,14 +170,21 @@ export function VistaTripulantes() {
         <EstadoVacio icono={<Users size={22} />} titulo="Sin tripulantes" descripcion="Todavía no hay tripulantes registrados." />
       )}
 
-      {!isLoading && !isError && tripulantes.length > 0 && (
+      {!isLoading && !isError && tripulantes.length > 0 && visibles.length === 0 && (
+        <EstadoVacio icono={<Users size={22} />} titulo="Sin tripulantes de demostración" descripcion='Activa “Ver datos de referencia” para mostrar los conjuntos PhysioNet / CDC.' />
+      )}
+
+      {!isLoading && !isError && visibles.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {tripulantes.map((tp) => (
+          {visibles.map((tp) => (
             <Tarjeta key={tp.id} relleno="compacto" className="space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold text-tinta">{tp.nombre}</div>
                   <div className="text-sm text-tinta-suave">{tp.cargo || 'Sin cargo'}</div>
+                  <div className={`text-[10px] font-mono ${esReferencia(tp) ? 'text-exito' : 'text-tinta-suave'}`}>
+                    {esReferencia(tp) ? 'Datos reales de referencia (PhysioNet / CDC)' : 'Datos simulados'}
+                  </div>
                 </div>
                 <InsigniaActivo activo={tp.activo !== false} />
               </div>

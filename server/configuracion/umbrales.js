@@ -12,8 +12,14 @@
 const UMBRALES_POR_DEFECTO = {
   saturacion_oxigeno: { normalMin: 95, normalMax: 100, criticoMin: 90, criticoMax: 100 },
   frecuencia_cardiaca: { normalMin: 60, normalMax: 100, criticoMin: 40, criticoMax: 150 },
-  temperatura: { normalMin: 36, normalMax: 37.5, criticoMin: 34, criticoMax: 40 },
+  temperatura: { normalMin: 36, normalMax: 37.5, criticoMin: 34, criticoMax: 100 },
   phq9: { normalMin: 0, normalMax: 9, criticoMin: 20, criticoMax: 27 },
+  glucosa: { normalMin: 70, normalMax: 99, criticoMin: 54, criticoMax: 250 },
+  presion_sistolica: { normalMin: 90, normalMax: 120, criticoMin: 0, criticoMax: 180 },
+  presion_diastolica: { normalMin: 60, normalMax: 80, criticoMin: 0, criticoMax: 120 },
+  radiacion_acumulada: { normalMin: 0, normalMax: 479, criticoMin: 0, criticoMax: 599.99 },
+  radiacion_evento: { normalMin: 0, normalMax: 249, criticoMin: 0, criticoMax: 249.99 },
+  sueno: { normalMin: 7, normalMax: 24, criticoMin: 0, criticoMax: 24 },
 }
 
 /** Umbrales actuales. */
@@ -41,6 +47,22 @@ export function umbralCriticoSpo2() {
  */
 export function umbralCriticoPhq9() {
   return umbrales.phq9?.criticoMin ?? 20
+}
+
+/**
+ * Umbral crítico de presión sistólica (crisis hipertensiva).
+ * @returns {number} Valor crítico en mmHg.
+ */
+export function umbralCriticoPresionSistolica() {
+  return umbrales.presion_sistolica?.criticoMax ?? 180
+}
+
+/**
+ * Umbral crítico de presión diastólica (crisis hipertensiva).
+ * @returns {number} Valor crítico en mmHg.
+ */
+export function umbralCriticoPresionDiastolica() {
+  return umbrales.presion_diastolica?.criticoMax ?? 120
 }
 
 /**

@@ -91,6 +91,12 @@ export default function VistaDashboard() {
               <Insignia variante={estadoGlobal === 'optimo' ? 'exito' : estadoGlobal === 'atencion' ? 'advertencia' : 'critico'} punto>
                 {estadoGlobal === 'optimo' ? t('dash.estadoOptimo') : estadoGlobal === 'atencion' ? t('dash.requiereAtencion') : t('dash.critico')}
               </Insignia>
+              {esDemo && (
+                <Insignia variante="advertencia">Datos simulados con fines de demostración</Insignia>
+              )}
+              {(tripulante.origen === 'physionet-noneeg' || tripulante.origen === 'physionet-bigideas' || tripulante.origen === 'physionet-mmash' || tripulante.origen === 'nhanes') && (
+                <Insignia variante="exito">Datos reales de referencia (PhysioNet / CDC)</Insignia>
+              )}
               {esDemo && esAdmin && (
                 <button type="button" onClick={() => avanzarDia.mutate()} disabled={avanzarDia.isPending} className="rounded-boton border border-white/40 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/10" data-testid="avanzar-dia">
                   {avanzarDia.isPending ? t('dash.avanzando') : t('dash.avanzarDia')}

@@ -1,4 +1,10 @@
 -- ============================================================
+-- SOLO REFERENCIA. NO USAR PARA CREAR LA BASE.
+-- La base se crea con `npm run db:setup` (modelos Sequelize + migraciones).
+-- Este script puede estar desactualizado (puerto, ENUM y tablas nuevas).
+-- ============================================================
+
+-- ============================================================
 -- AYNI HEALTH · Esquema relacional completo (MySQL)
 -- Ejecutar desde Workbench en 127.0.0.1:3313
 -- ============================================================

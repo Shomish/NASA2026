@@ -85,7 +85,7 @@ export default function TarjetaEstadoGlobal({ resultado }) {
         <div className="flex-1 space-y-3">
           <InsigniaEstado estado={nivel} />
           <p className="text-sm text-tinta-suave leading-relaxed">
-            Evaluación combinada de presión arterial, saturación de O₂, masa corporal y
+            Evaluación combinada de presión arterial, frecuencia cardíaca, saturación de O₂ y
             temperatura, procesada de forma autónoma sin conexión a control de misión.
           </p>
         </div>

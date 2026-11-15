@@ -209,7 +209,6 @@ export default function VistaConfiguracion() {
               <option value="meta-llama/llama-3.3-70b-instruct" />
               <option value="meta-llama/llama-3.3-70b-instruct:free" />
               <option value="google/gemma-4-31b-it:free" />
-              
               <option value="llama-3.3-70b-versatile" />
             </datalist>
           </div>

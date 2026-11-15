@@ -151,6 +151,7 @@ export function VistaChatRuta() {
   const { data } = useResumen(tripulanteActivo?.id)
   const contexto = useMemo(() => ({
     persona: tripulanteActivo ? {
+      id: tripulanteActivo.id,
       nombre: tripulanteActivo.nombre,
       rol: tripulanteActivo.cargo,
       edad: tripulanteActivo.edad,
@@ -158,7 +159,7 @@ export function VistaChatRuta() {
       alturaCm: tripulanteActivo.altura_cm,
       alergias: tripulanteActivo.alergias,
     } : null,
-    signos: data?.signos ? { saturacion_oxigeno: data.signos.spo2, frecuencia_cardiaca: data.signos.frecuencia_cardiaca } : {},
+    signos: data?.signos ? { saturacion_oxigeno: data.signos.spo2, frecuencia_cardiaca: data.signos.frecuencia_cardiaca, presion_sistolica: data.signos.presion_sistolica, presion_diastolica: data.signos.presion_diastolica } : {},
     sueno: data?.sueno,
     mental: data?.conductual,
   }), [tripulanteActivo, data])

@@ -8,6 +8,7 @@
 import { GeminiChatProvider, ProveedorLocal } from './proveedores.js'
 import { umbralCriticoSpo2, umbralCriticoPhq9 } from '../configuracion/umbrales.js'
 import { sanitizarSalida } from './privacidad.js'
+import { PROTOCOLO_EMERGENCIA, detectarEmergencia } from '../../shared/emergencia.js'
 
 /**
  * Prompt de sistema (español, Perú).
@@ -63,6 +64,15 @@ export function detectarEscalamiento(contexto = {}) {
  * @returns {Promise<{respuesta: string, escalamiento: string | null, usoNube: boolean}>} Respuesta.
  */
 export async function generarRespuestaChat({ mensaje, contexto, proveedor }) {
+  const emergencia = detectarEmergencia(mensaje, contexto?.signosVitales ?? {})
+  if (emergencia.emergencia) {
+    return {
+      respuesta: PROTOCOLO_EMERGENCIA,
+      escalamiento: `Posible emergencia: ${emergencia.motivos.join(', ')}`,
+      usoNube: false,
+    }
+  }
+
   const escalamiento = detectarEscalamiento(contexto)
   const contextoSanitizado = seudonimizarContexto(contexto)
   const provider = proveedor ?? new GeminiChatProvider(process.env.GEMINI_API_KEY ?? '', process.env.GEMINI_MODEL || 'gemini-flash-latest')

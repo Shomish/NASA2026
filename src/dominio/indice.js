@@ -104,12 +104,12 @@ export function sanitizarTripulante(datos) {
  * Rangos fisiológicos de referencia para validación de signos vitales.
  */
 export const RANGOS_SIGNO_VITAL = {
-  sistolica: { etiqueta: 'Presión sistólica', unidad: 'mmHg', normalMin: 90, normalMax: 120, criticoMin: 70, criticoMax: 180 },
-  diastolica: { etiqueta: 'Presión diastólica', unidad: 'mmHg', normalMin: 60, normalMax: 80, criticoMin: 40, criticoMax: 120 },
-  saturacion_oxigeno: { etiqueta: 'Saturación de O₂', unidad: '%', normalMin: 95, normalMax: 100, criticoMin: 85, criticoMax: 100 },
-  masa_corporal: { etiqueta: 'Masa corporal', unidad: 'kg', normalMin: 50, normalMax: 90, criticoMin: 40, criticoMax: 110 },
-  temperatura: { etiqueta: 'Temperatura', unidad: '°C', normalMin: 36, normalMax: 37.5, criticoMin: 34, criticoMax: 40 },
+  sistolica: { etiqueta: 'Presión sistólica', unidad: 'mmHg', normalMin: 90, normalMax: 120, atencionMin: 120, atencionMax: 139, criticoMin: 0, criticoMax: 180 },
+  diastolica: { etiqueta: 'Presión diastólica', unidad: 'mmHg', normalMin: 60, normalMax: 80, atencionMin: 80, atencionMax: 89, criticoMin: 0, criticoMax: 120 },
+  saturacion_oxigeno: { etiqueta: 'Saturación de O₂', unidad: '%', normalMin: 95, normalMax: 100, criticoMin: 90, criticoMax: 100 },
   frecuencia_cardiaca: { etiqueta: 'Frecuencia cardíaca', unidad: 'lpm', normalMin: 60, normalMax: 100, criticoMin: 40, criticoMax: 150 },
+  temperatura: { etiqueta: 'Temperatura', unidad: '°C', normalMin: 36, normalMax: 37.5, criticoMin: 34, criticoMax: 100 },
+  masa_corporal: { etiqueta: 'Masa corporal', unidad: 'kg', sinRango: true },
 }
 
 /**
@@ -120,9 +120,12 @@ export const RANGOS_SIGNO_VITAL = {
  */
 export function evaluarSignoVital(tipo, valor) {
   const rango = RANGOS_SIGNO_VITAL[tipo]
-  if (!rango || valor === null || valor === undefined || Number.isNaN(valor)) return 'optimo'
-  if (valor < rango.criticoMin || valor > rango.criticoMax) return 'critico'
-  if (valor < rango.normalMin || valor > rango.normalMax) return 'atencion'
+  if (!rango || rango.sinRango || valor === null || valor === undefined || Number.isNaN(valor)) return 'sin-rango'
+  if (rango.criticoMin != null && valor < rango.criticoMin) return 'critico'
+  if (rango.criticoMax != null && valor > rango.criticoMax) return 'critico'
+  if (rango.atencionMin != null && rango.atencionMax != null && valor >= rango.atencionMin && valor <= rango.atencionMax) return 'atencion'
+  if (rango.normalMin != null && valor < rango.normalMin) return 'atencion'
+  if (rango.normalMax != null && valor > rango.normalMax) return 'atencion'
   return 'optimo'
 }
 

@@ -7,6 +7,29 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from './conexion.js'
 
+/**
+ * Define un campo JSON compatible con MySQL y MariaDB.
+ * MariaDB puede devolver el JSON como texto; el getter lo parsea.
+ * @param {string} nombre - Nombre del atributo.
+ * @param {boolean} [allowNull] - Si permite nulos.
+ * @returns {object} Definición del atributo.
+ */
+export function campoJSON(nombre, allowNull = true) {
+  return {
+    type: DataTypes.JSON,
+    allowNull,
+    get() {
+      const valor = this.getDataValue(nombre)
+      if (typeof valor !== 'string') return valor
+      try {
+        return JSON.parse(valor)
+      } catch {
+        return valor
+      }
+    },
+  }
+}
+
 /* ==================== NÚCLEO ==================== */
 
 export const Usuario = sequelize.define('Usuario', {
@@ -23,6 +46,7 @@ export const Usuario = sequelize.define('Usuario', {
 export const Tripulante = sequelize.define('Tripulante', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
   usuario_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true, unique: true },
+  origen: { type: DataTypes.STRING(40), allowNull: false, defaultValue: 'simulado' },
   entorno_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: true },
   nombre: { type: DataTypes.STRING(120), allowNull: false },
   cargo: { type: DataTypes.STRING(80), allowNull: true },
@@ -32,7 +56,7 @@ export const Tripulante = sequelize.define('Tripulante', {
   dia_mision: { type: DataTypes.INTEGER, allowNull: true },
   mision: { type: DataTypes.STRING(120), allowNull: true },
   objetivo: { type: DataTypes.STRING(255), allowNull: true },
-  alergias: { type: DataTypes.JSON, allowNull: true },
+  alergias: campoJSON('alergias', true),
   activo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 }, { tableName: 'tripulantes' })
 
@@ -42,6 +66,7 @@ export const Registro = sequelize.define('Registro', {
   usuario_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   tipo: { type: DataTypes.ENUM('signos_vitales', 'sueno', 'salud_mental', 'radiacion', 'diario', 'glucosa', 'animo', 'ejercicio', 'sintomas_inmunes', 'estado_conductual', 'ambiente'), allowNull: false },
+  origen: { type: DataTypes.STRING(40), allowNull: false, defaultValue: 'simulado' },
   estado: { type: DataTypes.ENUM('pendiente', 'validado', 'cerrado'), allowNull: false, defaultValue: 'pendiente' },
   fecha_registro: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
   fecha_cierre: { type: DataTypes.DATE, allowNull: true },
@@ -59,6 +84,7 @@ export const SignoVital = sequelize.define('SignoVital', {
   frecuencia_cardiaca: { type: DataTypes.INTEGER, allowNull: true },
   masa_kg: { type: DataTypes.DECIMAL(5, 1), allowNull: true },
   temperatura_c: { type: DataTypes.DECIMAL(4, 1), allowNull: true },
+  temperatura_piel_c: { type: DataTypes.DECIMAL(4, 1), allowNull: true },
 }, { tableName: 'signos_vitales', timestamps: false })
 
 export const RegistroSueno = sequelize.define('RegistroSueno', {
@@ -72,7 +98,7 @@ export const RegistroSueno = sequelize.define('RegistroSueno', {
 export const EvaluacionPhq9 = sequelize.define('EvaluacionPhq9', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
   registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
-  respuestas: { type: DataTypes.JSON, allowNull: false },
+  respuestas: campoJSON('respuestas', false),
   puntaje: { type: DataTypes.INTEGER, allowNull: false },
   nivel: { type: DataTypes.STRING(40), allowNull: true },
   item9_positivo: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
@@ -90,7 +116,7 @@ export const NotaDiario = sequelize.define('NotaDiario', {
   registro_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   titulo: { type: DataTypes.STRING(160), allowNull: false },
   contenido: { type: DataTypes.TEXT, allowNull: false },
-  etiquetas: { type: DataTypes.JSON, allowNull: true },
+  etiquetas: campoJSON('etiquetas', true),
 }, { tableName: 'notas_diario', timestamps: false })
 
 /* ==================== DETALLE DE REGISTROS (nuevos tipos del reto) ==================== */
@@ -188,7 +214,7 @@ export const PlanNutricional = sequelize.define('PlanNutricional', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
   tripulante_id: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
   objetivo: { type: DataTypes.STRING(255), allowNull: true },
-  alergias: { type: DataTypes.JSON, allowNull: true },
+  alergias: campoJSON('alergias', true),
   imc_referencia: { type: DataTypes.DECIMAL(4, 1), allowNull: true },
   vigente: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
 }, { tableName: 'planes_nutricionales' })
@@ -268,7 +294,7 @@ export const Auditoria = sequelize.define('Auditoria', {
   entidad: { type: DataTypes.STRING(60), allowNull: false },
   entidad_id: { type: DataTypes.STRING(40), allowNull: true },
   ip: { type: DataTypes.STRING(45), allowNull: true },
-  detalle: { type: DataTypes.JSON, allowNull: true },
+  detalle: campoJSON('detalle', true),
 }, { tableName: 'auditoria', timestamps: true, updatedAt: false, createdAt: 'creado_en' })
 
 export const OperacionSync = sequelize.define('OperacionSync', {
@@ -356,8 +382,8 @@ export const EntornoMision = sequelize.define('EntornoMision', {
   id: { type: DataTypes.INTEGER.UNSIGNED, primaryKey: true, autoIncrement: true },
   nombre: { type: DataTypes.STRING(120), allowNull: false, unique: true },
   descripcion: { type: DataTypes.STRING(255), allowNull: true },
-  peligros_relevantes: { type: DataTypes.JSON, allowNull: true },
-  consejos: { type: DataTypes.JSON, allowNull: true },
+  peligros_relevantes: campoJSON('peligros_relevantes', true),
+  consejos: campoJSON('consejos', true),
 }, { tableName: 'entornos_mision', timestamps: false })
 
 export const RutinaMedicion = sequelize.define('RutinaMedicion', {

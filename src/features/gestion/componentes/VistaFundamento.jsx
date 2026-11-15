@@ -94,6 +94,13 @@ export function VistaFundamento() {
         </ul>
       </Tarjeta>
 
+      {/* Contexto de medidas estándar de la NASA */}
+      <Tarjeta relleno="normal">
+        <h2 className="mb-2 flex items-center gap-2 font-semibold text-tinta"><ShieldCheck size={18} className="text-andino-dorado" /> Medidas estándar de la NASA</h2>
+        <p className="text-sm text-tinta">La NASA utiliza un conjunto de medidas estandarizadas para comparar la salud de la tripulación antes, durante y después de la misión. AYNI HEALTH se inspira en ese enfoque, pero no reproduce el protocolo oficial ni usa esta fuente para las instrucciones de medición.</p>
+        <p className="mt-1 text-xs text-tinta-suave">Fuente: NASA Standard Measures. https://www.nasa.gov/reference/standard-measures/</p>
+      </Tarjeta>
+
       {/* Guía de indicadores (tabs) */}
       <div>
         <h2 className="mb-3 font-semibold text-tinta">Guía de indicadores</h2>
@@ -135,7 +142,7 @@ export function VistaFundamento() {
       </div>
 
       <p className="rounded-tarjeta border border-advertencia/40 bg-advertencia/10 px-4 py-3 text-xs text-tinta">
-        Prototipo educativo, no un dispositivo médico. Las referencias de la NASA y otras agencias espaciales están marcadas &quot;pendiente de verificar&quot; hasta confirmar con los recursos oficiales del reto.
+        Prototipo educativo, no un dispositivo médico. Cada indicador muestra su fuente; cuando el valor es un criterio del equipo se indica expresamente. La app orienta y señala cuándo escalar al oficial médico y a control de misión, pero no diagnostica.
       </p>
     </div>
   )

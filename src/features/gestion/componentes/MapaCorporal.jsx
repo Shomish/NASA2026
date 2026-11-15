@@ -50,7 +50,7 @@ function estadoRegion(id, resumen) {
 }
 
 /** Color por estado. */
-const COLOR_ESTADO = { optimo: '#3FA37A', atencion: '#E0A23F', critico: '#DC2626', 'sin-datos': '#6B7280' }
+const COLOR_ESTADO = { optimo: 'rgb(var(--exito))', atencion: 'rgb(var(--advertencia))', critico: 'rgb(var(--critico))', 'sin-datos': 'rgb(var(--tinta-suave))' }
 
 /**
  * Mapa corporal interactivo.
@@ -84,7 +84,7 @@ export function MapaCorporal({ resumen }) {
               r={r.r}
               fill={COLOR_ESTADO[estadoRegion(r.id, resumen)]}
               fillOpacity={0.55}
-              stroke={seleccionada === r.id ? '#FFFFFF' : 'transparent'}
+              stroke={seleccionada === r.id ? 'rgb(var(--tinta))' : 'transparent'}
               strokeWidth={2}
               className="cursor-pointer transition-opacity hover:opacity-80"
               role="button"

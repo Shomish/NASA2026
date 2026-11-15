@@ -8,6 +8,7 @@
 
 import { sequelize } from './conexion.js'
 import { modelos } from './modelos.js'
+import { actualizarDatosClinicos } from './datosClinicos.js'
 
 const { Migracion } = modelos
 
@@ -68,6 +69,28 @@ const MIGRACIONES = [
       if (process.env.IA_URL_BASE) {
         await sequelize.query("UPDATE configuracion_ia SET proveedor_activo = 'openai' WHERE proveedor = 'gemini'")
       }
+    },
+  },
+  {
+    nombre: '006_datos_reales_umbrales_catalogo',
+    up: async () => {
+      const columnas = async (tabla, columna) => {
+        const [filas] = await sequelize.query(`SHOW COLUMNS FROM ${tabla} LIKE '${columna}'`)
+        return filas.length > 0
+      }
+      if (!(await columnas('tripulantes', 'origen'))) {
+        await sequelize.query("ALTER TABLE tripulantes ADD COLUMN origen VARCHAR(40) NOT NULL DEFAULT 'simulado'")
+      }
+      if (!(await columnas('registros', 'origen'))) {
+        await sequelize.query("ALTER TABLE registros ADD COLUMN origen VARCHAR(40) NOT NULL DEFAULT 'simulado'")
+      }
+      if (!(await columnas('signos_vitales', 'temperatura_piel_c'))) {
+        await sequelize.query('ALTER TABLE signos_vitales ADD COLUMN temperatura_piel_c DECIMAL(4,1) NULL')
+      }
+      if (!(await columnas('configuracion_ia', 'url_base'))) {
+        await sequelize.query('ALTER TABLE configuracion_ia ADD COLUMN url_base VARCHAR(255) NULL')
+      }
+      await actualizarDatosClinicos()
     },
   },
 ]
