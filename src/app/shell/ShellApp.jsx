@@ -24,6 +24,7 @@ import {
   Menu,
   Moon,
   NotebookPen,
+  Orbit,
   PersonStanding,
   Plus,
   Search,
@@ -77,6 +78,7 @@ const NAVEGACION = [
     items: [
       { id: 'monitor', etiqueta: 'nav.monitor', icono: HeartPulse, ruta: '/app/monitor' },
       { id: 'cuerpo', etiqueta: 'nav.cuerpo', icono: PersonStanding, ruta: '/app/cuerpo' },
+      { id: 'lot', etiqueta: 'nav.lot', icono: Orbit, ruta: '/app/lot' },
       { id: 'signos', etiqueta: 'nav.signos', icono: Activity, ruta: '/app/signos' },
       { id: 'salud-integral', etiqueta: 'nav.saludIntegral', icono: Brain, ruta: '/app/salud-integral' },
       { id: 'calendario', etiqueta: 'nav.calendario', icono: Calendar, ruta: '/app/calendario' },

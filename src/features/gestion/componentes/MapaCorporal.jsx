@@ -6,17 +6,16 @@
  */
 
 import { useState } from 'react'
-import { Brain, HeartPulse, Wind, Bone, Dumbbell, ShieldPlus } from 'lucide-react'
+import { Brain, HeartPulse, Wind, Bone, ShieldPlus } from 'lucide-react'
 import { Tarjeta } from '../../../presentacion/sistema/indice.js'
-import ModeloRobot from '../../../presentacion/componentes/ModeloRobot.jsx'
+import MapaCorporal3D from '../../../presentacion/componentes/MapaCorporal3D.jsx'
 
 /** Regiones del cuerpo con su indicador y cómo se calcula el estado. */
 const REGIONES = [
   { id: 'cerebro', etiqueta: 'Cerebro · salud mental', icono: Brain, x: 90, y: 34, r: 22, indicadores: ['Ánimo', 'PHQ-9', 'Estrés'], funcion: 'Controla el ánimo, el estrés y la ansiedad durante el confinamiento.' },
   { id: 'corazon', etiqueta: 'Corazón · cardiovascular', icono: HeartPulse, x: 90, y: 92, r: 20, indicadores: ['Frecuencia cardíaca', 'Presión arterial'], funcion: 'Bombea la sangre; la microgravedad cambia su trabajo.' },
   { id: 'pulmones', etiqueta: 'Pulmones · oxígeno', icono: Wind, x: 90, y: 130, r: 20, indicadores: ['Saturación de O₂', 'Ambiente (CO₂)'], funcion: 'Aportan oxígeno; dependen del aire de la cabina.' },
-  { id: 'huesos', etiqueta: 'Huesos · densidad ósea', icono: Bone, x: 90, y: 178, r: 20, indicadores: ['Ejercicio de resistencia'], funcion: 'Pierden densidad en microgravedad; el ejercicio los protege.' },
-  { id: 'musculos', etiqueta: 'Músculos · fuerza', icono: Dumbbell, x: 48, y: 178, r: 18, indicadores: ['Ejercicio', 'Contramedidas'], funcion: 'Se debilitan sin carga; el entrenamiento los mantiene.' },
+  { id: 'musculos', etiqueta: 'Huesos y músculos · actividad', icono: Bone, indicadores: ['Ejercicio de resistencia', 'Contramedidas'], funcion: 'Pierden densidad y fuerza en microgravedad; el ejercicio los protege.' },
   { id: 'inmune', etiqueta: 'Piel · sistema inmune', icono: ShieldPlus, x: 132, y: 178, r: 18, indicadores: ['Síntomas inmunes', 'Temperatura'], funcion: 'Defensa contra infecciones; puede alterarse en el espacio.' },
 ]
 
@@ -40,7 +39,7 @@ function estadoRegion(id, resumen) {
     const spo2 = resumen.signos?.spo2
     if (spo2 !== undefined) return spo2 < 90 ? 'critico' : spo2 < 95 ? 'atencion' : 'optimo'
   }
-  if (id === 'huesos' || id === 'musculos') {
+  if (id === 'musculos') {
     if (resumen.ejercicio) return resumen.ejercicio.cumplio_plan ? 'optimo' : 'atencion'
   }
   if (id === 'inmune') {
@@ -62,28 +61,25 @@ const COLOR_ESTADO = { optimo: 'rgb(var(--exito))', atencion: 'rgb(var(--adverte
 export function MapaCorporal({ resumen }) {
   const [seleccionada, setSeleccionada] = useState('cerebro')
   const region = REGIONES.find((r) => r.id === seleccionada)
+  const estados = Object.fromEntries(REGIONES.map((r) => [r.id, estadoRegion(r.id, resumen)]))
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      {/* Avatar 3D */}
+      {/* Mapa corporal 3D */}
       <div className="space-y-2">
-        <ModeloRobot className="h-[420px] w-full rounded-tarjeta border border-borde bg-superficie-alta/40" />
-        <div className="flex flex-wrap items-center justify-between gap-1 px-1 text-[9px] text-tinta-suave">
-          <span>Modelo 3D: Cute Home Robot — Yandrack (Sketchfab), CC-BY-4.0.</span>
-          <a
-            href="https://sketchfab.com/3d-models/cute-home-robot-7b75f204eb3e42b6babd883773e0789d"
-            target="_blank"
-            rel="noreferrer"
-            className="text-primario hover:underline"
-          >
-            Ver fuente
-          </a>
+        <MapaCorporal3D estados={estados} seleccionada={seleccionada} alSeleccionar={setSeleccionada} />
+        <div className="flex flex-wrap gap-3 px-1 text-[10px] text-tinta-suave">
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-exito" />Estable</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-advertencia" />Atención</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-critico" />Crítico</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-tinta-suave" />Sin datos</span>
         </div>
-        <p className="px-1 text-[10px] text-tinta-suave">Selecciona un sistema en la lista para ver su estado.</p>
+        <p className="px-1 text-[10px] text-tinta-suave">Modelo 3D del prototipo AYNI HEALTH. Selecciona un sistema en el modelo o en la lista.</p>
       </div>
 
       {/* Detalle de la región */}
       <div className="space-y-3">
+{region ? (
         <Tarjeta relleno="compacto" className="space-y-2">
           <div className="flex items-center gap-2">
             {region && <region.icono size={20} className="text-primario" />}
@@ -96,10 +92,15 @@ export function MapaCorporal({ resumen }) {
             ))}
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <span className="h-3 w-3 rounded-full" style={{ background: COLOR_ESTADO[estadoRegion(seleccionada, resumen)] }} />
-            <span className="capitalize text-tinta">{estadoRegion(seleccionada, resumen) === 'sin-datos' ? 'Sin datos' : estadoRegion(seleccionada, resumen)}</span>
+            <span className="h-3 w-3 rounded-full" style={{ background: COLOR_ESTADO[estados[seleccionada]] }} />
+            <span className="capitalize text-tinta">{estados[seleccionada] === 'sin-datos' ? 'Sin datos' : estados[seleccionada]}</span>
           </div>
         </Tarjeta>
+        ) : (
+          <Tarjeta relleno="compacto">
+            <p className="text-sm text-tinta-suave">Selecciona una región en el modelo o en la lista para ver sus indicadores.</p>
+          </Tarjeta>
+        )}
 
         {/* Alternativa en lista (accesibilidad) */}
         <div className="grid gap-1">
@@ -110,7 +111,7 @@ export function MapaCorporal({ resumen }) {
               onClick={() => setSeleccionada(r.id)}
               className={`flex items-center gap-2 rounded-boton px-3 py-2 text-left text-sm ${seleccionada === r.id ? 'bg-superficie-alta text-tinta' : 'text-tinta-suave hover:bg-superficie-alta'}`}
             >
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_ESTADO[estadoRegion(r.id, resumen)] }} />
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: COLOR_ESTADO[estados[r.id]] }} />
               <r.icono size={15} />
               {r.etiqueta}
             </button>

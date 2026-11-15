@@ -36,6 +36,7 @@ const VistaUsuarios = lazy(() => import('../features/gestion/indice.js').then((m
 const VistaAuditoria = lazy(() => import('../features/gestion/componentes/VistaAuditoria.jsx').then((m) => ({ default: m.VistaAuditoria })))
 const VistaFundamento = lazy(() => import('../features/gestion/componentes/VistaFundamento.jsx').then((m) => ({ default: m.VistaFundamento })))
 const VistaCuerpo = lazy(() => import('../features/gestion/componentes/VistaCuerpo.jsx').then((m) => ({ default: m.VistaCuerpo })))
+const VistaLot = lazy(() => import('../presentacion/componentes/VistaLot.jsx'))
 const VistaAlertas = lazy(() => import('../features/gestion/componentes/VistaAlertas.jsx').then((m) => ({ default: m.VistaAlertas })))
 
 /**
@@ -57,6 +58,7 @@ export function Router() {
         <Route path="auditoria" element={<Suspense fallback={<SplashCarga />}><RutaAdmin><VistaAuditoria /></RutaAdmin></Suspense>} />
         <Route path="fundamento" element={<Suspense fallback={<SplashCarga />}><VistaFundamento /></Suspense>} />
         <Route path="cuerpo" element={<Suspense fallback={<SplashCarga />}><VistaCuerpo /></Suspense>} />
+        <Route path="lot" element={<Suspense fallback={<SplashCarga />}><VistaLot /></Suspense>} />
         <Route path="signos" element={<Suspense fallback={<SplashCarga />}><VistaSignosRuta /></Suspense>} />
         <Route path="salud-integral" element={<Suspense fallback={<SplashCarga />}><VistaSaludIntegralRuta /></Suspense>} />
         <Route path="nutricion" element={<Suspense fallback={<SplashCarga />}><VistaNutricionRuta /></Suspense>} />

@@ -6,13 +6,14 @@
 
 import { Command } from 'cmdk'
 import { useNavigate } from 'react-router-dom'
-import { LayoutDashboard, HeartPulse, Settings, HelpCircle, Plus, Users } from 'lucide-react'
+import { LayoutDashboard, HeartPulse, Settings, HelpCircle, Plus, Users, Orbit } from 'lucide-react'
 import { tripulacionInicial } from '../../datos/mockDatos.js'
 
 /** Módulos navegables. */
 const MODULOS = [
   { etiqueta: 'Dashboard', ruta: '/app', icono: LayoutDashboard },
   { etiqueta: 'Monitor de salud', ruta: '/app/monitor', icono: HeartPulse },
+  { etiqueta: 'LOT 3D', ruta: '/app/lot', icono: Orbit },
   { etiqueta: 'Configuración', ruta: '/app/configuracion', icono: Settings },
   { etiqueta: 'Ayuda', ruta: '/app/ayuda', icono: HelpCircle },
 ]

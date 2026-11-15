@@ -36,7 +36,7 @@ export function VistaCuerpo() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-2xl font-bold text-tinta">Mi cuerpo</h1>
-        <p className="text-sm text-tinta-suave">Selecciona un sistema en la lista para ver su función, indicadores y estado.</p>
+        <p className="text-sm text-tinta-suave">Selecciona un sistema en el modelo o en la lista para ver su función, indicadores y estado.</p>
       </div>
 
       <MapaCorporal resumen={data} />
