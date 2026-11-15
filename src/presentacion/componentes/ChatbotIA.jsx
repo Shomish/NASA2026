@@ -9,7 +9,7 @@ import { Bot, Send, User } from 'lucide-react'
 import { Tarjeta } from './UtilidadesUi.jsx'
 import { responderChatbot } from '../../aplicacion/indice.js'
 import { calcularIMC } from '../../dominio/indice.js'
-import { useTraduccion } from '../../shared/idioma.js'
+import { useTraduccion, useIdioma } from '../../shared/idioma.js'
 import { useAlmacenSesion } from '../../features/auth/almacenSesion.js'
 import { PROTOCOLO_EMERGENCIA, detectarEmergencia } from '../../../shared/emergencia.js'
 import { crearAlertaEmergencia } from '../../features/gestion/api.js'
@@ -24,6 +24,7 @@ import { encolar } from '../../features/gestion/outbox.js'
  */
 export default function ChatbotIA({ contexto, conectorLLM }) {
   const t = useTraduccion()
+  const idioma = useIdioma((s) => s.idioma)
   const usuario = useAlmacenSesion((s) => s.usuario)
   // Nombre a usar: el tripulante activo o, en su defecto, quien inició sesión.
   const nombreMostrado = contexto.persona?.nombre ?? usuario?.nombre ?? 'tripulante'
@@ -88,6 +89,7 @@ export default function ChatbotIA({ contexto, conectorLLM }) {
       alergias: persona?.alergias,
       objetivoSalud: persona?.objetivoSalud,
       signosVitales: signos,
+      idioma,
     }
   }
 

@@ -23,8 +23,18 @@ const PALABRAS_CLAVE = [
   'shortness of breath',
   'fainted',
   'confusion',
-  'mareo',
-  'dizziness',
+  'emergencia',
+  'emergency',
+  'quiero morir',
+  'me quiero morir',
+  'no quiero vivir',
+  'hacerme dano',
+  'suicid',
+  'want to die',
+  'kill myself',
+  'suicide',
+  'self-harm',
+  'autolesion',
 ]
 
 /**

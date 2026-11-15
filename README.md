@@ -64,8 +64,7 @@ diagnose or replace medical evaluation.
 npm install
 
 # 2. Create the environment file
-cp .env.example .env
-# Edit .env: JWT_SECRET, DB_* and optional AI/NASA keys
+cp .env.example .env y completa los valores
 
 # 3. Create the database, schema, thresholds, catalog, and demo data
 npm run db:setup

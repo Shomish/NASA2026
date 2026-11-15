@@ -20,6 +20,7 @@ import { HeartPulse, Activity } from 'lucide-react'
 import { Tarjeta, EncabezadoPanel, InsigniaEstado } from './UtilidadesUi.jsx'
 import { vitales24Horas } from '../../datos/mockDatos.js'
 import { useTema } from '../sistema/tema.jsx'
+import { useIdioma } from '../../shared/idioma.js'
 
 /**
  * Tarjeta de estado global con puntaje y tendencias.
@@ -29,7 +30,10 @@ import { useTema } from '../sistema/tema.jsx'
  */
 export default function TarjetaEstadoGlobal({ resultado }) {
   const { tema, modoEfectivo } = useTema()
+  const idioma = useIdioma((s) => s.idioma)
   const tokens = tema[modoEfectivo] ?? tema.oscuro
+  const tituloIndice = idioma === 'en' ? 'Indicative health index' : 'Índice orientativo de salud'
+  const avisoIndice = idioma === 'en' ? 'An indicative summary of your records; not a diagnosis.' : 'Resumen orientativo de tus registros; no es un diagnóstico.'
 
   const puntaje = resultado?.puntaje ?? 0
   const nivel = resultado?.nivel ?? 'critico'
@@ -57,8 +61,8 @@ export default function TarjetaEstadoGlobal({ resultado }) {
     <Tarjeta clase="p-5 flex flex-col gap-4">
       <EncabezadoPanel
         icono={<Activity size={18} />}
-        titulo="Estado Global de Salud"
-        subtitulo="Puntaje compuesto autónomo"
+        titulo={tituloIndice}
+        subtitulo={avisoIndice}
       />
 
       <div className="flex items-center gap-4">

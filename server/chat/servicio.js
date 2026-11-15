@@ -35,6 +35,7 @@ export function seudonimizarContexto(contexto = {}) {
     sueno: contexto.sueno,
     saludMental: contexto.saludMental,
     radiacion: contexto.radiacion,
+    idioma: contexto.idioma === 'en' ? 'en' : 'es',
   }
   // El nombre real nunca se envía; se usa un alias.
   return JSON.stringify({ tripulante: 'Tripulante', ...metricas }, null, 2)

@@ -54,12 +54,22 @@ const ESQUEMAS_DETALLE = {
     calidad: z.number().int().min(0).max(10).optional(),
     despertares: z.number().int().min(0).optional(),
   }),
-  salud_mental: z.object({
-    respuestas: z.array(z.number().int().min(0).max(3)),
-    puntaje: z.number().int().min(0).max(27),
-    nivel: z.string().max(40).optional(),
-    item9_positivo: z.boolean().optional(),
-  }),
+  salud_mental: z
+    .object({
+      cuestionario: z.enum(['phq9', 'gad7']).optional(),
+      respuestas: z.array(z.number().int().min(0).max(3)),
+      puntaje: z.number().int().min(0).max(27),
+      nivel: z.string().max(40).optional(),
+      item9_positivo: z.boolean().optional(),
+    })
+    .refine(
+      (datos) => {
+        if (datos.cuestionario === 'phq9') return datos.respuestas.length === 9
+        if (datos.cuestionario === 'gad7') return datos.respuestas.length === 7
+        return datos.respuestas.length === 7 || datos.respuestas.length === 9
+      },
+      { message: 'Respuestas incompletas', path: ['respuestas'] },
+    ),
   radiacion: z.object({
     dosis_msv: z.number().min(0),
     acumulada_msv: z.number().min(0),
@@ -118,6 +128,12 @@ const esquemaRegistro = z.object({
  */
 function validarDetalle(tipo, detalle, parcial = false) {
   const esquema = ESQUEMAS_DETALLE[tipo]
+  if (!esquema) return { valido: false }
+  // El esquema de salud mental exige el cuestionario completo; no se usa .partial().
+  if (tipo === 'salud_mental') {
+    const resultado = esquema.safeParse(detalle ?? {})
+    return resultado.success ? { valido: true, detalle: resultado.data } : { valido: false }
+  }
   const resultado = (parcial ? esquema.partial() : esquema).safeParse(detalle ?? {})
   return resultado.success ? { valido: true, detalle: resultado.data } : { valido: false }
 }
@@ -198,7 +214,9 @@ rutas.post('/', autenticacion, async (req, res) => {
       },
       { transaction: transaccion },
     )
-    await modeloDetalle.create({ registro_id: registro.id, ...detalle.detalle }, { transaction: transaccion })
+    const detalleGuardar = { ...detalle.detalle }
+    delete detalleGuardar.cuestionario
+    await modeloDetalle.create({ registro_id: registro.id, ...detalleGuardar }, { transaction: transaccion })
     await transaccion.commit()
     await auditar({ usuarioId: req.usuario.id, accion: 'crear', entidad: 'registro', entidadId: registro.id, req })
     await generarAlertas(registro, detalle.detalle)
@@ -256,7 +274,9 @@ rutas.put('/:id', autenticacion, async (req, res) => {
   if (!detalle.valido) return res.status(400).json({ codigo: 'DATOS_INVALIDOS', mensaje: 'Detalle inválido.' })
 
   const modeloDetalle = MODELOS_DETALLE[registro.tipo]
-  await modeloDetalle.update(detalle.detalle, { where: { registro_id: registro.id } })
+  const detalleGuardar = { ...detalle.detalle }
+  delete detalleGuardar.cuestionario
+  await modeloDetalle.update(detalleGuardar, { where: { registro_id: registro.id } })
   await auditar({ usuarioId: req.usuario.id, accion: 'editar', entidad: 'registro', entidadId: registro.id, req })
   res.json(registro)
 })

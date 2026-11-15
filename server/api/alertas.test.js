@@ -124,6 +124,35 @@ describe('umbrales de alertas', () => {
   })
 })
 
+describe('PHQ-9 y GAD-7', () => {
+  it('rechaza el PHQ-9 con 8 respuestas', async () => {
+    const res = await request(app)
+      .post('/api/v1/registros')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tripulante_id: tripulanteId, tipo: 'salud_mental', detalle: { cuestionario: 'phq9', respuestas: [0, 0, 0, 0, 0, 0, 0, 0], puntaje: 0 } })
+    expect(res.status).toBe(400)
+  })
+
+  it('rechaza respuestas mayores a 3', async () => {
+    const res = await request(app)
+      .post('/api/v1/registros')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ tripulante_id: tripulanteId, tipo: 'salud_mental', detalle: { cuestionario: 'phq9', respuestas: [0, 0, 0, 0, 0, 0, 0, 0, 4], puntaje: 4 } })
+    expect(res.status).toBe(400)
+  })
+
+  it('acepta el GAD-7 con 7 respuestas', async () => {
+    const id = await crearRegistro('salud_mental', { cuestionario: 'gad7', respuestas: [0, 0, 0, 0, 0, 0, 0], puntaje: 0 })
+    expect(id).toBeGreaterThan(0)
+  })
+
+  it('el ítem 9 del PHQ-9 genera una alerta crítica', async () => {
+    const id = await crearRegistro('salud_mental', { cuestionario: 'phq9', respuestas: [0, 0, 0, 0, 0, 0, 0, 0, 1], puntaje: 1 })
+    const alertas = await alertasDe(id)
+    expect(alertas.some((a) => a.severidad === 'critica' && a.mensaje.includes('PHQ-9'))).toBe(true)
+  })
+})
+
 describe('alerta de emergencia y outbox', () => {
   it('POST /alertas crea una alerta crítica', async () => {
     const res = await request(app)

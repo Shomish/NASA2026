@@ -7,6 +7,7 @@ import { evaluarSignoVital, CATALOGO_CONDICIONES, calcularIMC } from '../dominio
 import { contramedidasAndinas, despensaGlobal } from '../datos/mockDatos.js'
 import { idiomaActual } from '../shared/idioma.js'
 import { PROTOCOLO_EMERGENCIA, detectarEmergencia } from '../../shared/emergencia.js'
+import { AVISO_LEGAL, respuestaLocal } from '../../shared/chatLocal.js'
 
 /**
  * Calcula el puntaje compuesto de salud (0-100).
@@ -95,22 +96,33 @@ export function generarRecomendacionNutricional(persona, signos = {}) {
 }
 
 /**
+ * Responde localmente y añade el aviso legal a toda respuesta no urgente.
+ * @param {string} texto - Mensaje del usuario.
+ * @param {object} [contexto] - Contexto.
+ * @returns {string} Respuesta.
+ */
+export function responderChatbot(texto, contexto = {}) {
+  const idioma = idiomaActual() === 'en' ? 'en' : 'es'
+  const emergencia = detectarEmergencia(texto, contexto?.signos ?? {})
+  if (emergencia.emergencia) return PROTOCOLO_EMERGENCIA
+  const base = responderChatbotInterno(texto, contexto)
+  return `${base}\n\n${AVISO_LEGAL[idioma]}`
+}
+
+/**
  * Motor del chatbot (local): genera respuestas contextuales según la persona y sus datos.
  * Funciona sin conexión y respeta el idioma actual (es/en) de la interfaz.
  * @param {string} texto - Mensaje del usuario.
  * @param {object} contexto - Contexto (persona, signos, historial).
  * @returns {string} Respuesta del asistente.
  */
-export function responderChatbot(texto, contexto) {
+function responderChatbotInterno(texto, contexto = {}) {
   const { persona, signos = {}, sueno = null, mental = null, nutricion = null } = contexto
   // Normaliza: minúsculas y sin tildes para un matching robusto.
   const t = (texto ?? '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-  const emergencia = detectarEmergencia(texto, signos)
-  if (emergencia.emergencia) return PROTOCOLO_EMERGENCIA
-
   const nombre = persona?.nombre ?? 'tripulante'
   const idioma = idiomaActual() === 'en' ? 'en' : 'es'
   const en = idioma === 'en'
@@ -144,9 +156,12 @@ export function responderChatbot(texto, contexto) {
       ? (en ? ` Nutrition: ${nutricion.contramedidas.map((c) => c.nombre).join(', ')}.` : ` Nutrición: ${nutricion.contramedidas.map((c) => c.nombre).join(', ')}.`)
       : (en ? ' No personalized nutrition plan yet.' : ' Aún sin plan nutricional personalizado.')
     return en
-      ? `${nombre}, here is your full analysis: Health score ${resultado.puntaje}/100 (${nivel}).${parteSueno}${parteMental}${parteNutricion}`
-      : `${nombre}, aquí va tu análisis completo: Puntaje de salud ${resultado.puntaje}/100 (${nivel}).${parteSueno}${parteMental}${parteNutricion}`
+      ? `${nombre}, here is your full analysis: Indicative health index ${resultado.puntaje}/100 (${nivel}).${parteSueno}${parteMental}${parteNutricion}`
+      : `${nombre}, aquí va tu análisis completo: Índice orientativo de salud ${resultado.puntaje}/100 (${nivel}).${parteSueno}${parteMental}${parteNutricion}`
   }
+
+  const local = respuestaLocal(texto, idioma)
+  if (['sintomas', 'alimentacion', 'sueno', 'animo'].includes(local.intencion)) return local.texto
 
   // Intenciones específicas primero (orden de prioridad).
   if (/(comer|nutri|dieta|aliment|recomienda|superalimento|andino|plan|food|diet|eat|meal)/.test(t)) {
@@ -154,14 +169,14 @@ export function responderChatbot(texto, contexto) {
   }
   if (/(sueno|dormir|dormi|descanso|insomnio|circadiano|sleep|rest)/.test(t)) {
     if (sueno) {
-      const dentro = sueno.horas >= 6.5
+      const dentro = sueno.horas >= 7
       return en
         ? `Sleep record: ${sueno.horas}h with quality ${sueno.calidad}/10 and ${sueno.interrupciones} awakenings. ${dentro ? 'Within the recommended range.' : 'Below the recommendation; I suggest regulating your circadian cycle and a muña infusion before bed.'}`
         : `Registro de sueño: ${sueno.horas}h con calidad ${sueno.calidad}/10 y ${sueno.interrupciones} despertares. ${dentro ? 'Dentro del rango recomendado.' : 'Por debajo de lo recomendado; sugiero regular el ciclo circadiano y una infusión de muña antes de dormir.'}`
     }
     return en
-      ? `${nombre}, you have not logged any sleep yet. Record your rest hours so I can evaluate them.`
-      : `${nombre}, aún no registras sueño. Registra tus horas de descanso para que pueda evaluarlas.`
+      ? `${nombre}, aim for 7 hours or more (Watson et al., 2015). Keep a regular routine, avoid caffeine and screens before bed, and record your sleep in the app.`
+      : `${nombre}, apunta a 7 horas o más (Watson et al., 2015). Mantén una rutina regular, evita cafeína y pantallas antes de dormir, y registra tu sueño en la app.`
   }
   if (/(mental|animo|estres|ansiedad|depresion|phq|gad|mood|stress|anxiety|depression)/.test(t)) {
     if (mental) {
@@ -193,8 +208,13 @@ export function responderChatbot(texto, contexto) {
       : `${nombre}, mantén ~30 min de ejercicio diario (resistencia + cardio). Protege la masa muscular y ósea en microgravedad.`
   }
 
-  // Respuesta por defecto: resumen de salud.
-  return generarResumenSalud(persona, signos, en)
+  // Resumen de salud si el usuario lo pide explícitamente.
+  if (/(salud|health|estado|status|como estoy|how am i)/.test(t)) {
+    return generarResumenSalud(persona, signos, en)
+  }
+
+  // Respuesta por defecto: intenciones locales.
+  return respuestaLocal(texto, idioma).texto
 }
 
 /** Nombres legibles de los signos para el análisis offline. */
@@ -247,7 +267,7 @@ function generarResumenSalud(persona, signos, en = false) {
   const prefijo = en ? 'Hello' : 'Hola'
   const desglose = en ? 'Indicators:' : 'Indicadores:'
 
-  return `${prefijo} ${persona.nombre}. ${en ? 'Your health score' : 'Tu puntaje de salud'} ${resultado.puntaje}/100 (${nivelTexto}).${detalleAnomalos}\n${desglose} ${lineas.join(' · ')}${condicion}`
+  return `${prefijo} ${persona.nombre}. ${en ? 'Your indicative health index' : 'Tu índice orientativo de salud'} ${resultado.puntaje}/100 (${nivelTexto}).${detalleAnomalos}\n${desglose} ${lineas.join(' · ')}${condicion}`
 }
 
 /**
